@@ -16,23 +16,15 @@ function LoginForm() {
   const redirectUrl = searchParams.get('redirect')
   const { data: session, status } = useSession()
 
-  // Check for session and redirect authenticated users
+  // Check for session
   useEffect(() => {
     console.log('Login page - Auth status:', {
       status,
       hasSession: !!session,
       userId: session?.user?.id,
       email: session?.user?.email,
-      sessionUser: session?.user
     })
-
-    // Auto redirect authenticated users to dashboard
-    if (status === 'authenticated' && session?.user?.id) {
-      const redirectTo = redirectUrl || '/dashboard'
-      console.log('User is authenticated, redirecting to:', redirectTo)
-      window.location.href = redirectTo
-    }
-  }, [status, session, redirectUrl, router])
+  }, [status, session])
 
   // Show loading state while checking authentication
   if (status === 'loading') {
@@ -46,38 +38,32 @@ function LoginForm() {
     )
   }
 
-  // If authenticated but no userId, show debug info
-  if (status === 'authenticated' && !session?.user?.id) {
-    return (
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="text-center">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-yellow-900 mb-2">Session Error</h2>
-            <div className="text-left text-sm text-yellow-700 space-y-2">
-              <p><strong>Status:</strong> {status}</p>
-              <p><strong>Has Session:</strong> {session ? 'Yes' : 'No'}</p>
-              <p><strong>User ID:</strong> {session?.user?.id || 'Missing'}</p>
-              <p><strong>Email:</strong> {session?.user?.email || 'Missing'}</p>
-              <p>Session exists but missing user ID - there's a configuration issue.</p>
-            </div>
-            <div className="mt-4">
-              <button onClick={() => window.location.reload()} className="btn btn-primary">
-                Reload Page
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
-  // If fully authenticated, show redirecting
+  // If fully authenticated, show passive UI instead of auto-redirecting
   if (status === 'authenticated' && session?.user?.id) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Redirecting to dashboard...</p>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-8 max-w-md mx-auto">
+            <div className="text-5xl mb-4">👋</div>
+            <h2 className="text-2xl font-bold text-green-900 mb-2">Welcome back!</h2>
+            <p className="text-green-700 mb-6">
+              You are already logged in as <strong>{session.user.email}</strong>.
+            </p>
+            <Link
+              href={(redirectUrl || '/dashboard') as any}
+              className="btn btn-primary w-full block text-center"
+            >
+              Go to Dashboard
+            </Link>
+            <div className="mt-4">
+              <button
+                onClick={() => window.location.reload()}
+                className="text-sm text-green-600 hover:text-green-800 underline"
+              >
+                Not you? Refresh page
+              </button>
+            </div>
+          </div>
         </div>
       </main>
     )
@@ -93,11 +79,21 @@ function LoginForm() {
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: true, // Let NextAuth handle the redirect
+        redirect: false,
         callbackUrl: redirectUrl || '/dashboard',
       })
 
       console.log('Login result:', result)
+
+      if (result?.error) {
+        setError('Invalid email or password')
+        setIsLoading(false)
+      } else if (result?.ok) {
+        // Manual redirect on success
+        console.log('Login successful, redirecting manually...')
+        router.push((redirectUrl || '/dashboard') as any)
+        router.refresh() // Ensure session is updated
+      }
     } catch (error) {
       console.error('Login error:', error)
       setError('An error occurred. Please try again.')

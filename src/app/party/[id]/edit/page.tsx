@@ -36,9 +36,9 @@ export default function EditPartyPage() {
   // Check authentication
   useEffect(() => {
     if (status === 'loading') return
-    
+
     if (status === 'unauthenticated' || !session?.user?.id) {
-      router.push('/login?redirect=' + encodeURIComponent('/party/' + id + '/edit'))
+      router.push(('/login?redirect=' + encodeURIComponent('/party/' + id + '/edit')) as any)
       return
     }
   }, [status, session, router, id])
@@ -47,16 +47,16 @@ export default function EditPartyPage() {
   useEffect(() => {
     const fetchParty = async () => {
       if (!id || status !== 'authenticated') return
-      
+
       try {
         const response = await fetch(`/api/parties/${id}`, {
           credentials: 'include'
         })
-        
+
         if (response.ok) {
           const partyData = await response.json()
           setParty(partyData)
-          
+
           // Populate form
           setChildName(partyData.childName)
           setChildAge(partyData.childAge.toString())
@@ -105,7 +105,7 @@ export default function EditPartyPage() {
 
       if (response.ok) {
         setSuccess('Party updated successfully! Notification emails have been sent to guests if there were important changes.')
-        
+
         // Redirect to party dashboard after a short delay
         setTimeout(() => {
           router.push(`/party/${id}/dashboard`)
@@ -142,7 +142,7 @@ export default function EditPartyPage() {
     <main className="flex-1 container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
-          <button 
+          <button
             onClick={() => router.back()}
             className="text-primary-600 hover:text-primary-700 mb-4"
           >
@@ -280,7 +280,7 @@ export default function EditPartyPage() {
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <h3 className="font-medium text-blue-900 mb-2">📧 Notification Policy</h3>
           <p className="text-sm text-blue-800">
-            Guests who have RSVP'd "Yes" or "Maybe" will automatically receive email notifications 
+            Guests who have RSVP'd "Yes" or "Maybe" will automatically receive email notifications
             if you change important details like the date, time, or location.
           </p>
         </div>

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useParams, useRouter } from 'next/navigation'
+import { useSession, signIn } from 'next-auth/react'
 import { formatDate } from '@/lib/utils'
 
 interface Party {
@@ -17,6 +17,7 @@ interface Party {
 
 export default function RSVPPage() {
   const { token } = useParams()
+  const router = useRouter()
   const { data: session, status: sessionStatus } = useSession()
   const [party, setParty] = useState<Party | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -84,11 +85,23 @@ export default function RSVPPage() {
       })
 
       if (response.ok) {
-        // Registration successful, user can now sign in
-        setShowRegistration(false)
-        setError('')
-        // Redirect to login page to complete the flow
-        window.location.href = `/login?redirect=${encodeURIComponent(`/rsvp/${token}`)}`
+        // Registration successful, auto sign in
+        const result = await signIn('credentials', {
+          email: regEmail,
+          password: regPassword,
+          redirect: false,
+        })
+
+        if (result?.ok) {
+          setShowRegistration(false)
+          setError('')
+          // Refresh to update session state
+          router.refresh()
+          // Force reload to ensure session is picked up if refresh isn't enough
+          window.location.reload()
+        } else {
+          setError('Registration successful but auto-login failed. Please try signing in.')
+        }
       } else {
         const data = await response.json()
         setError(data.error || 'Registration failed')
@@ -174,7 +187,7 @@ export default function RSVPPage() {
                 Thank you for your response. We're looking forward to celebrating with you!
               </p>
             </div>
-            
+
             <div className="bg-neutral-50 rounded-lg p-4">
               <h3 className="font-semibold text-neutral-900 mb-2">
                 {party.childName}'s {party.childAge}th Birthday Party
@@ -244,7 +257,7 @@ export default function RSVPPage() {
                   >
                     Create New Account
                   </button>
-                  <a 
+                  <a
                     href={`/login?redirect=${encodeURIComponent(`/rsvp/${token}`)}`}
                     className="btn btn-secondary flex-1 text-center"
                   >
@@ -348,174 +361,173 @@ export default function RSVPPage() {
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
-                  Parent/Guardian Name *
-                </label>
-                <input
-                  type="text"
-                  id="parentName"
-                  value={parentName}
-                  onChange={(e) => setParentName(e.target.value)}
-                  className="input"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                  Child's Name *
-                </label>
-                <input
-                  type="text"
-                  id="childName"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  className="input"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="input"
-                placeholder="Optional - for party updates"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-3">
-                Will you be attending? *
-              </label>
-              <div className="grid grid-cols-3 gap-4">
-                {(['YES', 'NO', 'MAYBE'] as const).map((option) => (
-                  <label key={option} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="rsvpStatus"
-                      value={option}
-                      checked={rsvpStatus === option}
-                      onChange={(e) => setRsvpStatus(e.target.value as 'YES' | 'NO' | 'MAYBE')}
-                      className="mr-2"
-                    />
-                    <span className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer flex-1 text-center ${
-                      rsvpStatus === option
-                        ? option === 'YES'
-                          ? 'bg-green-100 text-green-800 border-2 border-green-300'
-                          : option === 'NO'
-                          ? 'bg-red-100 text-red-800 border-2 border-red-300'
-                          : 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
-                        : 'bg-neutral-100 text-neutral-600 border-2 border-transparent'
-                    }`}>
-                      {option === 'YES' ? 'Yes! 🎉' : option === 'NO' ? 'Sorry, can\'t make it 😢' : 'Maybe 🤔'}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {rsvpStatus !== 'NO' && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="numChildren" className="block text-sm font-medium text-neutral-700 mb-1">
-                      Number of children attending *
-                    </label>
-                    <input
-                      type="number"
-                      id="numChildren"
-                      value={numChildren}
-                      onChange={(e) => setNumChildren(parseInt(e.target.value))}
-                      className="input"
-                      min="0"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-3">
-                      Will a parent/guardian stay?
-                    </label>
-                    <div className="flex gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="parentStaying"
-                          checked={parentStaying}
-                          onChange={() => setParentStaying(true)}
-                          className="mr-2"
-                        />
-                        Yes
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="parentStaying"
-                          checked={!parentStaying}
-                          onChange={() => setParentStaying(false)}
-                          className="mr-2"
-                        />
-                        No (drop-off)
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="allergies" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Food allergies or dietary restrictions
+                  <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
+                    Parent/Guardian Name *
                   </label>
                   <input
                     type="text"
-                    id="allergies"
-                    value={allergies}
-                    onChange={(e) => setAllergies(e.target.value)}
+                    id="parentName"
+                    value={parentName}
+                    onChange={(e) => setParentName(e.target.value)}
                     className="input"
-                    placeholder="Please list any allergies or dietary needs"
+                    required
+                    autoFocus
                   />
                 </div>
-              </>
-            )}
 
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-neutral-700 mb-1">
-                Message to the host
-              </label>
-              <textarea
-                id="message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="input"
-                rows={3}
-                placeholder="Any special message or questions?"
-              />
-            </div>
-
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
+                <div>
+                  <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
+                    Child's Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="childName"
+                    value={childName}
+                    onChange={(e) => setChildName(e.target.value)}
+                    className="input"
+                    required
+                  />
+                </div>
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full btn btn-primary disabled:opacity-50 text-lg py-3"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit RSVP'}
-            </button>
-          </form>
-        </div>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="input"
+                  placeholder="Optional - for party updates"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-3">
+                  Will you be attending? *
+                </label>
+                <div className="grid grid-cols-3 gap-4">
+                  {(['YES', 'NO', 'MAYBE'] as const).map((option) => (
+                    <label key={option} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="rsvpStatus"
+                        value={option}
+                        checked={rsvpStatus === option}
+                        onChange={(e) => setRsvpStatus(e.target.value as 'YES' | 'NO' | 'MAYBE')}
+                        className="mr-2"
+                      />
+                      <span className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer flex-1 text-center ${rsvpStatus === option
+                        ? option === 'YES'
+                          ? 'bg-green-100 text-green-800 border-2 border-green-300'
+                          : option === 'NO'
+                            ? 'bg-red-100 text-red-800 border-2 border-red-300'
+                            : 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
+                        : 'bg-neutral-100 text-neutral-600 border-2 border-transparent'
+                        }`}>
+                        {option === 'YES' ? 'Yes! 🎉' : option === 'NO' ? 'Sorry, can\'t make it 😢' : 'Maybe 🤔'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {rsvpStatus !== 'NO' && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="numChildren" className="block text-sm font-medium text-neutral-700 mb-1">
+                        Number of children attending *
+                      </label>
+                      <input
+                        type="number"
+                        id="numChildren"
+                        value={numChildren}
+                        onChange={(e) => setNumChildren(parseInt(e.target.value))}
+                        className="input"
+                        min="0"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-3">
+                        Will a parent/guardian stay?
+                      </label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="parentStaying"
+                            checked={parentStaying}
+                            onChange={() => setParentStaying(true)}
+                            className="mr-2"
+                          />
+                          Yes
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="parentStaying"
+                            checked={!parentStaying}
+                            onChange={() => setParentStaying(false)}
+                            className="mr-2"
+                          />
+                          No (drop-off)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="allergies" className="block text-sm font-medium text-neutral-700 mb-1">
+                      Food allergies or dietary restrictions
+                    </label>
+                    <input
+                      type="text"
+                      id="allergies"
+                      value={allergies}
+                      onChange={(e) => setAllergies(e.target.value)}
+                      className="input"
+                      placeholder="Please list any allergies or dietary needs"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Message to the host
+                </label>
+                <textarea
+                  id="message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="input"
+                  rows={3}
+                  placeholder="Any special message or questions?"
+                />
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full btn btn-primary disabled:opacity-50 text-lg py-3"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit RSVP'}
+              </button>
+            </form>
+          </div>
         )}
 
         <div className="text-center mt-6 text-sm text-neutral-500">

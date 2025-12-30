@@ -11,7 +11,7 @@ interface EmailData {
 const createTransporter = () => {
   // Check if we have Gmail SMTP configuration
   if (process.env.SMTP_HOST === 'smtp.gmail.com' && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 587,
       secure: false, // true for 465, false for other ports
@@ -21,10 +21,10 @@ const createTransporter = () => {
       },
     })
   }
-  
+
   // Check if we have custom SMTP configuration
   if (process.env.SMTP_HOST && process.env.SMTP_PORT) {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT),
       secure: process.env.SMTP_PORT === '465',
@@ -36,14 +36,14 @@ const createTransporter = () => {
       ignoreTLS: process.env.SMTP_HOST === 'localhost',
     })
   }
-  
+
   // Fallback - just log to console
   return null
 }
 
 export async function sendEmail(emailData: EmailData) {
   const transporter = createTransporter()
-  
+
   if (!transporter) {
     // Fallback to console logging for development
     console.log('\n=== EMAIL NOTIFICATION (No SMTP configured) ===')
@@ -54,7 +54,7 @@ export async function sendEmail(emailData: EmailData) {
     console.log('============================================\n')
     return Promise.resolve()
   }
-  
+
   try {
     const mailOptions = {
       from: process.env.SMTP_FROM || 'noreply@kidparty.app',
@@ -63,14 +63,14 @@ export async function sendEmail(emailData: EmailData) {
       text: emailData.text,
       html: emailData.html || emailData.text.replace(/\n/g, '<br>'),
     }
-    
+
     console.log(`📧 Sending email to ${emailData.to}: ${emailData.subject}`)
     const result = await transporter.sendMail(mailOptions)
     console.log(`✅ Email sent successfully: ${result.messageId}`)
     return result
   } catch (error) {
     console.error('❌ Failed to send email:', error)
-    
+
     // Fallback to console logging if email fails
     console.log('\n=== EMAIL NOTIFICATION (Fallback) ===')
     console.log(`To: ${emailData.to}`)
@@ -78,7 +78,7 @@ export async function sendEmail(emailData: EmailData) {
     console.log('Content:')
     console.log(emailData.text)
     console.log('=====================================\n')
-    
+
     // Don't throw error - just log and continue
     return Promise.resolve()
   }
@@ -128,12 +128,12 @@ export function generateRSVPConfirmationEmail(
 
   const subject = `RSVP Confirmed: ${partyData.childName}'s Birthday Party`
 
-  const guestConfirmText = guestData.status === 'YES' 
+  const guestConfirmText = guestData.status === 'YES'
     ? `Great! We're excited to celebrate with ${guestData.childName} and ${guestData.numChildren} child${guestData.numChildren !== 1 ? 'ren' : ''}.
 ${guestData.parentStaying ? 'A parent/guardian will be staying for the party.' : 'This will be a drop-off party for us.'}`
     : guestData.status === 'MAYBE'
-    ? `Thank you for letting us know you might be able to make it. We hope to see ${guestData.childName} there!`
-    : `Thank you for letting us know. We'll miss ${guestData.childName} but hope to celebrate together next time!`
+      ? `Thank you for letting us know you might be able to make it. We hope to see ${guestData.childName} there!`
+      : `Thank you for letting us know. We'll miss ${guestData.childName} but hope to celebrate together next time!`
 
   const text = `Hi ${guestData.parentName},
 
@@ -195,7 +195,7 @@ export function generateHostRSVPNotificationEmail(
 
   const statusText = {
     'YES': '接受邀请',
-    'NO': '无法参加', 
+    'NO': '无法参加',
     'MAYBE': '可能参加'
   }
 
@@ -264,11 +264,11 @@ export function generateReminderEmail(
 
   const timeMap = {
     SEVEN_DAYS: '7 days',
-    TWO_DAYS: '2 days', 
+    TWO_DAYS: '2 days',
     SAME_DAY: 'today'
   }
 
-  const subject = reminderType === 'SAME_DAY' 
+  const subject = reminderType === 'SAME_DAY'
     ? `Today: ${partyData.childName}'s Birthday Party!`
     : `Reminder: ${partyData.childName}'s Party in ${timeMap[reminderType]}`
 

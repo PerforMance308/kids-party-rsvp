@@ -11,16 +11,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    
+
     const session = await getServerSession(authOptions)
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const party = await prisma.party.findFirst({
-      where: { 
+      where: {
         id: id,
-        userId: session.user.id 
+        userId: session.user.id
       },
       include: {
         guests: {
@@ -68,7 +68,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    
+
     const session = await getServerSession(authOptions)
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -76,9 +76,9 @@ export async function PUT(
 
     // Get the existing party with guest emails for notifications
     const existingParty = await prisma.party.findFirst({
-      where: { 
+      where: {
         id: id,
-        userId: session.user.id 
+        userId: session.user.id
       },
       include: {
         guests: {
@@ -131,21 +131,21 @@ export async function PUT(
 
     // Send notification emails to guests who have RSVP'd "YES" or "MAYBE"
     if (hasImportantChanges) {
-      const notifiableGuests = existingParty.guests.filter(guest => 
+      const notifiableGuests = existingParty.guests.filter(guest =>
         guest.rsvp && ['YES', 'MAYBE'].includes(guest.rsvp.status)
       )
 
       for (const guest of notifiableGuests) {
-        if (guest.rsvp?.parentEmail) {
+        if (guest.email) {
           try {
             await sendPartyUpdateEmail(
-              guest.rsvp.parentEmail,
-              guest.rsvp.parentName || 'Guest',
+              guest.email,
+              guest.parentName || 'Guest',
               updatedParty,
               importantChanges
             )
           } catch (error) {
-            console.error(`Failed to send update email to ${guest.rsvp.parentEmail}:`, error)
+            console.error(`Failed to send update email to ${guest.email}:`, error)
           }
         }
       }
@@ -168,7 +168,7 @@ export async function PUT(
     return NextResponse.json(partyWithStats)
   } catch (error) {
     console.error('Update party error:', error)
-    
+
     if (error instanceof Error && 'issues' in error) {
       return NextResponse.json(
         { error: 'Validation failed', details: error },
@@ -189,7 +189,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    
+
     const session = await getServerSession(authOptions)
     if (!session || !session.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -197,9 +197,9 @@ export async function DELETE(
 
     // Get the party with guests for cleanup
     const party = await prisma.party.findFirst({
-      where: { 
+      where: {
         id: id,
-        userId: session.user.id 
+        userId: session.user.id
       },
       include: {
         guests: {
@@ -230,15 +230,7 @@ export async function DELETE(
         where: { partyId: id }
       })
 
-      // Delete reminder schedules if they exist
-      try {
-        await tx.reminderSchedule.deleteMany({
-          where: { partyId: id }
-        })
-      } catch (error) {
-        // Ignore if reminderSchedule table doesn't exist
-        console.log('Reminder schedules not deleted (table may not exist):', error)
-      }
+
 
       // Finally delete the party
       await tx.party.delete({
