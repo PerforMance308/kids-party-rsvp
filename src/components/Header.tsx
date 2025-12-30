@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import UserNav from './UserNav'
 
 export default function Header() {
@@ -10,7 +11,9 @@ export default function Header() {
             🎉 Kid Party RSVP
           </Link>
 
-          <UserNav />
+          <Suspense fallback={<div className="h-10 w-20 bg-neutral-100 animate-pulse rounded-lg"></div>}>
+            <UserNav />
+          </Suspense>
         </div>
       </div>
     </header>

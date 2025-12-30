@@ -35,7 +35,6 @@ declare namespace __next_route_internal_types__ {
     | `/`
     | `/api/auth/login`
     | `/api/auth/logout`
-    | `/api/auth/me`
     | `/api/auth/register`
     | `/api/contacts`
     | `/api/guests`
@@ -48,6 +47,7 @@ declare namespace __next_route_internal_types__ {
   type DynamicRoutes<T extends string = string> = 
     | `/api/auth/${CatchAllSlug<T>}`
     | `/api/parties/${SafeSlug<T>}`
+    | `/api/parties/${SafeSlug<T>}/invite`
     | `/api/parties/${SafeSlug<T>}/qr`
     | `/api/rsvp/${SafeSlug<T>}`
     | `/party/${SafeSlug<T>}/dashboard`

@@ -12,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { token } = await params
-    
+
     // Validate token format
     if (!isValidUUID(token)) {
       return NextResponse.json({ error: 'Invalid invitation link' }, { status: 400 })
@@ -51,7 +51,7 @@ export async function POST(
 ) {
   try {
     const { token } = await params
-    
+
     // Validate token format
     if (!isValidUUID(token)) {
       return NextResponse.json({ error: 'Invalid invitation link' }, { status: 400 })
@@ -80,7 +80,7 @@ export async function POST(
     }
 
     const body = await request.json()
-    
+
     // Validate and sanitize input - no email needed since user is authenticated
     const validatedData = {
       parentName: sanitizeInput(body.parentName || ''),
@@ -201,11 +201,38 @@ export async function POST(
         subject: hostNotificationEmail.subject,
         text: hostNotificationEmail.text
       })
-      
+
       console.log(`📧 Notification sent to host: ${party.user.email}`)
     } catch (emailError) {
       console.error('Failed to send host notification email:', emailError)
       // Don't fail the RSVP if email fails
+    }
+
+    // Auto-save guest as a contact for the host
+    try {
+      const existingContact = await prisma.contact.findFirst({
+        where: {
+          userId: party.userId,
+          email: user.email
+        }
+      })
+
+      if (!existingContact) {
+        await prisma.contact.create({
+          data: {
+            userId: party.userId,
+            name: parentName,
+            childName: childName,
+            email: user.email,
+            phone: phone || null,
+            source: 'RSVP'
+          }
+        })
+        console.log(`✅ Auto-saved contact for host: ${user.email}`)
+      }
+    } catch (contactError) {
+      console.error('Failed to auto-save contact:', contactError)
+      // Don't fail the RSVP if contact save fails
     }
 
     return NextResponse.json({ message: 'RSVP submitted successfully' })

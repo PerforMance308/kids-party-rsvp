@@ -1,37 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('token')?.value
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user?.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const user = verifyToken(token)
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
-
-    // Get all unique guests from user's previous parties
-    const contacts = await prisma.guest.findMany({
+    const contacts = await prisma.contact.findMany({
       where: {
-        party: {
-          userId: user.id
-        }
-      },
-      distinct: ['email'],
-      select: {
-        id: true,
-        parentName: true,
-        childName: true,
-        email: true,
-        phone: true,
-        createdAt: true,
+        userId: session.user.id
       },
       orderBy: {
-        createdAt: 'desc'
+        name: 'asc'
       }
     })
 
@@ -39,7 +23,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Fetch contacts error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch contacts' },
       { status: 500 }
     )
   }

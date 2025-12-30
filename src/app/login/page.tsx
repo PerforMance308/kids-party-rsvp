@@ -26,6 +26,14 @@ function LoginForm() {
     })
   }, [status, session])
 
+  // If fully authenticated, auto-redirect
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.id) {
+      console.log('User already authenticated, redirecting...')
+      window.location.href = (redirectUrl || '/dashboard') as string
+    }
+  }, [status, session, redirectUrl])
+
   // Show loading state while checking authentication
   if (status === 'loading') {
     return (
@@ -38,32 +46,13 @@ function LoginForm() {
     )
   }
 
-  // If fully authenticated, show passive UI instead of auto-redirecting
+  // Show loading state if authenticated (while redirecting)
   if (status === 'authenticated' && session?.user?.id) {
     return (
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="text-center">
-          <div className="bg-green-50 border border-green-200 rounded-lg p-8 max-w-md mx-auto">
-            <div className="text-5xl mb-4">👋</div>
-            <h2 className="text-2xl font-bold text-green-900 mb-2">Welcome back!</h2>
-            <p className="text-green-700 mb-6">
-              You are already logged in as <strong>{session.user.email}</strong>.
-            </p>
-            <Link
-              href={(redirectUrl || '/dashboard') as any}
-              className="btn btn-primary w-full block text-center"
-            >
-              Go to Dashboard
-            </Link>
-            <div className="mt-4">
-              <button
-                onClick={() => window.location.reload()}
-                className="text-sm text-green-600 hover:text-green-800 underline"
-              >
-                Not you? Refresh page
-              </button>
-            </div>
-          </div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Redirecting...</p>
         </div>
       </main>
     )

@@ -1,10 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 
 export default function UserNav() {
     const { data: session, status } = useSession()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
     const isLoading = status === 'loading'
 
     if (isLoading) {
@@ -35,10 +38,12 @@ export default function UserNav() {
         )
     }
 
+
+
     return (
         <nav className="flex items-center space-x-2 md:space-x-4">
             <Link
-                href="/login"
+                href={`/login?redirect=${encodeURIComponent(pathname + (searchParams.toString() ? `?${searchParams.toString()}` : ''))}`}
                 className="px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm md:text-base"
             >
                 Login

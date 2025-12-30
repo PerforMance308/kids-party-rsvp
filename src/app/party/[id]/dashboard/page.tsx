@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import InvitationCard from '@/components/InvitationCard'
+import InviteGuests from '@/components/InviteGuests'
 
 interface Guest {
   id: string
@@ -67,7 +68,7 @@ export default function PartyDashboard() {
   useEffect(() => {
     const fetchParty = async () => {
       if (!id) return
-      
+
       try {
         console.log('Fetching party:', id)
         const response = await fetch(`/api/parties/${id}`)
@@ -164,14 +165,14 @@ export default function PartyDashboard() {
               ← Back to Dashboard
             </Link>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-neutral-900">
             {party.childName}'s {party.childAge}th Birthday Party
           </h1>
           {party.theme && (
             <p className="text-lg text-primary-600 mt-1">{party.theme}</p>
           )}
-          
+
           <div className="mt-4 space-y-2 text-neutral-600">
             <p><strong>When:</strong> {formatDate(new Date(party.eventDatetime))}</p>
             <p><strong>Where:</strong> {party.location}</p>
@@ -184,12 +185,12 @@ export default function PartyDashboard() {
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Total Invited</h3>
             <div className="text-3xl font-bold text-neutral-900">{party.stats.total}</div>
           </div>
-          
+
           <div className="card text-center">
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Attending</h3>
             <div className="text-3xl font-bold text-green-600">{party.stats.attending}</div>
           </div>
-          
+
           <div className="card text-center">
             <h3 className="text-lg font-semibold text-neutral-900 mb-2">Response Rate</h3>
             <div className="text-3xl font-bold text-primary-600">
@@ -200,9 +201,9 @@ export default function PartyDashboard() {
 
         <div className="card mb-8">
           <h2 className="text-xl font-semibold text-neutral-900 mb-4">Printable Invitation Card</h2>
-          
+
           {qrCode && party ? (
-            <InvitationCard 
+            <InvitationCard
               party={{
                 childName: party.childName,
                 childAge: party.childAge,
@@ -232,7 +233,7 @@ export default function PartyDashboard() {
             >
               Copy RSVP Link
             </button>
-            
+
             <button
               onClick={exportToCSV}
               className="btn btn-secondary"
@@ -242,9 +243,15 @@ export default function PartyDashboard() {
           </div>
         </div>
 
+        <div className="card mb-8">
+          <h2 className="text-xl font-semibold text-neutral-900 mb-4">Invite Guests</h2>
+          <p className="text-neutral-600 mb-4">Select friends from previous parties to invite.</p>
+          <InviteGuests partyId={party.id} />
+        </div>
+
         <div className="card">
           <h2 className="text-xl font-semibold text-neutral-900 mb-4">Guest List & RSVPs</h2>
-          
+
           {party.guests.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-neutral-600">No RSVPs yet. Share your invitation to get started!</p>
@@ -276,15 +283,14 @@ export default function PartyDashboard() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          guest.rsvp?.status === 'YES'
-                            ? 'bg-green-100 text-green-800'
-                            : guest.rsvp?.status === 'NO'
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${guest.rsvp?.status === 'YES'
+                          ? 'bg-green-100 text-green-800'
+                          : guest.rsvp?.status === 'NO'
                             ? 'bg-red-100 text-red-800'
                             : guest.rsvp?.status === 'MAYBE'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-neutral-100 text-neutral-800'
-                        }`}>
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-neutral-100 text-neutral-800'
+                          }`}>
                           {guest.rsvp?.status || 'No response'}
                         </span>
                       </td>

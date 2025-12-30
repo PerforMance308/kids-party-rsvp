@@ -25,6 +25,7 @@ model User {
   guests        Guest[]   // RSVPs to other parties
   accounts      Account[]
   sessions      Session[]
+  contacts      Contact[]
   
   @@map("users")
 }
@@ -129,4 +130,21 @@ model Reminder {
   party   Party         @relation(fields: [partyId], references: [id], onDelete: Cascade)
   
   @@map("reminders")
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  childName String?  @map("child_name")
+  email     String
+  phone     String?
+  source    String?  // e.g., "RSVP", "MANUAL"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@map("contacts")
 }

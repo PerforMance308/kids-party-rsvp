@@ -379,3 +379,55 @@ export async function sendPartyUpdateEmail(
     text: emailContent.text
   })
 }
+
+export function generateInvitationEmail(
+  partyData: {
+    childName: string
+    childAge: number
+    eventDatetime: Date
+    location: string
+    theme?: string
+    notes?: string
+    publicRsvpToken: string
+  },
+  hostName: string
+) {
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date)
+  }
+
+  const rsvpUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${partyData.publicRsvpToken}`
+
+  const subject = `Invitation: ${partyData.childName}'s ${partyData.childAge}th Birthday Party!`
+
+  const text = `Hi!
+
+You are invited to celebrate ${partyData.childName}'s ${partyData.childAge}th birthday!
+
+${hostName} has sent you this invitation.
+
+Party Details:
+🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
+📅 ${formatDate(partyData.eventDatetime)}
+📍 ${partyData.location}
+
+${partyData.notes ? `Special Notes: ${partyData.notes}\n\n` : ''}Please RSVP by clicking the link below:
+${rsvpUrl}
+
+We hope you can make it!
+
+Best regards,
+Kid Party RSVP Team`
+
+  return {
+    subject,
+    text
+  }
+}

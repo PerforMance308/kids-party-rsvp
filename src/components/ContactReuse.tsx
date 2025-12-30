@@ -132,8 +132,17 @@ export default function ContactReuse({ onContactsSelected }: ContactReuseProps) 
               className="mr-3"
             />
             <div className="flex-1">
-              <div className="font-medium text-neutral-900">{contact.parentName}</div>
-              <div className="text-sm text-neutral-600">{contact.childName}</div>
+              {contact.childName ? (
+                <>
+                  <div className="font-medium text-neutral-900">{contact.childName}</div>
+                  <div className="text-sm text-neutral-600">Parent: {contact.parentName}</div>
+                </>
+              ) : (
+                <>
+                  <div className="font-medium text-neutral-900">{contact.parentName}</div>
+                  <div className="text-sm text-neutral-600">No child name recorded</div>
+                </>
+              )}
               <div className="text-sm text-neutral-500">{contact.email}</div>
               {contact.phone && (
                 <div className="text-sm text-neutral-500">{contact.phone}</div>

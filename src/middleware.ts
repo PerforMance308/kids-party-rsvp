@@ -52,6 +52,8 @@ export async function middleware(request: NextRequest) {
 
   if (isProtectedRoute && !user) {
     const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
+
     const redirectResponse = NextResponse.redirect(loginUrl)
 
     // Copy security headers to redirect response
