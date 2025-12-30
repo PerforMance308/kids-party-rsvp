@@ -91,8 +91,9 @@ function LoginForm() {
       } else if (result?.ok) {
         // Manual redirect on success
         console.log('Login successful, redirecting manually...')
-        router.push((redirectUrl || '/dashboard') as any)
-        router.refresh() // Ensure session is updated
+        // Use window.location.href instead of router.push to force a full page reload
+        // This ensures the session cookie is properly sent to the server for the new page
+        window.location.href = (redirectUrl || '/dashboard') as string
       }
     } catch (error) {
       console.error('Login error:', error)

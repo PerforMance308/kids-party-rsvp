@@ -1,15 +1,6 @@
 {
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/auth/register/route": "app/api/auth/register/route.js",
-  "/api/parties/route": "app/api/parties/route.js",
-  "/api/contacts/route": "app/api/contacts/route.js",
-  "/api/parties/[id]/route": "app/api/parties/[id]/route.js",
-  "/api/parties/[id]/qr/route": "app/api/parties/[id]/qr/route.js",
   "/api/rsvp/[token]/route": "app/api/rsvp/[token]/route.js",
-  "/page": "app/page.js",
-  "/register/page": "app/register/page.js",
-  "/party/new/page": "app/party/new/page.js",
-  "/party/[id]/dashboard/page": "app/party/[id]/dashboard/page.js",
+  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/rsvp/[token]/page": "app/rsvp/[token]/page.js",
   "/login/page": "app/login/page.js"
 }
