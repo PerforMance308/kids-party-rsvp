@@ -1,16 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typedRoutes: true,
-  experimental: {
-    allowedDevOrigins: [
-      '192.168.4.168:3001',
-      '192.168.4.168:3000', 
-      '192.168.4.168',
-      '0.0.0.0:3001',
-      '0.0.0.0:3000',
-      '0.0.0.0'
-    ],
-  },
   async headers() {
     return [
       {
@@ -18,7 +8,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: '*',
+            value: process.env.ALLOWED_ORIGINS || 'http://localhost:3000',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -28,6 +18,26 @@ const nextConfig = {
             key: 'Access-Control-Allow-Headers',
             value: 'Content-Type, Authorization',
           },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          }
         ],
       },
     ]

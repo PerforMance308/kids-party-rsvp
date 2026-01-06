@@ -20,14 +20,8 @@ export async function GET(
 
     const party = await prisma.party.findUnique({
       where: { publicRsvpToken: token },
-      select: {
-        id: true,
-        childName: true,
-        childAge: true,
-        eventDatetime: true,
-        location: true,
-        theme: true,
-        notes: true,
+      include: {
+        child: true
       }
     })
 
@@ -35,7 +29,20 @@ export async function GET(
       return NextResponse.json({ error: 'Party not found' }, { status: 404 })
     }
 
-    return NextResponse.json(party)
+    // Calculate child age
+    const today = new Date()
+    const birthDate = new Date(party.child.birthDate)
+    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+    return NextResponse.json({
+      id: party.id,
+      childName: party.child.name,
+      childAge,
+      eventDatetime: party.eventDatetime,
+      location: party.location,
+      theme: party.theme,
+      notes: party.notes,
+    })
   } catch (error) {
     console.error('Fetch party by token error:', error)
     return NextResponse.json(
@@ -71,7 +78,8 @@ export async function POST(
     const party = await prisma.party.findUnique({
       where: { publicRsvpToken: token },
       include: {
-        user: true // Include party host details for email notifications
+        user: true, // Include party host details for email notifications
+        child: true // Include child details
       }
     })
 
@@ -85,6 +93,7 @@ export async function POST(
     const validatedData = {
       parentName: sanitizeInput(body.parentName || ''),
       childName: sanitizeInput(body.childName || ''),
+      childId: body.childId ? sanitizeInput(body.childId) : undefined,
       phone: body.phone ? sanitizeInput(body.phone) : undefined,
       status: body.status,
       numChildren: parseInt(body.numChildren) || 0,
@@ -96,6 +105,7 @@ export async function POST(
     const {
       parentName,
       childName,
+      childId,
       phone,
       status,
       numChildren,
@@ -122,6 +132,7 @@ export async function POST(
         data: {
           parentName,
           childName,
+          childId: childId || null, // Link to child if selected
           phone: phone || null,
           userId: user.id, // Link to authenticated user
         }
@@ -158,6 +169,7 @@ export async function POST(
           partyId: party.id,
           parentName,
           childName,
+          childId: childId || null, // Link to child if selected
           email: user.email,
           phone: phone || null,
           userId: user.id, // Link to authenticated user
@@ -178,10 +190,15 @@ export async function POST(
 
     // Send email notification to party host only
     try {
+      // Calculate child age for email
+      const today = new Date()
+      const birthDate = new Date(party.child.birthDate)
+      const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
       const hostNotificationEmail = generateHostRSVPNotificationEmail(
         {
-          childName: party.childName,
-          childAge: party.childAge,
+          childName: party.child.name,
+          childAge,
           eventDatetime: party.eventDatetime,
           location: party.location
         },

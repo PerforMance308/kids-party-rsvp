@@ -25,9 +25,7 @@ export default function EditPartyPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  // Form state
-  const [childName, setChildName] = useState('')
-  const [childAge, setChildAge] = useState('')
+  // Form state - removed childName and childAge as they are managed through child management
   const [eventDatetime, setEventDatetime] = useState('')
   const [location, setLocation] = useState('')
   const [theme, setTheme] = useState('')
@@ -58,8 +56,6 @@ export default function EditPartyPage() {
           setParty(partyData)
 
           // Populate form
-          setChildName(partyData.childName)
-          setChildAge(partyData.childAge.toString())
           setEventDatetime(formatDateForInput(new Date(partyData.eventDatetime)))
           setLocation(partyData.location)
           setTheme(partyData.theme || '')
@@ -94,8 +90,6 @@ export default function EditPartyPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          childName,
-          childAge: parseInt(childAge),
           eventDatetime,
           location,
           theme: theme || undefined,
@@ -168,38 +162,24 @@ export default function EditPartyPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="card space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                Child's Name *
-              </label>
-              <input
-                type="text"
-                id="childName"
-                value={childName}
-                onChange={(e) => setChildName(e.target.value)}
-                className="input"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="childAge" className="block text-sm font-medium text-neutral-700 mb-1">
-                Child's Age *
-              </label>
-              <input
-                type="number"
-                id="childAge"
-                value={childAge}
-                onChange={(e) => setChildAge(e.target.value)}
-                min="1"
-                max="18"
-                className="input"
-                required
-              />
+        {/* Child Information Display */}
+        {party && (
+          <div className="card mb-6">
+            <h3 className="text-lg font-semibold text-neutral-900 mb-3">Party For</h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xl font-medium text-neutral-900">
+                  {party.childName}'s {party.childAge}th Birthday Party
+                </p>
+                <p className="text-sm text-neutral-600 mt-1">
+                  To update child information, visit the <a href="/children" className="text-primary-600 hover:text-primary-700">Children Management</a> page
+                </p>
+              </div>
             </div>
           </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="card space-y-6">
 
           <div>
             <label htmlFor="eventDatetime" className="block text-sm font-medium text-neutral-700 mb-1">
@@ -281,7 +261,7 @@ export default function EditPartyPage() {
           <h3 className="font-medium text-blue-900 mb-2">📧 Notification Policy</h3>
           <p className="text-sm text-blue-800">
             Guests who have RSVP'd "Yes" or "Maybe" will automatically receive email notifications
-            if you change important details like the date, time, or location.
+            if you change the date, time, or location. To update child information, use the Children Management page.
           </p>
         </div>
       </div>

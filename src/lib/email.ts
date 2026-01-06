@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { getEmailProvider } from './email-providers'
 
 interface EmailData {
   to: string
@@ -8,7 +9,7 @@ interface EmailData {
 }
 
 // Create reusable transporter
-const createTransporter = () => {
+export const createTransporter = () => {
   // Check if we have Gmail SMTP configuration
   if (process.env.SMTP_HOST === 'smtp.gmail.com' && process.env.SMTP_USER && process.env.SMTP_PASS) {
     return nodemailer.createTransport({
@@ -42,32 +43,11 @@ const createTransporter = () => {
 }
 
 export async function sendEmail(emailData: EmailData) {
-  const transporter = createTransporter()
-
-  if (!transporter) {
-    // Fallback to console logging for development
-    console.log('\n=== EMAIL NOTIFICATION (No SMTP configured) ===')
-    console.log(`To: ${emailData.to}`)
-    console.log(`Subject: ${emailData.subject}`)
-    console.log('Content:')
-    console.log(emailData.text)
-    console.log('============================================\n')
-    return Promise.resolve()
-  }
-
   try {
-    const mailOptions = {
-      from: process.env.SMTP_FROM || 'noreply@kidparty.app',
-      to: emailData.to,
-      subject: emailData.subject,
-      text: emailData.text,
-      html: emailData.html || emailData.text.replace(/\n/g, '<br>'),
-    }
-
-    console.log(`📧 Sending email to ${emailData.to}: ${emailData.subject}`)
-    const result = await transporter.sendMail(mailOptions)
-    console.log(`✅ Email sent successfully: ${result.messageId}`)
-    return result
+    const provider = await getEmailProvider()
+    await provider.send(emailData.to, emailData.subject, emailData.text)
+    console.log(`✅ Email sent via ${provider.name} to ${emailData.to}`)
+    return Promise.resolve()
   } catch (error) {
     console.error('❌ Failed to send email:', error)
 
@@ -425,6 +405,132 @@ We hope you can make it!
 
 Best regards,
 Kid Party RSVP Team`
+
+  return {
+    subject,
+    text
+  }
+}
+
+export function generatePhotoSharingAvailableEmail(
+  partyData: {
+    childName: string
+    childAge: number
+    eventDatetime: Date
+    location: string
+    theme?: string
+    publicRsvpToken: string
+  },
+  guestData: {
+    parentName: string
+    childName: string
+  }
+) {
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date)
+  }
+
+  const guestPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/party/guest/${partyData.publicRsvpToken}`
+
+  const subject = `📷 Share Your Photos: ${partyData.childName}'s Birthday Party Memories!`
+
+  const text = `Hi ${guestData.parentName},
+
+Hope ${partyData.childName}'s ${partyData.childAge}th birthday party was amazing! 🎉
+
+We know you probably took some wonderful photos during the celebration, and we'd love for everyone to share their memories together.
+
+📸 Photo Sharing is Now Available!
+
+You can now:
+• Upload and share your photos from the party
+• View photos uploaded by other guests
+• Download photos to keep the memories forever
+
+Party Details:
+🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
+📅 ${formatDate(partyData.eventDatetime)}
+📍 ${partyData.location}
+
+Share your photos here:
+${guestPageUrl}
+
+Let's create a beautiful photo album together to remember this special day! 📚✨
+
+Best regards,
+Kid Party RSVP Team`
+
+  return {
+    subject,
+    text
+  }
+}
+
+export function generateBirthdayPartyReminderEmail(
+  childData: {
+    name: string
+    birthDate: Date
+  },
+  parentData: {
+    name: string
+  }
+) {
+  const today = new Date()
+  const thisYearBirthday = new Date(today.getFullYear(), childData.birthDate.getMonth(), childData.birthDate.getDate())
+  
+  // If birthday has passed this year, calculate for next year
+  if (thisYearBirthday < today) {
+    thisYearBirthday.setFullYear(today.getFullYear() + 1)
+  }
+
+  const age = thisYearBirthday.getFullYear() - childData.birthDate.getFullYear()
+
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date)
+  }
+
+  const subject = `🎂 ${childData.name}'s ${age}th Birthday is Coming Up - Time to Plan a Party!`
+
+  const text = `Hi ${parentData.name},
+
+${childData.name}'s special day is approaching! 🎉
+
+📅 ${childData.name} will turn ${age} on ${formatDate(thisYearBirthday)}
+
+That's just a few weeks away - the perfect time to start planning an unforgettable birthday party!
+
+🎊 Why not create a memorable celebration?
+
+With Kid Party RSVP, you can easily:
+• Create beautiful invitation templates
+• Manage guest RSVPs effortlessly  
+• Share photos from the party
+• Keep track of dietary restrictions
+• Send automatic reminders to guests
+
+✨ Ready to start planning?
+
+Visit our website to create ${childData.name}'s birthday party:
+${process.env.NEXT_PUBLIC_BASE_URL}
+
+Make this birthday one to remember! 🌟
+
+Best regards,
+Kid Party RSVP Team
+
+P.S. Early planning means less stress and more fun for everyone! 🎈`
 
   return {
     subject,

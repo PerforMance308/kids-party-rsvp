@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
-import { partySchema } from '@/lib/validations'
+import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { sendPartyUpdateEmail } from '@/lib/email'
 
 export async function GET(
@@ -23,12 +23,18 @@ export async function GET(
         userId: session.user.id
       },
       include: {
+        child: true,
         guests: {
           include: {
             rsvp: true
           },
           orderBy: {
             createdAt: 'desc'
+          }
+        },
+        _count: {
+          select: {
+            guests: true
           }
         }
       }
@@ -38,16 +44,34 @@ export async function GET(
       return NextResponse.json({ error: 'Party not found' }, { status: 404 })
     }
 
-    const rsvps = party.guests.map(g => g.rsvp).filter(Boolean)
+    const rsvpStats = await prisma.rSVP.groupBy({
+      by: ['status'],
+      where: {
+        guest: {
+          partyId: id
+        }
+      },
+      _count: {
+        status: true
+      }
+    })
+
     const stats = {
-      total: party.guests.length,
-      attending: rsvps.filter(r => r?.status === 'YES').length,
-      notAttending: rsvps.filter(r => r?.status === 'NO').length,
-      maybe: rsvps.filter(r => r?.status === 'MAYBE').length,
+      total: party._count.guests,
+      attending: rsvpStats.find(s => s.status === 'YES')?._count.status || 0,
+      notAttending: rsvpStats.find(s => s.status === 'NO')?._count.status || 0,
+      maybe: rsvpStats.find(s => s.status === 'MAYBE')?._count.status || 0,
     }
+
+    // Calculate child age
+    const today = new Date()
+    const birthDate = new Date(party.child.birthDate)
+    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 
     const partyWithStats = {
       ...party,
+      childName: party.child.name,
+      childAge,
       stats,
       rsvpUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${party.publicRsvpToken}`
     }
@@ -81,6 +105,7 @@ export async function PUT(
         userId: session.user.id
       },
       include: {
+        child: true,
         guests: {
           include: {
             rsvp: true
@@ -94,17 +119,21 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const validatedData = partySchema.parse({
-      ...body,
-      eventDatetime: new Date(body.eventDatetime)
-    })
+    
+    // For party updates, we only allow updating basic party details, not child info
+    // Child info should be updated through the child management system
+    const validatedData = {
+      eventDatetime: new Date(body.eventDatetime),
+      location: body.location,
+      theme: body.theme || null,
+      notes: body.notes || null,
+      template: body.template || 'free',
+    }
 
     // Check if any important details changed (date, time, location)
     const importantChanges = {
       date: existingParty.eventDatetime.getTime() !== validatedData.eventDatetime.getTime(),
       location: existingParty.location !== validatedData.location,
-      childName: existingParty.childName !== validatedData.childName,
-      childAge: existingParty.childAge !== validatedData.childAge
     }
 
     const hasImportantChanges = Object.values(importantChanges).some(Boolean)
@@ -113,14 +142,14 @@ export async function PUT(
     const updatedParty = await prisma.party.update({
       where: { id: id },
       data: {
-        childName: validatedData.childName,
-        childAge: validatedData.childAge,
         eventDatetime: validatedData.eventDatetime,
         location: validatedData.location,
-        theme: validatedData.theme || null,
-        notes: validatedData.notes || null,
+        theme: validatedData.theme,
+        notes: validatedData.notes,
+        template: validatedData.template,
       },
       include: {
+        child: true,
         guests: {
           include: {
             rsvp: true
@@ -159,8 +188,15 @@ export async function PUT(
       maybe: rsvps.filter(r => r?.status === 'MAYBE').length,
     }
 
+    // Calculate child age
+    const today = new Date()
+    const birthDate = new Date(updatedParty.child.birthDate)
+    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
     const partyWithStats = {
       ...updatedParty,
+      childName: updatedParty.child.name,
+      childAge,
       stats,
       rsvpUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${updatedParty.publicRsvpToken}`
     }

@@ -22,7 +22,8 @@ export async function POST(
                 userId: session.user.id
             },
             include: {
-                user: true
+                user: true,
+                child: true
             }
         })
 
@@ -37,11 +38,16 @@ export async function POST(
             return NextResponse.json({ error: 'No emails provided' }, { status: 400 })
         }
 
+        // Calculate child age
+        const today = new Date()
+        const birthDate = new Date(party.child.birthDate)
+        const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        
         // Generate email content
         const emailContent = generateInvitationEmail(
             {
-                childName: party.childName,
-                childAge: party.childAge,
+                childName: party.child.name,
+                childAge: childAge,
                 eventDatetime: party.eventDatetime,
                 location: party.location,
                 theme: party.theme || undefined,

@@ -1,0 +1,240 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { formatDate } from '@/lib/utils'
+import Link from 'next/link'
+
+interface Invitation {
+  id: string
+  partyId: string
+  parentName: string
+  childName: string
+  email: string
+  phone?: string
+  createdAt: string
+  party: {
+    id: string
+    childName: string
+    childAge: number
+    eventDatetime: string
+    location: string
+    theme?: string
+    notes?: string
+    publicRsvpToken: string
+    user: {
+      name?: string
+      email: string
+    }
+  }
+  rsvp?: {
+    status: 'YES' | 'NO' | 'MAYBE'
+    numChildren: number
+    parentStaying: boolean
+    allergies?: string
+    message?: string
+    updatedAt: string
+  }
+}
+
+export default function InvitationsPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [invitations, setInvitations] = useState<Invitation[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login?redirect=/invitations')
+      return
+    }
+    
+    if (status === 'authenticated') {
+      loadInvitations()
+    }
+  }, [status, router])
+
+  const loadInvitations = async () => {
+    try {
+      const response = await fetch('/api/invitations')
+      if (response.ok) {
+        const data = await response.json()
+        setInvitations(data)
+      } else {
+        setError('Failed to load invitations')
+      }
+    } catch (error) {
+      setError('An error occurred while loading invitations')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return null
+  }
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'YES': return 'bg-green-100 text-green-800 border-green-200'
+      case 'NO': return 'bg-red-100 text-red-800 border-red-200'
+      case 'MAYBE': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  const getStatusText = (status?: string) => {
+    switch (status) {
+      case 'YES': return 'Attending'
+      case 'NO': return 'Not Attending'
+      case 'MAYBE': return 'Maybe'
+      default: return 'No Response'
+    }
+  }
+
+  const upcomingInvitations = invitations.filter(inv => 
+    new Date(inv.party.eventDatetime) > new Date()
+  ).sort((a, b) => 
+    new Date(a.party.eventDatetime).getTime() - new Date(b.party.eventDatetime).getTime()
+  )
+
+  const pastInvitations = invitations.filter(inv => 
+    new Date(inv.party.eventDatetime) <= new Date()
+  ).sort((a, b) => 
+    new Date(b.party.eventDatetime).getTime() - new Date(a.party.eventDatetime).getTime()
+  )
+
+  return (
+    <main className="flex-1 container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-neutral-900">My Invitations</h1>
+          <p className="text-neutral-600 mt-2">
+            Manage invitations you've received to children's parties
+          </p>
+        </div>
+
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-6">
+            {error}
+          </div>
+        )}
+
+        {/* Upcoming Invitations */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+            Upcoming Parties ({upcomingInvitations.length})
+          </h2>
+          
+          {upcomingInvitations.length === 0 ? (
+            <div className="card text-center py-12">
+              <div className="text-neutral-400 text-6xl mb-4">🎉</div>
+              <h3 className="text-lg font-medium text-neutral-900 mb-2">
+                No Upcoming Invitations
+              </h3>
+              <p className="text-neutral-600">
+                When friends invite you to their parties, they'll appear here
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {upcomingInvitations.map((invitation) => (
+                <div key={invitation.id} className="card">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-neutral-900">
+                          {invitation.party.childName}'s {invitation.party.childAge}th Birthday Party
+                        </h3>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(invitation.rsvp?.status)}`}>
+                          {getStatusText(invitation.rsvp?.status)}
+                        </span>
+                      </div>
+                      
+                      {invitation.party.theme && (
+                        <p className="text-primary-600 mb-2">{invitation.party.theme} Theme</p>
+                      )}
+                      
+                      <div className="space-y-1 text-sm text-neutral-600 mb-3">
+                        <p><strong>Host:</strong> {invitation.party.user.name || invitation.party.user.email}</p>
+                        <p><strong>When:</strong> {formatDate(new Date(invitation.party.eventDatetime))}</p>
+                        <p><strong>Where:</strong> {invitation.party.location}</p>
+                      </div>
+                      
+                      {invitation.party.notes && (
+                        <div className="p-3 bg-neutral-50 rounded text-sm text-neutral-700 mb-3">
+                          <strong>Special Notes:</strong> {invitation.party.notes}
+                        </div>
+                      )}
+                      
+                      {invitation.rsvp && (
+                        <div className="text-xs text-neutral-500">
+                          Last updated: {new Date(invitation.rsvp.updatedAt).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Link
+                        href={`/rsvp/${invitation.party.publicRsvpToken}`}
+                        className="btn btn-primary"
+                      >
+                        {invitation.rsvp ? 'Update RSVP' : 'RSVP Now'}
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Past Invitations */}
+        {pastInvitations.length > 0 && (
+          <div>
+            <h2 className="text-xl font-semibold text-neutral-900 mb-4">
+              Past Parties ({pastInvitations.length})
+            </h2>
+            
+            <div className="space-y-3">
+              {pastInvitations.map((invitation) => (
+                <div key={invitation.id} className="card opacity-75">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-base font-medium text-neutral-700">
+                          {invitation.party.childName}'s {invitation.party.childAge}th Birthday Party
+                        </h3>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(invitation.rsvp?.status)}`}>
+                          {getStatusText(invitation.rsvp?.status)}
+                        </span>
+                      </div>
+                      
+                      <div className="text-sm text-neutral-500">
+                        <span>Host: {invitation.party.user.name || invitation.party.user.email}</span>
+                        <span className="mx-2">•</span>
+                        <span>{formatDate(new Date(invitation.party.eventDatetime))}</span>
+                        <span className="mx-2">•</span>
+                        <span>{invitation.party.location}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}

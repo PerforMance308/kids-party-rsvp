@@ -45,11 +45,30 @@ A simple, beautiful web application for managing children's party invitations an
    cp .env.example .env
    ```
    
-   Edit `.env` with your configuration:
+   Edit `.env` with your configuration. **IMPORTANT**: Never commit the `.env` file to version control as it contains sensitive information.
+   
+   Required variables:
    ```
-   DATABASE_URL="file:./dev.db"
-   JWT_SECRET="your-secure-jwt-secret"
+   DATABASE_URL="file:./prisma/dev.db"
+   JWT_SECRET="generate-a-secure-random-string"
+   NEXTAUTH_SECRET="generate-another-secure-random-string"
    NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
+   
+   For Google OAuth (optional):
+   ```
+   GOOGLE_CLIENT_ID="your-google-client-id"
+   GOOGLE_CLIENT_SECRET="your-google-client-secret"
+   ```
+   
+   For email functionality (optional):
+   ```
+   SMTP_HOST="smtp.gmail.com"
+   SMTP_PORT="587"
+   SMTP_USER="your-email@gmail.com"
+   SMTP_PASS="your-gmail-app-password"
+   SMTP_FROM="Kid Party RSVP <your-email@gmail.com>"
    ```
 
 4. Set up the database:

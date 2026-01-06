@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@heroicons/react": "^2.2.0",
+    "@juspay-tech/hyper-js": "^2.0.4",
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
@@ -27,7 +29,8 @@
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.4.0",
     "uuid": "^11.0.3",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

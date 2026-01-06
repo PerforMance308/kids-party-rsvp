@@ -50,6 +50,7 @@ export async function processReminders() {
       }
     },
     include: {
+      child: true,
       guests: true,
       reminders: true,
     }
@@ -83,10 +84,15 @@ export async function processReminders() {
     
     for (const guest of party.guests) {
       try {
+        // Calculate child age
+        const today = new Date()
+        const birthDate = new Date(party.child.birthDate)
+        const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        
         const emailContent = generateReminderEmail(
           {
-            childName: party.childName,
-            childAge: party.childAge,
+            childName: party.child.name,
+            childAge: childAge,
             eventDatetime: party.eventDatetime,
             location: party.location,
             theme: party.theme || undefined,
@@ -126,6 +132,6 @@ export async function processReminders() {
       })
     }
 
-    console.log(`Sent ${reminderType} reminders for ${party.childName}'s party`)
+    console.log(`Sent ${reminderType} reminders for ${party.child.name}'s party`)
   }
 }

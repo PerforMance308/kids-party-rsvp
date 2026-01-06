@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import ContactReuse from '@/components/ContactReuse'
 
 interface Contact {
@@ -12,9 +13,23 @@ interface Contact {
   phone?: string
 }
 
+interface Child {
+  id: string
+  name: string
+  birthDate: string
+  age: number
+  notes?: string
+}
+
 export default function NewPartyPage() {
-  const [childName, setChildName] = useState('')
-  const [childAge, setChildAge] = useState('')
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const preSelectedChildId = searchParams.get('childId')
+  
+  const [children, setChildren] = useState<Child[]>([])
+  const [selectedChildId, setSelectedChildId] = useState(preSelectedChildId || '')
+  const [showLegacyForm, setShowLegacyForm] = useState(false)
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [location, setLocation] = useState('')
@@ -22,8 +37,44 @@ export default function NewPartyPage() {
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingChildren, setIsLoadingChildren] = useState(true)
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
-  const router = useRouter()
+  
+  // Legacy form fields
+  const [childName, setChildName] = useState('')
+  const [childAge, setChildAge] = useState('')
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login?redirect=/party/new')
+      return
+    }
+    
+    if (status === 'authenticated') {
+      loadChildren()
+    }
+  }, [status, router])
+
+  const loadChildren = async () => {
+    try {
+      const response = await fetch('/api/children')
+      if (response.ok) {
+        const data = await response.json()
+        setChildren(data)
+        
+        // If no children exist, show legacy form
+        if (data.length === 0) {
+          setShowLegacyForm(true)
+        }
+      } else {
+        setError('Failed to load children')
+      }
+    } catch (error) {
+      setError('An error occurred while loading children')
+    } finally {
+      setIsLoadingChildren(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,19 +84,40 @@ export default function NewPartyPage() {
     try {
       const eventDatetime = new Date(`${eventDate}T${eventTime}`)
       
-      const response = await fetch('/api/parties', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      let requestBody
+      if (showLegacyForm) {
+        // Legacy form submission
+        requestBody = {
           childName,
           childAge: parseInt(childAge),
           eventDatetime: eventDatetime.toISOString(),
           location,
           theme: theme || undefined,
           notes: notes || undefined,
-        }),
+        }
+      } else {
+        // New form submission with child selection
+        if (!selectedChildId) {
+          setError('Please select a child')
+          setIsLoading(false)
+          return
+        }
+        
+        requestBody = {
+          childId: selectedChildId,
+          eventDatetime: eventDatetime.toISOString(),
+          location,
+          theme: theme || undefined,
+          notes: notes || undefined,
+        }
+      }
+      
+      const response = await fetch('/api/parties', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       })
 
       if (response.ok) {
@@ -88,6 +160,18 @@ export default function NewPartyPage() {
     }
   }
 
+  if (status === 'loading' || isLoadingChildren) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">Loading...</div>
+      </div>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return null
+  }
+
   return (
     <main className="flex-1 container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
@@ -104,38 +188,90 @@ export default function NewPartyPage() {
           <ContactReuse onContactsSelected={setSelectedContacts} />
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {!showLegacyForm && children.length > 0 ? (
               <div>
-                <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                  Child's Name *
+                <label htmlFor="childSelect" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Select Child *
                 </label>
-                <input
-                  type="text"
-                  id="childName"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
+                <select
+                  id="childSelect"
+                  value={selectedChildId}
+                  onChange={(e) => setSelectedChildId(e.target.value)}
                   className="input"
                   required
                   autoFocus
-                />
+                >
+                  <option value="">Choose a child...</option>
+                  {children.map((child) => (
+                    <option key={child.id} value={child.id}>
+                      {child.name} ({child.age} years old)
+                    </option>
+                  ))}
+                </select>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => router.push('/children')}
+                    className="text-sm text-primary-600 hover:text-primary-700"
+                  >
+                    + Add New Child
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowLegacyForm(true)}
+                    className="text-sm text-neutral-600 hover:text-neutral-700"
+                  >
+                    Enter child details manually
+                  </button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
+                      Child's Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="childName"
+                      value={childName}
+                      onChange={(e) => setChildName(e.target.value)}
+                      className="input"
+                      required
+                      autoFocus
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="childAge" className="block text-sm font-medium text-neutral-700 mb-1">
-                  Age *
-                </label>
-                <input
-                  type="number"
-                  id="childAge"
-                  value={childAge}
-                  onChange={(e) => setChildAge(e.target.value)}
-                  className="input"
-                  min="1"
-                  max="18"
-                  required
-                />
-              </div>
-            </div>
+                  <div>
+                    <label htmlFor="childAge" className="block text-sm font-medium text-neutral-700 mb-1">
+                      Age *
+                    </label>
+                    <input
+                      type="number"
+                      id="childAge"
+                      value={childAge}
+                      onChange={(e) => setChildAge(e.target.value)}
+                      className="input"
+                      min="1"
+                      max="18"
+                      required
+                    />
+                  </div>
+                </div>
+                {children.length > 0 && (
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowLegacyForm(false)}
+                      className="text-sm text-primary-600 hover:text-primary-700"
+                    >
+                      ← Select from existing children instead
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

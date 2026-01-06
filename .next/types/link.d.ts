@@ -33,25 +33,49 @@ declare namespace __next_route_internal_types__ {
 
   type StaticRoutes = 
     | `/`
+    | `/admin/notifications`
+    | `/api/admin/notifications`
+    | `/api/admin/test-email`
+    | `/api/admin/trigger-notifications`
     | `/api/auth/login`
     | `/api/auth/logout`
     | `/api/auth/register`
+    | `/api/children`
     | `/api/contacts`
     | `/api/guests`
+    | `/api/invitations`
+    | `/api/notifications/process`
     | `/api/parties`
+    | `/api/payment/create-intent`
+    | `/api/photos`
     | `/api/reminders/process`
+    | `/api/webhooks/hyperswitch`
+    | `/children`
     | `/dashboard`
+    | `/invitations`
     | `/login`
     | `/party/new`
+    | `/payment/success`
     | `/register`
   type DynamicRoutes<T extends string = string> = 
     | `/api/auth/${CatchAllSlug<T>}`
+    | `/api/children/${SafeSlug<T>}`
     | `/api/parties/${SafeSlug<T>}`
+    | `/api/parties/${SafeSlug<T>}/enable-photo-sharing`
     | `/api/parties/${SafeSlug<T>}/invite`
+    | `/api/parties/${SafeSlug<T>}/photo-sharing`
+    | `/api/parties/${SafeSlug<T>}/photos`
+    | `/api/parties/${SafeSlug<T>}/photos/download`
     | `/api/parties/${SafeSlug<T>}/qr`
+    | `/api/parties/${SafeSlug<T>}/upgrade-template`
+    | `/api/party/guest/${SafeSlug<T>}`
+    | `/api/photos/${SafeSlug<T>}`
+    | `/api/photos/delete/${SafeSlug<T>}`
     | `/api/rsvp/${SafeSlug<T>}`
     | `/party/${SafeSlug<T>}/dashboard`
     | `/party/${SafeSlug<T>}/edit`
+    | `/party/guest/${SafeSlug<T>}`
+    | `/payment/photo-sharing/${SafeSlug<T>}`
     | `/rsvp/${SafeSlug<T>}`
 
   type RouteImpl<T> = 

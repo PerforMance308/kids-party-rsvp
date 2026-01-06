@@ -25,6 +25,17 @@ export default function RSVPPage() {
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [showRegistration, setShowRegistration] = useState(false)
+  const [userChildren, setUserChildren] = useState<any[]>([])
+  const [selectedChildId, setSelectedChildId] = useState('')
+  const [showManualForm, setShowManualForm] = useState(false)
+  const [showAddChild, setShowAddChild] = useState(false)
+
+  // Quick add child form state
+  const [newChildName, setNewChildName] = useState('')
+  const [newChildBirthDate, setNewChildBirthDate] = useState('')
+  const [newChildAllergies, setNewChildAllergies] = useState('')
+  const [newChildNotes, setNewChildNotes] = useState('')
+  const [isAddingChild, setIsAddingChild] = useState(false)
 
   // Registration form state
   const [regEmail, setRegEmail] = useState('')
@@ -66,6 +77,84 @@ export default function RSVPPage() {
 
   // Get authentication status from NextAuth session
   const isAuthenticated = sessionStatus === 'authenticated' && session?.user?.id
+
+  useEffect(() => {
+    const loadUserChildren = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await fetch('/api/children')
+          if (response.ok) {
+            const data = await response.json()
+            setUserChildren(data)
+            
+            // If no children, show manual form
+            if (data.length === 0) {
+              setShowManualForm(true)
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load user children:', error)
+        }
+      }
+    }
+
+    loadUserChildren()
+  }, [isAuthenticated])
+
+  // Auto-fill parent name when session is available
+  useEffect(() => {
+    if (isAuthenticated && session?.user?.name && !parentName) {
+      setParentName(session.user.name)
+    }
+  }, [isAuthenticated, session?.user?.name, parentName])
+
+  const handleAddChild = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsAddingChild(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/children', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newChildName,
+          birthDate: newChildBirthDate,
+          allergies: newChildAllergies || undefined,
+          notes: newChildNotes || undefined,
+        }),
+      })
+
+      if (response.ok) {
+        const newChild = await response.json()
+        
+        // Update children list
+        const updatedChildren = [newChild, ...userChildren]
+        setUserChildren(updatedChildren)
+        
+        // Auto-select the new child
+        setSelectedChildId(newChild.id)
+        
+        // Reset form and hide add child form
+        setNewChildName('')
+        setNewChildBirthDate('')
+        setNewChildAllergies('')
+        setNewChildNotes('')
+        setShowAddChild(false)
+        setShowManualForm(false)
+        
+      } else {
+        const data = await response.json()
+        setError(data.error || 'Failed to add child')
+      }
+    } catch (error) {
+      setError('An error occurred while adding child')
+    } finally {
+      setIsAddingChild(false)
+    }
+  }
 
   const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -113,19 +202,47 @@ export default function RSVPPage() {
     }
   }
 
+  // Auto-fill allergies when child is selected
+  useEffect(() => {
+    if (selectedChildId && userChildren.length > 0) {
+      const selectedChild = userChildren.find(child => child.id === selectedChildId)
+      if (selectedChild?.allergies && !allergies) {
+        setAllergies(selectedChild.allergies)
+      }
+    }
+  }, [selectedChildId, userChildren, allergies])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setError('')
 
     try {
-      const response = await fetch(`/api/rsvp/${token}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
+      let requestBody
+      
+      if (selectedChildId && !showManualForm) {
+        // Using child selection
+        const selectedChild = userChildren.find(child => child.id === selectedChildId)
+        if (!selectedChild) {
+          setError('Please select a child')
+          setIsSubmitting(false)
+          return
+        }
+        
+        requestBody = {
+          parentName: parentName || session?.user?.name,
+          childName: selectedChild.name,
+          childId: selectedChildId,
+          phone: phone || undefined,
+          status: rsvpStatus,
+          numChildren,
+          parentStaying,
+          allergies: allergies || selectedChild.allergies || undefined,
+          message: message || undefined,
+        }
+      } else {
+        // Manual form
+        requestBody = {
           parentName,
           childName,
           phone: phone || undefined,
@@ -134,7 +251,16 @@ export default function RSVPPage() {
           parentStaying,
           allergies: allergies || undefined,
           message: message || undefined,
-        }),
+        }
+      }
+
+      const response = await fetch(`/api/rsvp/${token}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(requestBody),
       })
 
       if (response.ok) {
@@ -188,7 +314,7 @@ export default function RSVPPage() {
               </p>
             </div>
 
-            <div className="bg-neutral-50 rounded-lg p-4">
+            <div className="bg-neutral-50 rounded-lg p-4 mb-4">
               <h3 className="font-semibold text-neutral-900 mb-2">
                 {party.childName}'s {party.childAge}th Birthday Party
               </h3>
@@ -199,6 +325,13 @@ export default function RSVPPage() {
                 {party.location}
               </p>
             </div>
+
+            <a
+              href={`/party/guest/${token}`}
+              className="w-full btn btn-primary"
+            >
+              Go to Party Page
+            </a>
           </div>
         </div>
       </div>
@@ -353,24 +486,32 @@ export default function RSVPPage() {
           </div>
         )}
 
-        {/* RSVP Form - Only show if authenticated */}
-        {isAuthenticated && (
-          <div className="card">
-            <h3 className="text-xl font-semibold text-neutral-900 mb-4">
-              Please RSVP
-            </h3>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Quick Add Child Form */}
+        {isAuthenticated && showAddChild && (
+          <div className="card mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-neutral-900">
+                Add New Child
+              </h3>
+              <button
+                onClick={() => setShowAddChild(false)}
+                className="text-neutral-600 hover:text-neutral-800"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddChild} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Parent/Guardian Name *
+                  <label htmlFor="newChildName" className="block text-sm font-medium text-neutral-700 mb-1">
+                    Child's Name *
                   </label>
                   <input
                     type="text"
-                    id="parentName"
-                    value={parentName}
-                    onChange={(e) => setParentName(e.target.value)}
+                    id="newChildName"
+                    value={newChildName}
+                    onChange={(e) => setNewChildName(e.target.value)}
                     className="input"
                     required
                     autoFocus
@@ -378,19 +519,174 @@ export default function RSVPPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    Child's Name *
+                  <label htmlFor="newChildBirthDate" className="block text-sm font-medium text-neutral-700 mb-1">
+                    Birth Date *
                   </label>
                   <input
-                    type="text"
-                    id="childName"
-                    value={childName}
-                    onChange={(e) => setChildName(e.target.value)}
+                    type="date"
+                    id="newChildBirthDate"
+                    value={newChildBirthDate}
+                    onChange={(e) => setNewChildBirthDate(e.target.value)}
                     className="input"
                     required
                   />
                 </div>
               </div>
+
+              <div>
+                <label htmlFor="newChildAllergies" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Allergies & Dietary Restrictions
+                </label>
+                <input
+                  type="text"
+                  id="newChildAllergies"
+                  value={newChildAllergies}
+                  onChange={(e) => setNewChildAllergies(e.target.value)}
+                  className="input"
+                  placeholder="e.g., nuts, dairy, gluten-free, vegetarian"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="newChildNotes" className="block text-sm font-medium text-neutral-700 mb-1">
+                  Notes (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="newChildNotes"
+                  value={newChildNotes}
+                  onChange={(e) => setNewChildNotes(e.target.value)}
+                  className="input"
+                  placeholder="Any special notes about interests, preferences, etc."
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddChild(false)}
+                  className="btn btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAddingChild}
+                  className="btn btn-primary flex-1 disabled:opacity-50"
+                >
+                  {isAddingChild ? 'Adding...' : 'Add Child & Continue'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* RSVP Form - Only show if authenticated */}
+        {isAuthenticated && !showAddChild && (
+          <div className="card">
+            <h3 className="text-xl font-semibold text-neutral-900 mb-4">
+              Please RSVP
+            </h3>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!showManualForm && userChildren.length > 0 ? (
+                <>
+                  <div>
+                    <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
+                      Parent/Guardian Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="parentName"
+                      value={parentName}
+                      onChange={(e) => setParentName(e.target.value)}
+                      className="input"
+                      required
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="childSelect" className="block text-sm font-medium text-neutral-700 mb-1">
+                      Select Child *
+                    </label>
+                    <select
+                      id="childSelect"
+                      value={selectedChildId}
+                      onChange={(e) => setSelectedChildId(e.target.value)}
+                      className="input"
+                      required
+                    >
+                      <option value="">Choose a child...</option>
+                      {userChildren.map((child) => (
+                        <option key={child.id} value={child.id}>
+                          {child.name} ({child.age} years old)
+                        </option>
+                      ))}
+                    </select>
+                    <div className="mt-2 flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddChild(true)}
+                        className="text-sm text-primary-600 hover:text-primary-700"
+                      >
+                        + Add New Child
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowManualForm(true)}
+                        className="text-sm text-neutral-600 hover:text-neutral-700"
+                      >
+                        Enter manually
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
+                        Parent/Guardian Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="parentName"
+                        value={parentName}
+                        onChange={(e) => setParentName(e.target.value)}
+                        className="input"
+                        required
+                        autoFocus
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
+                        Child's Name *
+                      </label>
+                      <input
+                        type="text"
+                        id="childName"
+                        value={childName}
+                        onChange={(e) => setChildName(e.target.value)}
+                        className="input"
+                        required
+                      />
+                    </div>
+                  </div>
+                  {userChildren.length > 0 && (
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowManualForm(false)}
+                        className="text-sm text-primary-600 hover:text-primary-700"
+                      >
+                        ← Select from my children instead
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
 
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-neutral-700 mb-1">
@@ -495,6 +791,11 @@ export default function RSVPPage() {
                       className="input"
                       placeholder="Please list any allergies or dietary needs"
                     />
+                    {selectedChildId && !showManualForm && (
+                      <div className="text-xs text-green-600 mt-1">
+                        ✓ Auto-filled from {userChildren.find(c => c.id === selectedChildId)?.name}'s profile
+                      </div>
+                    )}
                   </div>
                 </>
               )}

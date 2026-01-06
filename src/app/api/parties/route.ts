@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
-import { partySchema } from '@/lib/validations'
+import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { createReminderSchedule } from '@/lib/scheduler'
 
 export async function POST(request: NextRequest) {
@@ -13,22 +13,72 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = partySchema.parse({
-      ...body,
-      eventDatetime: new Date(body.eventDatetime)
-    })
+    
+    let party
+    
+    // Try new schema first (with childId)
+    if (body.childId) {
+      const validatedData = partySchema.parse({
+        ...body,
+        eventDatetime: new Date(body.eventDatetime)
+      })
 
-    const party = await prisma.party.create({
-      data: {
-        userId: session.user.id,
-        childName: validatedData.childName,
-        childAge: validatedData.childAge,
-        eventDatetime: validatedData.eventDatetime,
-        location: validatedData.location,
-        theme: validatedData.theme || null,
-        notes: validatedData.notes || null,
+      // Verify the child belongs to the current user
+      const child = await prisma.child.findFirst({
+        where: {
+          id: validatedData.childId,
+          userId: session.user.id
+        }
+      })
+
+      if (!child) {
+        return NextResponse.json({ error: 'Child not found' }, { status: 404 })
       }
-    })
+
+      party = await prisma.party.create({
+        data: {
+          userId: session.user.id,
+          childId: validatedData.childId,
+          eventDatetime: validatedData.eventDatetime,
+          location: validatedData.location,
+          theme: validatedData.theme || null,
+          notes: validatedData.notes || null,
+        },
+        include: {
+          child: true
+        }
+      })
+    } else {
+      // Fallback to legacy schema (for backward compatibility)
+      const validatedData = legacyPartySchema.parse({
+        ...body,
+        eventDatetime: new Date(body.eventDatetime)
+      })
+
+      // First, create a child entry for this party
+      const child = await prisma.child.create({
+        data: {
+          userId: session.user.id,
+          name: validatedData.childName,
+          birthDate: new Date(new Date().getFullYear() - validatedData.childAge, 0, 1), // Approximate birth date
+          notes: `Auto-created from party: ${validatedData.location}`
+        }
+      })
+
+      party = await prisma.party.create({
+        data: {
+          userId: session.user.id,
+          childId: child.id,
+          eventDatetime: validatedData.eventDatetime,
+          location: validatedData.location,
+          theme: validatedData.theme || null,
+          notes: validatedData.notes || null,
+        },
+        include: {
+          child: true
+        }
+      })
+    }
 
     // Create reminder schedule
     try {
@@ -65,36 +115,55 @@ export async function GET(request: NextRequest) {
     const parties = await prisma.party.findMany({
       where: { userId: session.user.id },
       include: {
-        guests: {
-          include: {
-            rsvp: true
+        child: true,
+        _count: {
+          select: {
+            guests: true
           }
         }
       },
       orderBy: { eventDatetime: 'asc' }
     })
 
-    const partiesWithStats = parties.map(party => {
-      const rsvps = party.guests.map(g => g.rsvp).filter(Boolean)
+    const partiesWithStats = await Promise.all(parties.map(async (party) => {
+      const rsvpStats = await prisma.rSVP.groupBy({
+        by: ['status'],
+        where: {
+          guest: {
+            partyId: party.id
+          }
+        },
+        _count: {
+          status: true
+        }
+      })
+      
       const stats = {
-        total: party.guests.length,
-        attending: rsvps.filter(r => r?.status === 'YES').length,
-        notAttending: rsvps.filter(r => r?.status === 'NO').length,
-        maybe: rsvps.filter(r => r?.status === 'MAYBE').length,
+        total: party._count.guests,
+        attending: rsvpStats.find(s => s.status === 'YES')?._count.status || 0,
+        notAttending: rsvpStats.find(s => s.status === 'NO')?._count.status || 0,
+        maybe: rsvpStats.find(s => s.status === 'MAYBE')?._count.status || 0,
       }
+      
+      // Calculate child age
+      const today = new Date()
+      const birthDate = new Date(party.child.birthDate)
+      const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
       
       return {
         id: party.id,
-        childName: party.childName,
-        childAge: party.childAge,
+        childName: party.child.name,
+        childAge,
         eventDatetime: party.eventDatetime,
         location: party.location,
         theme: party.theme,
         notes: party.notes,
+        template: party.template,
+        templatePaid: party.templatePaid,
         publicRsvpToken: party.publicRsvpToken,
         stats
       }
-    })
+    }))
 
     return NextResponse.json(partiesWithStats)
   } catch (error) {

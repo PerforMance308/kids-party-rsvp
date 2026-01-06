@@ -11,6 +11,18 @@ export const loginSchema = z.object({
 })
 
 export const partySchema = z.object({
+  childId: z.string().min(1, 'Child selection is required'),
+  eventDatetime: z.date().refine(
+    date => date > new Date(),
+    'Event must be in the future'
+  ),
+  location: z.string().min(1, 'Location is required'),
+  theme: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+// Legacy schema for backward compatibility
+export const legacyPartySchema = z.object({
   childName: z.string().min(1, 'Child name is required'),
   childAge: z.number().min(1, 'Age must be at least 1').max(18, 'Age must be under 18'),
   eventDatetime: z.date().refine(

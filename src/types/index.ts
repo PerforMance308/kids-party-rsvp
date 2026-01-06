@@ -35,11 +35,29 @@ export interface PartyWithStats {
   location: string
   theme?: string
   notes?: string
+  template?: string
+  templatePaid?: boolean
+  photoSharingPaid?: boolean
+  allowPhotoSharing?: boolean
+  guestCanSeeOthers?: boolean
   publicRsvpToken: string
+  user?: {
+    hasPremium: boolean
+    premiumExpiry?: Date
+  }
   stats: {
     total: number
     attending: number
     notAttending: number
     maybe: number
   }
+}
+
+export interface Photo {
+  id: string
+  filename: string
+  originalName: string
+  caption?: string
+  uploaderName: string
+  uploadedAt: string
 }

@@ -26,7 +26,11 @@ model User {
   accounts      Account[]
   sessions      Session[]
   contacts      Contact[]
+  children      Child[]   // User's children
+  photos        Photo[]   // Photos uploaded by user
+  emailNotifications EmailNotification[]
   
+  @@index([email])
   @@map("users")
 }
 
@@ -70,22 +74,50 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+model Child {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  birthDate DateTime @map("birth_date")
+  allergies String?  // Food allergies and dietary restrictions
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parties   Party[]  // Parties for this child
+  guests    Guest[]  // Guest entries when this child is invited to other parties
+  
+  @@map("children")
+}
+
 model Party {
   id               String    @id @default(uuid())
   userId           String    @map("user_id")
-  childName        String    @map("child_name")
-  childAge         Int       @map("child_age")
+  childId          String    @map("child_id")
   eventDatetime    DateTime  @map("event_datetime")
   location         String
   theme            String?
   notes            String?
+  template         String    @default("free") // Invitation template: free, premium1, premium2, etc.
+  templatePaid     Boolean   @default(false) @map("template_paid") // Whether premium template was purchased for this party
   publicRsvpToken  String    @unique @map("public_rsvp_token") @default(uuid())
+  photoSharingPaid Boolean   @default(false) @map("photo_sharing_paid") // Whether photo sharing was purchased for this party
+  allowPhotoSharing Boolean  @default(false) @map("allow_photo_sharing") // Enable photo sharing for this party
+  guestCanSeeOthers Boolean  @default(false) @map("guest_can_see_others") // Guests can see other guests' info
+  photoSharingPaymentId String? @map("photo_sharing_payment_id") // Hyperswitch payment ID for photo sharing
+  photoSharingEnabledAt DateTime? @map("photo_sharing_enabled_at") // When photo sharing was enabled
   createdAt        DateTime  @default(now()) @map("created_at")
   
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  child            Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
   guests           Guest[]
   reminders        Reminder[]
+  photos           Photo[]
   
+  @@index([userId])
+  @@index([eventDatetime])
+  @@index([publicRsvpToken])
   @@map("parties")
 }
 
@@ -93,6 +125,7 @@ model Guest {
   id           String   @id @default(uuid())
   partyId      String   @map("party_id")
   userId       String?  @map("user_id") // Optional for backward compatibility
+  childId      String?  @map("child_id") // Child being invited (for user's own children)
   parentName   String   @map("parent_name")
   childName    String   @map("child_name")
   email        String
@@ -101,8 +134,12 @@ model Guest {
   
   party        Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
   user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  child        Child?   @relation(fields: [childId], references: [id], onDelete: SetNull)
   rsvp         RSVP?
   
+  @@index([partyId])
+  @@index([email])
+  @@unique([partyId, email])
   @@map("guests")
 }
 
@@ -124,7 +161,7 @@ model RSVP {
 model Reminder {
   id      String        @id @default(uuid())
   partyId String        @map("party_id")
-  type    String        // "SEVEN_DAYS" | "TWO_DAYS" | "SAME_DAY"
+  type    String        // "SEVEN_DAYS" | "TWO_DAYS" | "SAME_DAY" | "PHOTO_SHARING_AVAILABLE" | "BIRTHDAY_REMINDER"
   sentAt  DateTime?     @map("sent_at")
   
   party   Party         @relation(fields: [partyId], references: [id], onDelete: Cascade)
@@ -147,4 +184,42 @@ model Contact {
 
   @@unique([userId, email])
   @@map("contacts")
+}
+
+model Photo {
+  id           String   @id @default(uuid())
+  partyId      String   @map("party_id")
+  uploaderId   String?  @map("uploader_id") // Can be host or guest
+  uploaderName String   @map("uploader_name") // Store uploader name for display
+  filename     String   // Stored filename on server
+  originalName String   @map("original_name") // Original filename uploaded by user
+  caption      String?
+  fileSize     Int      @map("file_size") // File size in bytes
+  mimeType     String   @map("mime_type") // Image MIME type
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+  
+  party        Party    @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  uploader     User?    @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+  
+  @@map("photos")
+}
+
+model EmailNotification {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id") // Recipient
+  email       String    // Recipient email
+  type        String    // "PHOTO_SHARING_AVAILABLE" | "BIRTHDAY_PARTY_REMINDER" 
+  subject     String    // Email subject
+  content     String    // Email content
+  relatedId   String?   @map("related_id") // PartyId for photo sharing, ChildId for birthday
+  sentAt      DateTime? @map("sent_at")
+  scheduledAt DateTime? @map("scheduled_at") // When to send
+  attempts    Int       @default(0)
+  status      String    @default("pending") // "pending" | "sent" | "failed"
+  error       String?   // Error message if failed
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("email_notifications")
 }

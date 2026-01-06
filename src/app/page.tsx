@@ -4,21 +4,47 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { LoadingSpinner } from '@/components/LoadingStates'
 
 export default function HomePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+  const [sessionError, setSessionError] = useState<string | null>(null)
 
   useEffect(() => {
+    console.log('HomePage session check:', { status, session: !!session, userId: session?.user?.id })
+    
     if (status === 'loading') {
       setIsAuthenticated(null)
+      setSessionError(null)
     } else if (status === 'authenticated' && session?.user?.id) {
+      console.log('User authenticated:', session.user.email)
       setIsAuthenticated(true)
+      setSessionError(null)
+    } else if (status === 'unauthenticated') {
+      console.log('User not authenticated')
+      setIsAuthenticated(false)
+      setSessionError(null)
     } else {
+      console.error('Session status unclear:', { status, session })
+      setSessionError('Session check failed')
       setIsAuthenticated(false)
     }
   }, [status, session])
+
+  // Add timeout for loading state to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (status === 'loading') {
+        console.warn('Session loading timeout, falling back to unauthenticated state')
+        setSessionError('Connection timeout')
+        setIsAuthenticated(false)
+      }
+    }, 10000) // 10 second timeout
+
+    return () => clearTimeout(timeout)
+  }, [status])
 
   return (
     <main className="flex-1">
@@ -35,8 +61,12 @@ export default function HomePage() {
             </p>
 
             {isAuthenticated === null ? (
-              <div className="flex justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <div className="flex flex-col items-center">
+                <LoadingSpinner size="lg" className="mb-4" />
+                <p className="text-neutral-600">Loading...</p>
+                {sessionError && (
+                  <p className="text-red-600 text-sm mt-2">{sessionError}</p>
+                )}
               </div>
             ) : isAuthenticated ? (
               <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-sm mx-auto sm:max-w-none">
