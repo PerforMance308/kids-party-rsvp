@@ -1,6 +1,7 @@
 'use client'
 
 import { ExclamationTriangleIcon, InformationCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface ErrorDisplayProps {
   error: string | string[]

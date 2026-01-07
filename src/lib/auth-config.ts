@@ -47,9 +47,8 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: 'database',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // Update session once per day
+    strategy: 'jwt',
+    maxAge: 60 * 60, // 1 hour
   },
   cookies: {
     sessionToken: {
@@ -59,15 +58,47 @@ export const authOptions: NextAuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        maxAge: 60 * 60, // 1 hour
       },
     },
   },
   callbacks: {
-    session: async ({ session, user }) => {
-      // With database strategy and Prisma adapter, we get user from database
-      if (user?.id && session?.user) {
-        session.user.id = user.id
+    jwt: async ({ token, user, account }) => {
+      // Store user ID in token for session access
+      if (user && account) {
+        if (account.provider === 'credentials') {
+          token.userId = user.id
+        } else if (account.provider === 'google') {
+          // For Google OAuth, find or create user in database
+          try {
+            let dbUser = await prisma.user.findUnique({
+              where: { email: user.email! }
+            })
+            
+            if (!dbUser) {
+              dbUser = await prisma.user.create({
+                data: {
+                  email: user.email!,
+                  name: user.name,
+                  image: user.image,
+                  emailVerified: new Date(),
+                }
+              })
+            }
+            
+            token.userId = dbUser.id
+          } catch (error) {
+            console.error('Database error in JWT callback:', error)
+            return null
+          }
+        }
+      }
+      return token
+    },
+    session: async ({ session, token }) => {
+      // Add user ID to session from token
+      if (token?.userId && session?.user) {
+        session.user.id = token.userId as string
       }
       return session
     }

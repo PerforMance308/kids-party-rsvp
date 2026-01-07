@@ -4,11 +4,14 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
+import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 export default function UserNav() {
     const { data: session, status } = useSession()
     const pathname = usePathname()
     const searchParams = useSearchParams()
+    const locale = useLocale()
+    const { t } = useLanguage()
     const isLoading = status === 'loading'
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -32,22 +35,22 @@ export default function UserNav() {
                 <nav className="flex items-center space-x-2 md:space-x-4">
                     {/* Desktop Navigation */}
                     <Link
-                        href="/dashboard"
+                        href={`/${locale}/dashboard`}
                         className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
                     >
-                        Dashboard
+                        {t('nav.dashboard')}
                     </Link>
                     <Link
-                        href="/invitations"
+                        href={`/${locale}/invitations`}
                         className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
                     >
-                        Invitations
+                        {t('nav.invitations')}
                     </Link>
                     <Link
-                        href="/children"
+                        href={`/${locale}/children`}
                         className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
                     >
-                        My Children
+                        {t('nav.myChildren')}
                     </Link>
 
                     {/* Mobile Menu Button */}
@@ -67,14 +70,14 @@ export default function UserNav() {
                     </button>
 
                     {/* Always visible buttons */}
-                    <Link href="/party/new" className="btn btn-primary text-sm md:text-base">
-                        New Party
+                    <Link href={`/${locale}/party/new`} className="btn btn-primary text-sm md:text-base">
+                        {t('nav.newParty')}
                     </Link>
                     <button
-                        onClick={() => signOut({ callbackUrl: '/' })}
+                        onClick={() => signOut({ callbackUrl: `/${locale}` })}
                         className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm md:text-base"
                     >
-                        Logout
+                        {t('nav.logout')}
                     </button>
                 </nav>
 
@@ -90,35 +93,35 @@ export default function UserNav() {
                         {/* Mobile Menu */}
                         <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-50 sm:hidden">
                             <Link
-                                href="/dashboard"
+                                href={`/${locale}/dashboard`}
                                 onClick={closeMobileMenu}
                                 className="block px-4 py-2 text-neutral-700 hover:bg-neutral-100 transition-colors"
                             >
-                                Dashboard
+                                {t('nav.dashboard')}
                             </Link>
                             <Link
-                                href="/invitations"
+                                href={`/${locale}/invitations`}
                                 onClick={closeMobileMenu}
                                 className="block px-4 py-2 text-neutral-700 hover:bg-neutral-100 transition-colors"
                             >
-                                Invitations
+                                {t('nav.invitations')}
                             </Link>
                             <Link
-                                href="/children"
+                                href={`/${locale}/children`}
                                 onClick={closeMobileMenu}
                                 className="block px-4 py-2 text-neutral-700 hover:bg-neutral-100 transition-colors"
                             >
-                                My Children
+                                {t('nav.myChildren')}
                             </Link>
                             <hr className="my-2 border-neutral-200" />
                             <button
                                 onClick={() => {
                                     closeMobileMenu()
-                                    signOut({ callbackUrl: '/' })
+                                    signOut({ callbackUrl: `/${locale}` })
                                 }}
                                 className="block w-full text-left px-4 py-2 text-neutral-700 hover:bg-neutral-100 transition-colors"
                             >
-                                Logout
+                                {t('nav.logout')}
                             </button>
                         </div>
                     </>
@@ -130,13 +133,13 @@ export default function UserNav() {
     return (
         <nav className="flex items-center space-x-2 md:space-x-4">
             <Link
-                href={`/login?redirect=${encodeURIComponent(pathname + (searchParams.toString() ? `?${searchParams.toString()}` : ''))}`}
+                href={`/${locale}/login?redirect=${encodeURIComponent(pathname + (searchParams.toString() ? `?${searchParams.toString()}` : ''))}`}
                 className="px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm md:text-base"
             >
-                Login
+                {t('nav.login')}
             </Link>
-            <Link href="/register" className="btn btn-primary text-sm md:text-base">
-                Sign Up
+            <Link href={`/${locale}/register`} className="btn btn-primary text-sm md:text-base">
+                {t('nav.signUp')}
             </Link>
         </nav>
     )

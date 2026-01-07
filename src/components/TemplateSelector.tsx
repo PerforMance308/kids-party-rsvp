@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import InvitationTemplate from './InvitationTemplates'
+import { useTranslations } from '@/contexts/LanguageContext'
 
 interface Party {
   childName: string
@@ -24,52 +25,63 @@ interface TemplateSelectorProps {
 
 type TemplateType = 'free' | 'premium1' | 'premium2' | 'premium3' | 'premium4'
 
-const templates = [
-  {
-    id: 'free',
-    name: '基础版',
-    description: '简单清洁的设计',
-    price: '免费',
-    isPremium: false,
-    features: ['基础样式', '二维码', '基本信息显示']
-  },
-  {
-    id: 'premium1',
-    name: '优雅花卉',
-    description: '专业渐变背景，优雅设计',
-    price: '¥9.9',
-    isPremium: true,
-    features: ['高级渐变', '装饰元素', '毛玻璃效果', '专业排版']
-  },
-  {
-    id: 'premium2',
-    name: '可爱卡通',
-    description: '充满童趣的卡通风格',
-    price: '¥9.9',
-    isPremium: true,
-    features: ['动态表情', '彩色卡片', '3D效果', '可爱装饰']
-  },
-  {
-    id: 'premium3',
-    name: '简约现代',
-    description: '极简主义，现代感设计',
-    price: '¥9.9',
-    isPremium: true,
-    features: ['几何元素', '极简风格', '专业字体', '高端质感']
-  },
-  {
-    id: 'premium4',
-    name: '节日庆典',
-    description: '充满节日气息的动感设计',
-    price: '¥9.9',
-    isPremium: true,
-    features: ['动画效果', '节日元素', '丰富色彩', '互动设计']
-  }
-]
 
 export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplateSelect, partyId, currentTemplate, templatePaid }: TemplateSelectorProps) {
+  const t = useTranslations('templates')
+  
+  // 添加CSS样式来隐藏滚动条
+  const hideScrollbarStyle = `
+    .template-scroll-container::-webkit-scrollbar {
+      display: none;
+    }
+  `
+  
+  const templates = [
+    {
+      id: 'free',
+      name: t('free'),
+      description: t('freeDesc'),
+      price: t('price'),
+      isPremium: false,
+      features: ['基础样式', '二维码', '基本信息显示']
+    },
+    {
+      id: 'premium1',
+      name: t('premium1'),
+      description: t('premium1Desc'),
+      price: t('premiumPrice'),
+      isPremium: true,
+      features: ['高级渐变', '装饰元素', '毛玻璃效果', '专业排版']
+    },
+    {
+      id: 'premium2',
+      name: t('premium2'),
+      description: t('premium2Desc'),
+      price: t('premiumPrice'),
+      isPremium: true,
+      features: ['动态表情', '彩色卡片', '3D效果', '可爱装饰']
+    },
+    {
+      id: 'premium3',
+      name: t('premium3'),
+      description: t('premium3Desc'),
+      price: t('premiumPrice'),
+      isPremium: true,
+      features: ['几何元素', '极简风格', '专业字体', '高端质感']
+    },
+    {
+      id: 'premium4',
+      name: t('premium4'),
+      description: t('premium4Desc'),
+      price: t('premiumPrice'),
+      isPremium: true,
+      features: ['动画效果', '节日元素', '丰富色彩', '互动设计']
+    }
+  ]
+  
   const [showPayment, setShowPayment] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState('')
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const handleTemplateClick = (templateId: string) => {
     const template = templates.find(t => t.id === templateId)
@@ -81,6 +93,25 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
     }
     
     onTemplateSelect(templateId)
+  }
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      // 滚动一个模板的宽度（包括gap）
+      // 容器宽度 - 左右padding(48px) - 2个gap(48px) = 内容宽度，除以3得到每个模板宽度，加上gap得到滚动距离
+      const containerWidth = scrollContainerRef.current.clientWidth
+      const scrollDistance = (containerWidth - 48 - 48) / 3 + 24
+      scrollContainerRef.current.scrollBy({ left: -scrollDistance, behavior: 'smooth' })
+    }
+  }
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      // 滚动一个模板的宽度（包括gap）
+      const containerWidth = scrollContainerRef.current.clientWidth
+      const scrollDistance = (containerWidth - 48 - 48) / 3 + 24
+      scrollContainerRef.current.scrollBy({ left: scrollDistance, behavior: 'smooth' })
+    }
   }
 
   const handlePayment = async () => {
@@ -112,22 +143,63 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <style dangerouslySetInnerHTML={{ __html: hideScrollbarStyle }} />
+      <div className="space-y-6">
       {/* 模板画廊 */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-neutral-900 mb-6">选择邀请卡样式</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-neutral-900">{t('title')}</h3>
+          <div className="text-sm text-neutral-500 flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+            </svg>
+            {t('scrollHint')}
+          </div>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="relative">
+          {/* 左侧滚动按钮 */}
+          <button
+            onClick={scrollLeft}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg border border-neutral-200 rounded-full p-2 transition-all hover:scale-110"
+            aria-label="向左滚动"
+          >
+            <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* 右侧滚动按钮 */}
+          <button
+            onClick={scrollRight}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg border border-neutral-200 rounded-full p-2 transition-all hover:scale-110"
+            aria-label="向右滚动"
+          >
+            <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <div 
+            ref={scrollContainerRef}
+            className="template-scroll-container flex overflow-x-auto gap-6 pb-4 px-6 snap-x snap-mandatory"
+            style={{ 
+              scrollbarWidth: 'none', 
+              msOverflowStyle: 'none'
+            }}
+          >
           {templates.map((template) => (
             <div
               key={template.id}
-              className={`relative group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden ${
+              className={`relative group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center ${
                 currentTemplate === template.id
                   ? 'border-primary-500 bg-primary-50 shadow-lg'
                   : template.isPremium && !templatePaid 
                   ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:border-orange-300 hover:shadow-lg' 
                   : 'border-neutral-200 bg-white hover:border-primary-300 hover:shadow-lg'
               }`}
+              style={{ width: 'calc((100% - 48px - 48px) / 3)' }}
               onClick={() => handleTemplateClick(template.id)}
             >
               {/* Premium 标签 */}
@@ -169,12 +241,12 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                     </span>
                     {template.isPremium && !templatePaid && (
                       <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
-                        需要购买
+                        {t('needsPurchase')}
                       </span>
                     )}
                     {currentTemplate === template.id && (
                       <span className="ml-2 text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
-                        当前使用
+                        {t('currentlyUsing')}
                       </span>
                     )}
                   </div>
@@ -205,10 +277,10 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                   disabled={currentTemplate === template.id}
                 >
                   {currentTemplate === template.id 
-                    ? '当前使用中' 
+                    ? t('currentlyUsing') 
                     : template.isPremium && !templatePaid 
-                    ? '购买使用 ¥9.9' 
-                    : '选择此模板'}
+                    ? t('purchaseUse') 
+                    : t('selectTemplate')}
                 </button>
               </div>
 
@@ -224,6 +296,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
               )}
             </div>
           ))}
+          </div>
         </div>
 
         {/* 付费模板介绍 */}
@@ -261,7 +334,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
       {showPayment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl">
-            <h3 className="text-xl font-bold text-center text-neutral-900 mb-4">🎉 购买付费模板</h3>
+            <h3 className="text-xl font-bold text-center text-neutral-900 mb-4">🎉 {t('purchaseTitle')}</h3>
             
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
@@ -288,19 +361,20 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                   onClick={handlePayment}
                   className="w-full btn btn-primary"
                 >
-                  立即支付
+                  {t('payNow')}
                 </button>
                 <button
                   onClick={() => setShowPayment(false)}
                   className="w-full btn btn-secondary"
                 >
-                  稍后再说
+                  {t('payLater')}
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }

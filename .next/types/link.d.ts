@@ -50,14 +50,20 @@ declare namespace __next_route_internal_types__ {
     | `/api/photos`
     | `/api/reminders/process`
     | `/api/webhooks/hyperswitch`
-    | `/children`
-    | `/dashboard`
-    | `/invitations`
-    | `/login`
-    | `/party/new`
-    | `/payment/success`
-    | `/register`
   type DynamicRoutes<T extends string = string> = 
+    | `/${SafeSlug<T>}`
+    | `/${SafeSlug<T>}/children`
+    | `/${SafeSlug<T>}/dashboard`
+    | `/${SafeSlug<T>}/invitations`
+    | `/${SafeSlug<T>}/login`
+    | `/${SafeSlug<T>}/party/${SafeSlug<T>}/dashboard`
+    | `/${SafeSlug<T>}/party/${SafeSlug<T>}/edit`
+    | `/${SafeSlug<T>}/party/guest/${SafeSlug<T>}`
+    | `/${SafeSlug<T>}/party/new`
+    | `/${SafeSlug<T>}/payment/photo-sharing/${SafeSlug<T>}`
+    | `/${SafeSlug<T>}/payment/success`
+    | `/${SafeSlug<T>}/register`
+    | `/${SafeSlug<T>}/rsvp/${SafeSlug<T>}`
     | `/api/auth/${CatchAllSlug<T>}`
     | `/api/children/${SafeSlug<T>}`
     | `/api/parties/${SafeSlug<T>}`
@@ -72,11 +78,6 @@ declare namespace __next_route_internal_types__ {
     | `/api/photos/${SafeSlug<T>}`
     | `/api/photos/delete/${SafeSlug<T>}`
     | `/api/rsvp/${SafeSlug<T>}`
-    | `/party/${SafeSlug<T>}/dashboard`
-    | `/party/${SafeSlug<T>}/edit`
-    | `/party/guest/${SafeSlug<T>}`
-    | `/payment/photo-sharing/${SafeSlug<T>}`
-    | `/rsvp/${SafeSlug<T>}`
 
   type RouteImpl<T> = 
     | StaticRoutes

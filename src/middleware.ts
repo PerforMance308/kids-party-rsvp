@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
 
     // More restrictive rate limiting for auth endpoints
     const isAuthEndpoint = pathname.startsWith('/api/auth/')
-    const maxRequests = isAuthEndpoint ? 5 : 20
+    const maxRequests = isAuthEndpoint ? 50 : 100
     const windowMs = isAuthEndpoint ? 60000 : 60000 // 1 minute
 
     if (!rateLimit(rateLimitKey, maxRequests, windowMs)) {
@@ -36,6 +36,10 @@ export async function middleware(request: NextRequest) {
         { status: 429 }
       )
     }
+
+    // Skip further processing for API routes to avoid overhead
+    // API routes handle their own authentication via route handlers
+    return response
   }
 
   // Protected routes that require authentication
@@ -50,8 +54,12 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request })
   const user = token ? { userId: token.userId as string, email: token.email as string } : null
 
+  // Detect locale from pathname
+  const pathnameLocale = pathname.split('/')[1]
+  const currentLocale = ['zh', 'en'].includes(pathnameLocale) ? pathnameLocale : 'zh'
+
   if (isProtectedRoute && !user) {
-    const loginUrl = new URL('/login', request.url)
+    const loginUrl = new URL(`/${currentLocale}/login`, request.url)
     loginUrl.searchParams.set('redirect', pathname + request.nextUrl.search)
 
     const redirectResponse = NextResponse.redirect(loginUrl)
@@ -65,7 +73,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPublicRoute && user) {
-    const dashboardUrl = new URL('/dashboard', request.url)
+    const dashboardUrl = new URL(`/${currentLocale}/dashboard`, request.url)
     const redirectResponse = NextResponse.redirect(dashboardUrl)
 
     // Copy security headers to redirect response

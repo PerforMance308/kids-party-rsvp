@@ -1,9 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Header from '@/components/Header'
-import Providers from '@/components/SessionProvider'
-import { ToastContainer } from '@/components/ToastContainer'
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -34,15 +31,9 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html className={inter.variable}>
       <body className="font-sans">
-        <Providers>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            {children}
-            <ToastContainer />
-          </div>
-        </Providers>
+        {children}
       </body>
     </html>
   )

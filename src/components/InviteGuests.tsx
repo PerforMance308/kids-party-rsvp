@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from '@/contexts/LanguageContext'
 
 interface Contact {
     id: string
@@ -15,6 +16,7 @@ interface InviteGuestsProps {
 }
 
 export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsProps) {
+    const tr = useTranslations('invite')
     const [contacts, setContacts] = useState<Contact[]>([])
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set())
     const [isLoading, setIsLoading] = useState(true)
@@ -68,28 +70,28 @@ export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsPro
 
             if (response.ok) {
                 const data = await response.json()
-                setMessage({ type: 'success', text: `Successfully sent ${data.count} invitations!` })
+                setMessage({ type: 'success', text: tr('success').replace('{count}', data.count) })
                 setSelectedContacts(new Set())
                 if (onInvitesSent) onInvitesSent()
             } else {
-                setMessage({ type: 'error', text: 'Failed to send invitations. Please try again.' })
+                setMessage({ type: 'error', text: tr('error') })
             }
         } catch (error) {
-            setMessage({ type: 'error', text: 'An error occurred while sending invitations.' })
+            setMessage({ type: 'error', text: tr('sendError') })
         } finally {
             setIsSending(false)
         }
     }
 
     if (isLoading) {
-        return <div className="text-center py-4 text-neutral-600">Loading contacts...</div>
+        return <div className="text-center py-4 text-neutral-600">{tr('loading')}</div>
     }
 
     if (contacts.length === 0) {
         return (
             <div className="text-center py-8 text-neutral-600">
-                <p>You don't have any contacts yet.</p>
-                <p className="text-sm mt-2">Contacts are automatically added when people RSVP to your parties.</p>
+                <p>{tr('noContacts')}</p>
+                <p className="text-sm mt-2">{tr('noContactsDesc')}</p>
             </div>
         )
     }
@@ -121,8 +123,8 @@ export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsPro
                                     className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
                                 />
                             </th>
-                            <th className="px-4 py-2 font-medium text-neutral-700">Name</th>
-                            <th className="px-4 py-2 font-medium text-neutral-700">Email</th>
+                            <th className="px-4 py-2 font-medium text-neutral-700">{tr('name')}</th>
+                            <th className="px-4 py-2 font-medium text-neutral-700">{tr('email')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-200">
@@ -140,7 +142,7 @@ export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsPro
                                     {contact.name}
                                     {contact.childName && (
                                         <span className="text-neutral-500 text-xs ml-2">
-                                            (Child: {contact.childName})
+                                            ({tr('child').replace('{name}', contact.childName)})
                                         </span>
                                     )}
                                 </td>
@@ -153,14 +155,14 @@ export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsPro
 
             <div className="flex justify-between items-center">
                 <div className="text-sm text-neutral-600">
-                    {selectedContacts.size} selected
+                    {tr('selected').replace('{count}', selectedContacts.size.toString())}
                 </div>
                 <button
                     onClick={handleSendInvites}
                     disabled={selectedContacts.size === 0 || isSending}
                     className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isSending ? 'Sending...' : 'Send Invitations'}
+                    {isSending ? tr('sending') : tr('send')}
                 </button>
             </div>
         </div>

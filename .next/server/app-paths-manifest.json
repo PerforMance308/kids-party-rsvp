@@ -1,4 +1,16 @@
 {
+  "/api/contacts/route": "app/api/contacts/route.js",
+  "/api/parties/[id]/route": "app/api/parties/[id]/route.js",
+  "/api/parties/[id]/qr/route": "app/api/parties/[id]/qr/route.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/page": "app/page.js"
+  "/api/children/route": "app/api/children/route.js",
+  "/api/parties/route": "app/api/parties/route.js",
+  "/api/invitations/route": "app/api/invitations/route.js",
+  "/[locale]/page": "app/[locale]/page.js",
+  "/[locale]/party/[id]/dashboard/page": "app/[locale]/party/[id]/dashboard/page.js",
+  "/[locale]/login/page": "app/[locale]/login/page.js",
+  "/[locale]/dashboard/page": "app/[locale]/dashboard/page.js",
+  "/[locale]/party/new/page": "app/[locale]/party/new/page.js",
+  "/[locale]/children/page": "app/[locale]/children/page.js",
+  "/[locale]/invitations/page": "app/[locale]/invitations/page.js"
 }
