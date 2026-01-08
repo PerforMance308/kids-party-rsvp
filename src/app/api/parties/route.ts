@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
         theme: party.theme,
         notes: party.notes,
         template: party.template,
-        templatePaid: party.templatePaid,
+        templatePaid: party.paidTemplates.includes(party.template),
         publicRsvpToken: party.publicRsvpToken,
         stats
       }

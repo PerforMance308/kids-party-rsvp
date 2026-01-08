@@ -17,7 +17,6 @@
     "@heroicons/react": "^2.2.0",
     "@juspay-tech/hyper-js": "^2.0.4",
     "@prisma/client": "^5.22.0",
-    "@types/archiver": "^7.0.0",
     "@types/pg": "^8.16.0",
     "archiver": "^7.0.1",
     "bcryptjs": "^2.4.3",
@@ -39,6 +38,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@types/archiver": "^7.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/html2canvas": "^0.5.35",
     "@types/jsonwebtoken": "^9.0.7",
