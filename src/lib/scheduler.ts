@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { sendEmail, generateReminderEmail } from '@/lib/email'
+import { getBaseUrl } from '@/lib/utils'
 
 export async function createReminderSchedule(partyId: string) {
   const party = await prisma.party.findUnique({
@@ -80,7 +81,7 @@ export async function processReminders() {
     if (existingReminder) continue
 
     // Send reminders to all guests
-    const rsvpUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${party.publicRsvpToken}`
+    const rsvpUrl = `${getBaseUrl()}/rsvp/${party.publicRsvpToken}`
     
     for (const guest of party.guests) {
       try {

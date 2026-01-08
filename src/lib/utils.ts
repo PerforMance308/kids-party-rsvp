@@ -5,6 +5,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function getBaseUrl(): string {
+  // Check for proper environment variable
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL
+  
+  // Filter out placeholder values and localhost
+  if (baseUrl && !baseUrl.includes('[your-domain]') && !baseUrl.includes('localhost')) {
+    return baseUrl.replace(/\/$/, '') // Remove trailing slash
+  }
+  
+  // Client-side: use current domain
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+  
+  // Server-side fallback: use production Zeabur domain
+  return 'https://kids-party-rsvp.zeabur.app'
+}
+
 export function formatDate(date: Date, locale: string = 'en-US'): string {
   // Normalize locale for Intl.DateTimeFormat
   const normalizedLocale = locale.startsWith('zh') ? 'zh-CN' : 'en-US'

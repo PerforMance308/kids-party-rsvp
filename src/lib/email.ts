@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import { getEmailProvider } from './email-providers'
+import { getBaseUrl } from './utils'
 
 interface EmailData {
   to: string
@@ -328,7 +329,7 @@ Updated Party Details:
 📍 ${partyData.location}
 
 ${partyData.notes ? `Special Notes: ${partyData.notes}\n\n` : ''}Please note these changes and let us know if they affect your ability to attend.
-Your current RSVP is still valid, but you can update it if needed: ${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${partyData.publicRsvpToken}
+Your current RSVP is still valid, but you can update it if needed: ${getBaseUrl()}/rsvp/${partyData.publicRsvpToken}
 
 We apologize for any inconvenience and look forward to celebrating with ${guestData.childName}!
 
@@ -383,7 +384,7 @@ export function generateInvitationEmail(
     }).format(date)
   }
 
-  const rsvpUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${partyData.publicRsvpToken}`
+  const rsvpUrl = `${getBaseUrl()}/rsvp/${partyData.publicRsvpToken}`
 
   const subject = `Invitation: ${partyData.childName}'s ${partyData.childAge}th Birthday Party!`
 
@@ -437,7 +438,7 @@ export function generatePhotoSharingAvailableEmail(
     }).format(date)
   }
 
-  const guestPageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/party/guest/${partyData.publicRsvpToken}`
+  const guestPageUrl = `${getBaseUrl()}/party/guest/${partyData.publicRsvpToken}`
 
   const subject = `📷 Share Your Photos: ${partyData.childName}'s Birthday Party Memories!`
 
@@ -523,7 +524,7 @@ With Kid Party RSVP, you can easily:
 ✨ Ready to start planning?
 
 Visit our website to create ${childData.name}'s birthday party:
-${process.env.NEXT_PUBLIC_BASE_URL}
+${getBaseUrl()}
 
 Make this birthday one to remember! 🌟
 

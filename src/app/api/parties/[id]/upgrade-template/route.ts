@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
+import { getBaseUrl } from '@/lib/utils'
 
 export async function POST(
   request: NextRequest,
@@ -80,7 +81,7 @@ export async function POST(
       template: updatedParty.template,
       templatePaid: updatedParty.templatePaid,
       publicRsvpToken: updatedParty.publicRsvpToken,
-      rsvpUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${updatedParty.publicRsvpToken}`,
+      rsvpUrl: `${getBaseUrl()}/rsvp/${updatedParty.publicRsvpToken}`,
       guests: updatedParty.guests,
       stats
     }

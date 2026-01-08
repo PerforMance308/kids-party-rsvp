@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { sendPartyUpdateEmail } from '@/lib/email'
+import { getBaseUrl } from '@/lib/utils'
 
 export async function GET(
   request: NextRequest,
@@ -73,7 +74,7 @@ export async function GET(
       childName: party.child.name,
       childAge,
       stats,
-      rsvpUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${party.publicRsvpToken}`
+      rsvpUrl: `${getBaseUrl()}/rsvp/${party.publicRsvpToken}`
     }
 
     return NextResponse.json(partyWithStats)
@@ -198,7 +199,7 @@ export async function PUT(
       childName: updatedParty.child.name,
       childAge,
       stats,
-      rsvpUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${updatedParty.publicRsvpToken}`
+      rsvpUrl: `${getBaseUrl()}/rsvp/${updatedParty.publicRsvpToken}`
     }
 
     return NextResponse.json(partyWithStats)
