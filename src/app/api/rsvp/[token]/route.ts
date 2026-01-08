@@ -87,6 +87,14 @@ export async function POST(
       return NextResponse.json({ error: 'Party not found' }, { status: 404 })
     }
 
+    // Check if user is the host
+    if (party.userId === user.id) {
+      return NextResponse.json(
+        { error: '您不需要为您自己的派对提交接受邀请 (Host cannot RSVP to their own party)' },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
 
     // Validate and sanitize input - no email needed since user is authenticated
@@ -126,42 +134,37 @@ export async function POST(
     })
 
     if (existingGuest) {
-      // Update existing guest
+      // If user already has an RSVP, block second submission
+      if (existingGuest.rsvp) {
+        return NextResponse.json(
+          { error: '您已经提交过该派对的回复了 (You have already RSVP\'d to this party)' },
+          { status: 400 }
+        )
+      }
+
+      // Update existing guest info if no RSVP yet (unlikely given logic, but for safety)
       await prisma.guest.update({
         where: { id: existingGuest.id },
         data: {
           parentName,
           childName,
-          childId: childId || null, // Link to child if selected
+          childId: childId || null,
           phone: phone || null,
-          userId: user.id, // Link to authenticated user
+          userId: user.id,
         }
       })
 
-      // Update or create RSVP
-      if (existingGuest.rsvp) {
-        await prisma.rSVP.update({
-          where: { id: existingGuest.rsvp.id },
-          data: {
-            status,
-            numChildren,
-            parentStaying,
-            allergies: allergies || null,
-            message: message || null,
-          }
-        })
-      } else {
-        await prisma.rSVP.create({
-          data: {
-            guestId: existingGuest.id,
-            status,
-            numChildren,
-            parentStaying,
-            allergies: allergies || null,
-            message: message || null,
-          }
-        })
-      }
+      // Create RSVP
+      await prisma.rSVP.create({
+        data: {
+          guestId: existingGuest.id,
+          status,
+          numChildren,
+          parentStaying,
+          allergies: allergies || null,
+          message: message || null,
+        }
+      })
     } else {
       // Create new guest and RSVP linked to authenticated user
       const newGuest = await prisma.guest.create({
