@@ -1,0 +1,108 @@
+﻿
+> kidparty@0.1.0 build
+> next build
+
+   Γû▓ Next.js 15.5.9
+   - Environments: .env.production, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 4.8s
+   Linting and checking validity of types ...
+
+./src/app/[locale]/children/page.tsx
+44:6  Warning: React Hook useEffect has a missing dependency: 'locale'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/[locale]/dashboard/page.tsx
+68:6  Warning: React Hook useEffect has a missing dependency: 'locale'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/[locale]/invitations/page.tsx
+61:6  Warning: React Hook useEffect has missing dependencies: 'loadInvitations' and 'locale'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/[locale]/party/guest/[token]/page.tsx
+99:6  Warning: React Hook useEffect has a missing dependency: 'locale'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/[locale]/party/new/page.tsx
+60:6  Warning: React Hook useEffect has a missing dependency: 'locale'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/[locale]/party/[id]/dashboard/page.tsx
+109:6  Warning: React Hook useEffect has a missing dependency: 'loadQRCode'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/app/[locale]/party/[id]/edit/page.tsx
+46:6  Warning: React Hook useEffect has a missing dependency: 'locale'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+181:58  Warning: Do not use an `<a>` element to navigate to `/children/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+181:58  Warning: Do not use an `<a>` element to navigate to `/children/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+181:58  Warning: Do not use an `<a>` element to navigate to `/children/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+181:58  Warning: Do not use an `<a>` element to navigate to `/children/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+./src/app/[locale]/rsvp/[token]/page.tsx
+79:6  Warning: React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/components/HostPhotoManager.tsx
+31:6  Warning: React Hook useEffect has a missing dependency: 'loadPhotos'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+node.exe : Failed 
+to compile.
+At C:\Program Files\
+nodejs\npm.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: (Fail   
+ ed to compile.:    
+String) [], Rem    
+oteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+
+./src/app/api/party/
+guest/[token]/route.
+ts:44:9
+Type error: Type 
+'string | null | 
+undefined' is not 
+assignable to type 
+'string | StringFilt
+er<"Guest"> | 
+undefined'.
+  Type 'null' is 
+not assignable to 
+type 'string | Strin
+gFilter<"Guest"> | 
+undefined'.
+
+[0m [90m 42 
+|[39m       
+where[33m:[39m {
+ [90m 43 |[39m    
+     
+partyId[33m:[39m p
+arty[33m.[39mid[3
+3m,[39m
+[31m[1m>[22m[39m
+[90m 44 |[39m     
+    
+email[33m:[39m 
+userEmail
+ [90m    |[39m    
+     
+[31m[1m^[22m[39m
+ [90m 45 |[39m    
+   }[33m,[39m
+ [90m 46 |[39m    
+   
+include[33m:[39m {
+ [90m 47 |[39m    
+     
+rsvp[33m:[39m 
+[36mtrue[39m[0m
+Next.js build 
+worker exited with 
+code: 1 and signal: 
+null

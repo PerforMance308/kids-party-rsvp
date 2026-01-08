@@ -34,7 +34,7 @@ export async function GET(
     const birthDate = new Date(party.child.birthDate)
     const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 
-    const childAge = party.targetAge ?? calculatedAge
+    const childAge = (party as any).targetAge ?? calculatedAge
 
     const partyData = {
       id: party.id,
@@ -76,7 +76,7 @@ export async function POST(
 
     const user = {
       id: session.user.id,
-      email: session.user.email
+      email: (session.user.email || '').toString()
     }
 
     const party = await prisma.party.findUnique({
@@ -130,7 +130,7 @@ export async function POST(
     let existingGuest = await prisma.guest.findFirst({
       where: {
         partyId: party.id,
-        email: user.email
+        email: (user.email || '').toString()
       },
       include: {
         rsvp: true
@@ -177,7 +177,7 @@ export async function POST(
           parentName,
           childName,
           childId: childId || null, // Link to child if selected
-          email: user.email,
+          email: (user.email || '').toString(),
           phone: phone || null,
           userId: user.id, // Link to authenticated user
         }
@@ -238,7 +238,7 @@ export async function POST(
       const existingContact = await prisma.contact.findFirst({
         where: {
           userId: party.userId,
-          email: user.email
+          email: (user.email || '').toString()
         }
       })
 

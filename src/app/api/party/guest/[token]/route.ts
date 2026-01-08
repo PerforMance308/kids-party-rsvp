@@ -23,7 +23,7 @@ export async function GET(
     }
 
     const userId = session.user.id
-    const userEmail = session.user.email
+    const userEmail = (session.user.email || '').toString()
 
     const party = await prisma.party.findUnique({
       where: { publicRsvpToken: token },
@@ -61,7 +61,7 @@ export async function GET(
     const birthDate = new Date(party.child.birthDate)
     const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 
-    const childAge = party.targetAge ?? calculatedAge
+    const childAge = (party as any).targetAge ?? calculatedAge
 
     const partyData = {
       id: party.id,

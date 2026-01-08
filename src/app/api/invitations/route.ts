@@ -12,11 +12,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Find all guests records for the current user's email
-    const userEmail = session.user.email || ''
+    const userEmail = (session.user.email || '').toString()
     const invitations = await prisma.guest.findMany({
       where: {
         OR: [
-          { userId: session.user.id }, // Direct user linkage
+          { userId: session.user.id } as any, // Direct user linkage
           { email: userEmail } // Email-based matching for older entries
         ]
       },
