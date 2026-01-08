@@ -1,0 +1,45 @@
+# Zeabur Configuration for Kid Party RSVP
+name: kidparty-rsvp
+
+services:
+  - name: kidparty-app
+    source:
+      type: git
+    environment:
+      # Framework detection
+      ZBPACK_NODE_VERSION: "18"
+      # Build configuration
+      BUILD_COMMAND: "npm run build"
+      START_COMMAND: "npm start"
+      # Environment variables (values to be set in Zeabur dashboard)
+      DATABASE_URL: ${DATABASE_URL}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY: ${NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY}
+      NEXT_PUBLIC_HYPERSWITCH_CLIENT_URL: ${NEXT_PUBLIC_HYPERSWITCH_CLIENT_URL}
+      HYPERSWITCH_SECRET_KEY: ${HYPERSWITCH_SECRET_KEY}
+      HYPERSWITCH_SERVER_URL: ${HYPERSWITCH_SERVER_URL}
+    
+    # Resource allocation
+    plan: serverless
+    
+    # Auto scaling
+    replicas:
+      min: 0
+      max: 10
+    
+    # Health check
+    health_check:
+      http_get:
+        path: /api/health
+        port: 3000

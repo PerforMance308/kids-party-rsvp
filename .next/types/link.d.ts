@@ -43,6 +43,7 @@ declare namespace __next_route_internal_types__ {
     | `/api/children`
     | `/api/contacts`
     | `/api/guests`
+    | `/api/health`
     | `/api/invitations`
     | `/api/notifications/process`
     | `/api/parties`

@@ -69,13 +69,18 @@ export default function UserNav() {
                         </svg>
                     </button>
 
-                    {/* Always visible buttons */}
-                    <Link href={`/${locale}/party/new`} className="btn btn-primary text-sm md:text-base">
+                    {/* Primary action - always visible */}
+                    <Link 
+                        href={`/${locale}/party/new`} 
+                        className="btn btn-primary text-sm whitespace-nowrap flex items-center justify-center min-w-fit px-4 py-2"
+                    >
                         {t('nav.newParty')}
                     </Link>
+                    
+                    {/* Secondary action - hidden on mobile */}
                     <button
                         onClick={() => signOut({ callbackUrl: `/${locale}` })}
-                        className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm md:text-base"
+                        className="hidden md:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm"
                     >
                         {t('nav.logout')}
                     </button>
@@ -138,7 +143,10 @@ export default function UserNav() {
             >
                 {t('nav.login')}
             </Link>
-            <Link href={`/${locale}/register`} className="btn btn-primary text-sm md:text-base">
+            <Link 
+                href={`/${locale}/register`} 
+                className="btn btn-primary text-sm whitespace-nowrap flex items-center justify-center min-w-fit"
+            >
                 {t('nav.signUp')}
             </Link>
         </nav>
