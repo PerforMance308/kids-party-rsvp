@@ -42,7 +42,7 @@ function RegisterForm() {
         })
 
         if (loginResult?.ok) {
-          router.push((redirectUrl || `/${locale}/dashboard`) as any)
+          router.push((redirectUrl || `/${locale}`) as any)
           router.refresh()
         }
         return
@@ -60,7 +60,7 @@ function RegisterForm() {
   const handleGoogleSignIn = async () => {
     try {
       await signIn('google', {
-        callbackUrl: redirectUrl || '/dashboard',
+        callbackUrl: redirectUrl || `/${locale}`,
       })
     } catch (error) {
       console.error('Google sign-up error:', error)

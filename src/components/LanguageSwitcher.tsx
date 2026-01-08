@@ -19,8 +19,8 @@ export default function LanguageSwitcher() {
   }
 
   const languages = [
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'zh', name: '中文', flag: '🇨🇳' }
+    { code: 'en', name: 'English' },
+    { code: 'zh', name: '中文' }
   ]
 
   const currentLanguage = languages.find(lang => lang.code === locale) || languages[0]
@@ -32,8 +32,7 @@ export default function LanguageSwitcher() {
         className="flex items-center gap-1 px-2 md:px-3 py-2 text-sm bg-white border border-neutral-200 rounded-lg hover:bg-neutral-50 transition-colors"
         aria-label="Switch Language"
       >
-        <span className="text-base">{currentLanguage.flag}</span>
-        <span className="hidden md:inline text-sm">{currentLanguage.name}</span>
+        <span className="text-sm">{currentLanguage.name}</span>
         <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -56,7 +55,6 @@ export default function LanguageSwitcher() {
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2 ${locale === language.code ? 'bg-primary-50 text-primary-700' : 'text-neutral-700'
                   }`}
               >
-                <span>{language.flag}</span>
                 <span>{language.name}</span>
                 {locale === language.code && (
                   <svg className="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">

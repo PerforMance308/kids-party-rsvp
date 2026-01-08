@@ -21,21 +21,23 @@ function LoginForm() {
 
   // Check for session
   useEffect(() => {
-    console.log('Login page - Auth status:', {
+    console.log('[DEBUG] Login page - Auth status:', {
       status,
-      hasSession: !!session,
+      session: session ? 'exists' : 'null',
       userId: session?.user?.id,
       email: session?.user?.email,
+      cookie: typeof document !== 'undefined' ? document.cookie.split(';').map(c => c.trim().split('=')[0]) : 'no-document'
     })
   }, [status, session])
 
   // If fully authenticated, auto-redirect
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
-      console.log('User already authenticated, redirecting...')
-      window.location.href = (redirectUrl || `/${locale}/dashboard`) as string
+      const target = (redirectUrl || `/${locale}/dashboard`) as string
+      console.log('[DEBUG] User already authenticated, redirecting to:', target)
+      window.location.href = target
     }
-  }, [status, session, redirectUrl])
+  }, [status, session, redirectUrl, locale])
 
   // Show loading state while checking authentication
   if (status === 'loading') {
@@ -96,9 +98,10 @@ function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     try {
-      console.log('Starting Google sign-in...')
+      const callbackUrl = redirectUrl || `/${locale}`
+      console.log('Starting Google sign-in with callbackUrl:', callbackUrl)
       await signIn('google', {
-        callbackUrl: redirectUrl || '/dashboard',
+        callbackUrl
       })
     } catch (error) {
       console.error('Google sign-in error:', error)

@@ -12,7 +12,7 @@
 2. 点击 "创建凭据" → "OAuth 2.0 客户端 ID"
 3. 选择应用程序类型为 "Web 应用程序"
 4. 设置授权的重定向 URI：
-   - 开发环境: `npm`
+   - 开发环境: `http://localhost:3000/api/auth/callback/google`
    - 生产环境: `https://yourdomain.com/api/auth/callback/google`
 5. 复制客户端 ID 和客户端密钥
 

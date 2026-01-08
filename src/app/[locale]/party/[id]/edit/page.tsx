@@ -14,6 +14,7 @@ interface Party {
   location: string
   theme?: string
   notes?: string
+  targetAge?: number
 }
 
 export default function EditPartyPage() {
@@ -32,6 +33,7 @@ export default function EditPartyPage() {
   const [location, setLocation] = useState('')
   const [theme, setTheme] = useState('')
   const [notes, setNotes] = useState('')
+  const [targetAge, setTargetAge] = useState('')
 
   // Check authentication
   useEffect(() => {
@@ -62,6 +64,7 @@ export default function EditPartyPage() {
           setLocation(partyData.location)
           setTheme(partyData.theme || '')
           setNotes(partyData.notes || '')
+          setTargetAge(partyData.targetAge != null ? partyData.targetAge.toString() : '')
         } else {
           const errorData = await response.json()
           setError(errorData.error || 'Failed to fetch party')
@@ -96,6 +99,7 @@ export default function EditPartyPage() {
           location,
           theme: theme || undefined,
           notes: notes || undefined,
+          targetAge: targetAge ? parseInt(targetAge) : undefined,
         }),
       })
 
@@ -238,6 +242,25 @@ export default function EditPartyPage() {
               rows={3}
               placeholder="Any special instructions, dietary considerations, or additional information..."
             />
+          </div>
+
+          <div>
+            <label htmlFor="targetAge" className="block text-sm font-medium text-neutral-700 mb-1">
+              Celebrating which birthday?
+            </label>
+            <input
+              type="number"
+              id="targetAge"
+              value={targetAge}
+              onChange={(e) => setTargetAge(e.target.value)}
+              className="input"
+              placeholder="e.g., 5"
+              min="1"
+              max="18"
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              If left blank, it will be calculated from birth date. Fill this if the party is held before the actual birthday.
+            </p>
           </div>
 
           <div className="flex gap-4 pt-4">

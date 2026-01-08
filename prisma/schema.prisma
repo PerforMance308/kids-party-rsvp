@@ -96,6 +96,7 @@ model Party {
   photoSharingPaid      Boolean    @default(false) @map("photo_sharing_paid")
   allowPhotoSharing     Boolean    @default(false) @map("allow_photo_sharing")
   guestCanSeeOthers     Boolean    @default(false) @map("guest_can_see_others")
+  targetAge             Int?       @map("target_age")
   photoSharingPaymentId String?    @map("photo_sharing_payment_id")
   photoSharingEnabledAt DateTime?  @map("photo_sharing_enabled_at")
   createdAt             DateTime   @default(now()) @map("created_at")
@@ -196,6 +197,7 @@ model EmailNotification {
   type        String
   subject     String
   content     String
+  htmlContent String?   @map("html_content")
   relatedId   String?   @map("related_id")
   sentAt      DateTime? @map("sent_at")
   scheduledAt DateTime? @map("scheduled_at")

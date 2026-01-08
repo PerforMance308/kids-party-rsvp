@@ -2,18 +2,19 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Check if there is any supported locale in the pathname
   const pathname = request.nextUrl.pathname
-  const pathnameIsMissingLocale = ['/zh', '/en'].every(
-    (locale) => !pathname.startsWith(locale) || pathname === locale
+
+  // Check if the pathname already has a supported locale
+  const locales = ['/en', '/zh']
+  const hasLocale = locales.some(
+    (locale) => pathname === locale || pathname.startsWith(`${locale}/`)
   )
 
   // Redirect if there is no locale
-  if (pathnameIsMissingLocale) {
-    // e.g. incoming request is /products
-    // The new URL is now /zh/products
+  if (!hasLocale) {
+    const locale = 'en' // Default locale
     return NextResponse.redirect(
-      new URL(`/zh${pathname.startsWith('/') ? '' : '/'}${pathname}`, request.url)
+      new URL(`/${locale}${pathname === '/' ? '' : pathname}`, request.url)
     )
   }
 }

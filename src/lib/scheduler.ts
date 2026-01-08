@@ -41,7 +41,7 @@ export async function createReminderSchedule(partyId: string) {
 
 export async function processReminders() {
   const now = new Date()
-  
+
   // Find parties with events in the next 24 hours that need reminders
   const upcomingParties = await prisma.party.findMany({
     where: {
@@ -60,9 +60,9 @@ export async function processReminders() {
   for (const party of upcomingParties) {
     const eventDate = new Date(party.eventDatetime)
     const daysUntilEvent = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    
+
     let reminderType: 'SEVEN_DAYS' | 'TWO_DAYS' | 'SAME_DAY' | null = null
-    
+
     if (daysUntilEvent === 7) {
       reminderType = 'SEVEN_DAYS'
     } else if (daysUntilEvent === 2) {
@@ -77,19 +77,21 @@ export async function processReminders() {
     const existingReminder = party.reminders.find(
       r => r.type === reminderType && r.sentAt
     )
-    
+
     if (existingReminder) continue
 
     // Send reminders to all guests
     const rsvpUrl = `${getBaseUrl()}/rsvp/${party.publicRsvpToken}`
-    
+
     for (const guest of party.guests) {
       try {
         // Calculate child age
         const today = new Date()
         const birthDate = new Date(party.child.birthDate)
-        const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-        
+        const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+        const childAge = party.targetAge ?? calculatedAge
+
         const emailContent = generateReminderEmail(
           {
             childName: party.child.name,

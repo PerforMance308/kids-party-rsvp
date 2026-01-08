@@ -12,6 +12,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -63,36 +64,10 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    jwt: async ({ token, user, account }) => {
+    jwt: async ({ token, user }) => {
       // Store user ID in token for session access
-      if (user && account) {
-        if (account.provider === 'credentials') {
-          token.userId = user.id
-        } else if (account.provider === 'google') {
-          // For Google OAuth, find or create user in database
-          try {
-            let dbUser = await prisma.user.findUnique({
-              where: { email: user.email! }
-            })
-            
-            if (!dbUser) {
-              dbUser = await prisma.user.create({
-                data: {
-                  email: user.email!,
-                  name: user.name,
-                  image: user.image,
-                  emailVerified: new Date(),
-                }
-              })
-            }
-            
-            token.userId = dbUser.id
-          } catch (error) {
-            console.error('Database error in JWT callback:', error)
-            // Return token even if database operation fails
-            return token
-          }
-        }
+      if (user) {
+        token.userId = user.id
       }
       return token
     },

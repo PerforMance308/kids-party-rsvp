@@ -35,6 +35,7 @@ interface Party {
   location: string
   theme?: string
   notes?: string
+  targetAge?: number
   template?: string
   paidTemplates?: string[]
   photoSharingPaid?: boolean
@@ -158,6 +159,7 @@ export default function PartyDashboard() {
           location: party?.location,
           theme: party?.theme || undefined,
           notes: party?.notes || undefined,
+          targetAge: party?.targetAge || undefined,
         }),
       })
 

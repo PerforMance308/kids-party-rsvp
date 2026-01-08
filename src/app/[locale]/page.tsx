@@ -17,7 +17,7 @@ export default function HomePage() {
 
   useEffect(() => {
     console.log('HomePage session check:', { status, session: !!session, userId: session?.user?.id })
-    
+
     if (status === 'loading') {
       setIsAuthenticated(null)
       setSessionError(null)
@@ -116,15 +116,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="card text-center">
-              <div className="text-4xl mb-4">✨</div>
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3">
-                {t('features.noLogin.title')}
-              </h3>
-              <p className="text-neutral-600">
-                {t('features.noLogin.desc')}
-              </p>
-            </div>
+
 
             <div className="card text-center">
               <div className="text-4xl mb-4">📊</div>

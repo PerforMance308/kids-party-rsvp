@@ -59,7 +59,22 @@ export async function GET(
     // Calculate child age
     const today = new Date()
     const birthDate = new Date(party.child.birthDate)
-    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+    const childAge = party.targetAge ?? calculatedAge
+
+    const partyData = {
+      id: party.id,
+      childName: party.child.name,
+      childAge,
+      eventDatetime: party.eventDatetime,
+      location: party.location,
+      theme: party.theme,
+      notes: party.notes,
+      allowPhotoSharing: party.allowPhotoSharing,
+      photoSharingPaid: party.photoSharingPaid,
+      guestCanSeeOthers: party.guestCanSeeOthers
+    }
 
     // Get other guests (if enabled)
     let guests: any[] = []

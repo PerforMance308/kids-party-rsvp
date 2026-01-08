@@ -67,7 +67,9 @@ export async function GET(
     // Calculate child age
     const today = new Date()
     const birthDate = new Date(party.child.birthDate)
-    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+    const childAge = party.targetAge ?? calculatedAge
 
     const partyWithStats = {
       ...party,
@@ -120,7 +122,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    
+
     // For party updates, we only allow updating basic party details, not child info
     // Child info should be updated through the child management system
     const validatedData = {
@@ -129,6 +131,7 @@ export async function PUT(
       theme: body.theme || null,
       notes: body.notes || null,
       template: body.template || 'free',
+      targetAge: body.targetAge != null ? parseInt(body.targetAge) : null,
     }
 
     // Check if any important details changed (date, time, location)
@@ -148,6 +151,7 @@ export async function PUT(
         theme: validatedData.theme,
         notes: validatedData.notes,
         template: validatedData.template,
+        targetAge: validatedData.targetAge,
       },
       include: {
         child: true,
@@ -192,7 +196,9 @@ export async function PUT(
     // Calculate child age
     const today = new Date()
     const birthDate = new Date(updatedParty.child.birthDate)
-    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+    const childAge = updatedParty.targetAge ?? calculatedAge
 
     const partyWithStats = {
       ...updatedParty,

@@ -32,17 +32,21 @@ export async function GET(
     // Calculate child age
     const today = new Date()
     const birthDate = new Date(party.child.birthDate)
-    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 
-    return NextResponse.json({
+    const childAge = party.targetAge ?? calculatedAge
+
+    const partyData = {
       id: party.id,
       childName: party.child.name,
       childAge,
       eventDatetime: party.eventDatetime,
       location: party.location,
       theme: party.theme,
-      notes: party.notes,
-    })
+      notes: party.notes
+    }
+
+    return NextResponse.json(partyData)
   } catch (error) {
     console.error('Fetch party by token error:', error)
     return NextResponse.json(
@@ -219,7 +223,8 @@ export async function POST(
       await sendEmail({
         to: party.user.email,
         subject: hostNotificationEmail.subject,
-        text: hostNotificationEmail.text
+        text: hostNotificationEmail.text,
+        html: hostNotificationEmail.html
       })
 
       console.log(`📧 Notification sent to host: ${party.user.email}`)

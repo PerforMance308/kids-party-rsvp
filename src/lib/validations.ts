@@ -19,6 +19,7 @@ export const partySchema = z.object({
   location: z.string().min(1, 'Location is required'),
   theme: z.string().optional(),
   notes: z.string().optional(),
+  targetAge: z.number().min(0).max(18).optional(),
 })
 
 // Legacy schema for backward compatibility
@@ -32,6 +33,7 @@ export const legacyPartySchema = z.object({
   location: z.string().min(1, 'Location is required'),
   theme: z.string().optional(),
   notes: z.string().optional(),
+  targetAge: z.number().min(0).max(18).optional(),
 })
 
 export const rsvpSchema = z.object({
