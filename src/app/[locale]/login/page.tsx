@@ -110,11 +110,11 @@ function LoginForm() {
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="card">
-          <div className="text-center mb-6">
+          <div className="text-center mb-4">
             <h1 className="text-2xl font-bold text-neutral-900">
               {t('login.title')}
             </h1>
-            <p className="text-neutral-600 mt-2">
+            <p className="text-neutral-600 mt-1">
               {t('login.subtitle')}
             </p>
           </div>
@@ -134,7 +134,7 @@ function LoginForm() {
             {t('login.signInWithGoogle')}
           </button>
 
-          <div className="relative">
+          <div className="relative mt-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import UserNav from './UserNav'
-import LanguageSwitcher from './LanguageSwitcher'
 import { useLocale } from '@/contexts/LanguageContext'
 
 export default function Header() {
@@ -16,12 +15,9 @@ export default function Header() {
             🎉 Kid Party RSVP
           </Link>
 
-          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-            <LanguageSwitcher />
-            <Suspense fallback={<div className="h-10 w-20 bg-neutral-100 animate-pulse rounded-lg"></div>}>
-              <UserNav />
-            </Suspense>
-          </div>
+          <Suspense fallback={<div className="h-10 w-20 bg-neutral-100 animate-pulse rounded-lg"></div>}>
+            <UserNav />
+          </Suspense>
         </div>
       </div>
     </header>

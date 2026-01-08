@@ -47,8 +47,8 @@ export default function LanguageSwitcher() {
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Dropdown */}
-          <div className="absolute right-0 mt-2 py-1 bg-white border border-neutral-200 rounded-lg shadow-lg z-20 min-w-[120px]">
+          {/* Dropdown - 往上弹出 */}
+          <div className="absolute right-0 bottom-full mb-2 py-1 bg-white border border-neutral-200 rounded-lg shadow-lg z-20 min-w-[120px]">
             {languages.map((language) => (
               <button
                 key={language.code}
