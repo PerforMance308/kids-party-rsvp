@@ -188,7 +188,7 @@ export default function PartyDashboard() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-neutral-900 mb-4">{t('rsvp.invitationNotFound')}</h1>
-          <Link href="/dashboard" className="btn btn-primary">
+          <Link href={`/${locale}/dashboard`} className="btn btn-primary">
             {tr('backToDashboard')}
           </Link>
         </div>
@@ -215,7 +215,7 @@ export default function PartyDashboard() {
         {/* Header - Always visible */}
         <div className="mb-6">
           <div className="flex items-center gap-4 mb-4">
-            <Link href="/dashboard" className="text-neutral-600 hover:text-neutral-900">
+            <Link href={`/${locale}/dashboard`} className="text-neutral-600 hover:text-neutral-900">
               ← {tr('backToDashboard')}
             </Link>
           </div>
