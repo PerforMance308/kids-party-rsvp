@@ -3,7 +3,7 @@ import { createTransporter } from './email'
 export interface EmailProvider {
   name: string
   test: () => Promise<boolean>
-  send: (to: string, subject: string, content: string) => Promise<void>
+  send: (to: string, subject: string, text: string, html?: string) => Promise<void>
 }
 
 // Gmail Provider
@@ -28,7 +28,7 @@ export const gmailProvider: EmailProvider = {
     }
   },
 
-  async send(to: string, subject: string, content: string) {
+  async send(to: string, subject: string, text: string, html?: string) {
     const transporter = createTransporter()
     if (!transporter) {
       throw new Error('Email transporter not available')
@@ -39,8 +39,8 @@ export const gmailProvider: EmailProvider = {
         : `Kid Party RSVP <${process.env.SMTP_USER}>`,
       to,
       subject,
-      text: content,
-      html: content.replace(/\n/g, '<br>')
+      text,
+      html: html || text.replace(/\n/g, '<br>')
     })
   }
 }
@@ -52,12 +52,15 @@ export const consoleProvider: EmailProvider = {
     return true // Console always works
   },
 
-  async send(to: string, subject: string, content: string) {
+  async send(to: string, subject: string, text: string, html?: string) {
     console.log('\n=== EMAIL NOTIFICATION (Console Provider) ===')
     console.log(`To: ${to}`)
     console.log(`Subject: ${subject}`)
-    console.log('Content:')
-    console.log(content)
+    console.log('Text content:')
+    console.log(text)
+    if (html) {
+      console.log('HTML content available (rich format)')
+    }
     console.log('===========================================\n')
   }
 }

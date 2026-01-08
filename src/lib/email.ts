@@ -92,7 +92,7 @@ export const createTransporter = () => {
 export async function sendEmail(emailData: EmailData) {
   try {
     const provider = await getEmailProvider()
-    await provider.send(emailData.to, emailData.subject, emailData.html || emailData.text)
+    await provider.send(emailData.to, emailData.subject, emailData.text, emailData.html)
     console.log(`✅ Email sent via ${provider.name} to ${emailData.to}`)
     return Promise.resolve()
   } catch (error) {
