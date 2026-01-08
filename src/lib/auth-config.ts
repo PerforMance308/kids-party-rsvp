@@ -89,7 +89,8 @@ export const authOptions: NextAuthOptions = {
             token.userId = dbUser.id
           } catch (error) {
             console.error('Database error in JWT callback:', error)
-            return null
+            // Return token even if database operation fails
+            return token
           }
         }
       }

@@ -5,15 +5,15 @@ import { prisma } from '@/lib/prisma'
 import PhotoSharingPayment from './PhotoSharingPayment'
 
 interface PageProps {
-  params: Promise<{ partyId: string }>
+  params: Promise<{ partyId: string; locale: string }>
 }
 
 export default async function PhotoSharingPaymentPage({ params }: PageProps) {
-  const { partyId } = await params
+  const { partyId, locale } = await params
   const session = await getServerSession(authOptions)
 
   if (!session || !session.user?.id) {
-    redirect('/login')
+    redirect(`/${locale}/login`)
   }
 
   // Get party details
@@ -33,7 +33,7 @@ export default async function PhotoSharingPaymentPage({ params }: PageProps) {
 
   // Check if photo sharing is already enabled
   if (party.photoSharingPaid) {
-    redirect(`/party/${partyId}/dashboard`)
+    redirect(`/${locale}/party/${partyId}/dashboard`)
   }
 
   return (

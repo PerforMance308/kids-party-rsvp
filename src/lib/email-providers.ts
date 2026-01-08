@@ -16,6 +16,9 @@ export const gmailProvider: EmailProvider = {
     
     try {
       const transporter = createTransporter()
+      if (!transporter) {
+        return false
+      }
       await transporter.verify()
       return true
     } catch (error) {
@@ -26,6 +29,9 @@ export const gmailProvider: EmailProvider = {
   
   async send(to: string, subject: string, content: string) {
     const transporter = createTransporter()
+    if (!transporter) {
+      throw new Error('Email transporter not available')
+    }
     await transporter.sendMail({
       from: process.env.SMTP_FROM,
       to,

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { formatDateForInput } from '@/lib/utils'
+import { useLocale } from '@/contexts/LanguageContext'
 
 interface Party {
   id: string
@@ -19,6 +20,7 @@ export default function EditPartyPage() {
   const { id } = useParams()
   const router = useRouter()
   const { data: session, status } = useSession()
+  const locale = useLocale()
   const [party, setParty] = useState<Party | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -36,7 +38,7 @@ export default function EditPartyPage() {
     if (status === 'loading') return
 
     if (status === 'unauthenticated' || !session?.user?.id) {
-      router.push(('/login?redirect=' + encodeURIComponent('/party/' + id + '/edit')) as any)
+      router.push(`/${locale}/login?redirect=${encodeURIComponent(`/${locale}/party/${id}/edit`)}`)
       return
     }
   }, [status, session, router, id])
@@ -102,7 +104,7 @@ export default function EditPartyPage() {
 
         // Redirect to party dashboard after a short delay
         setTimeout(() => {
-          router.push(`/party/${id}/dashboard`)
+          router.push(`/${locale}/party/${id}/dashboard`)
         }, 2000)
       } else {
         const errorData = await response.json()

@@ -42,7 +42,7 @@ function RegisterForm() {
         })
 
         if (loginResult?.ok) {
-          router.push((redirectUrl || '/dashboard') as any)
+          router.push((redirectUrl || `/${locale}/dashboard`) as any)
           router.refresh()
         }
         return

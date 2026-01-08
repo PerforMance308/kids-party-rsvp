@@ -60,7 +60,7 @@ export async function schedulePhotoSharingNotifications(partyId: string) {
           childAge: childAge,
           eventDatetime: party.eventDatetime,
           location: party.location,
-          theme: party.theme,
+          theme: party.theme || undefined,
           publicRsvpToken: party.publicRsvpToken
         },
         {

@@ -51,7 +51,7 @@ export default function InvitationsPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login?redirect=/invitations')
+      router.push(`/${locale}/login?redirect=/${locale}/invitations`)
       return
     }
 

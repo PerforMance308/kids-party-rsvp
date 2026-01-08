@@ -34,7 +34,7 @@ export default function ChildrenPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login?redirect=/children')
+      router.push(`/${locale}/login?redirect=/${locale}/children`)
       return
     }
     
@@ -298,13 +298,13 @@ export default function ChildrenPage() {
             </h3>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={() => router.push('/party/new')}
+                onClick={() => router.push(`/${locale}/party/new`)}
                 className="btn btn-primary"
               >
                 Create New Party
               </button>
               <button
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push(`/${locale}/dashboard`)}
                 className="btn btn-secondary"
               >
                 View All Parties
