@@ -322,8 +322,13 @@ const translations = {
     'features.privacy.desc': 'Your parties are completely private. Guests can\'t see other attendees\' information.',
 
     // CTA部分
-    'cta.title': 'Ready to Plan Your Party?',
-    'cta.subtitle': 'Join thousands of parents who\'ve made party planning simple and stress-free.',
+    'cta.title': 'Ready to make your child\'s day special?',
+    'cta.subtitle': 'Join thousands of parents who use Kid Party RSVP to plan perfect, stress-free birthday celebrations.',
+    'auth.verifySent': 'Verification email sent to',
+    'auth.verifyReminder': 'Your email is not verified. Please check your inbox at',
+    'auth.resendVerify': 'Resend verification email',
+    'auth.sending': 'Sending...',
+    'auth.sendFailed': 'Failed to send. Please try again later.',
 
     // Dashboard
     'dashboard.title': 'My Dashboard',

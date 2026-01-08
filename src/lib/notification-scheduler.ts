@@ -35,7 +35,7 @@ export async function schedulePhotoSharingNotifications(partyId: string) {
     const birthDate = new Date(party.child.birthDate)
     const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 
-    const childAge = party.targetAge ?? calculatedAge
+    const childAge = (party as any).targetAge ?? calculatedAge
 
     // Create notifications for all guests who RSVPed YES
     const attendingGuests = party.guests.filter(guest => guest.rsvp?.status === 'YES')
@@ -83,7 +83,7 @@ export async function schedulePhotoSharingNotifications(partyId: string) {
           htmlContent: emailContent.html,
           relatedId: partyId,
           scheduledAt: notificationDate
-        }
+        } as any
       })
 
       console.log(`📷 Scheduled photo sharing notification for ${guest.email} on ${notificationDate.toISOString()}`)
@@ -160,7 +160,7 @@ export async function scheduleBirthdayReminders() {
             htmlContent: emailContent.html,
             relatedId: child.id,
             scheduledAt: new Date() // Send immediately
-          }
+          } as any
         })
 
         console.log(`🎂 Scheduled birthday reminder for ${child.name} (${child.user.email})`)
@@ -196,6 +196,25 @@ export async function processPendingEmails() {
 
     for (const notification of pendingEmails) {
       try {
+        // Check if user is verified before sending (double-check since it might have been scheduled while verified or vice versa)
+        const user = await prisma.user.findUnique({
+          where: { id: notification.userId },
+          select: { emailVerified: true }
+        })
+
+        if (!user?.emailVerified) {
+          console.log(`⚠️ Skipping email for unverified user ${notification.email}: ${notification.subject}`)
+          // We mark as failed with a specific error so we don't keep trying
+          await prisma.emailNotification.update({
+            where: { id: notification.id },
+            data: {
+              status: 'failed',
+              error: 'Email address not verified'
+            }
+          })
+          continue
+        }
+
         // Update attempts before sending
         await prisma.emailNotification.update({
           where: { id: notification.id },
@@ -209,7 +228,7 @@ export async function processPendingEmails() {
           to: notification.email,
           subject: notification.subject,
           text: notification.content,
-          html: notification.htmlContent || undefined
+          html: (notification as any).htmlContent || undefined
         })
 
         // Mark as sent

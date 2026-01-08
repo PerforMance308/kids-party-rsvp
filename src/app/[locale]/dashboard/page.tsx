@@ -10,6 +10,16 @@ import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
+
+  useEffect(() => {
+    if (session) {
+      console.log('[DEBUG] Dashboard session user:', {
+        email: session.user.email,
+        emailVerified: session.user.emailVerified,
+        id: session.user.id
+      })
+    }
+  }, [session])
   const router = useRouter()
   const locale = useLocale()
   const { t } = useLanguage()

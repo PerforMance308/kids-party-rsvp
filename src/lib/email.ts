@@ -760,3 +760,85 @@ P.S. Early planning means less stress and more fun for everyone! 🎈`
     html: wrapHtmlEmail(subject, htmlContent, getBaseUrl(), 'Start Planning Now')
   }
 }
+
+export function generateVerificationEmail(
+  email: string,
+  token: string,
+  locale: 'en' | 'zh' = 'en'
+) {
+  const verifyUrl = `${getBaseUrl()}/api/auth/verify?token=${token}`
+
+  const content = {
+    en: {
+      subject: 'Verify your email for Kid Party RSVP',
+      greeting: 'Welcome to Kid Party RSVP!',
+      body: 'Please verify your email address to enable automatic reminders and notifications for your parties.',
+      button: 'Verify Email',
+      footer: 'If you did not create this account, you can safely ignore this email.'
+    },
+    zh: {
+      subject: '验证您的 Kid Party RSVP 邮箱',
+      greeting: '欢迎来到 Kid Party RSVP！',
+      body: '请验证您的电子邮箱地址，以开启派对自动提醒和通知功能。',
+      button: '验证邮箱',
+      footer: '如果您没有创建过此账号，请忽略此邮件。'
+    }
+  }
+
+  const t = content[locale]
+
+  const plainText = `${t.greeting}\n\n${t.body}\n\n${t.button}: ${verifyUrl}\n\n${t.footer}`
+
+  const htmlContent = `
+    <p class="greeting">${t.greeting}</p>
+    <p>${t.body}</p>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #6b7280;">${t.footer}</p>
+  `
+
+  return {
+    subject: t.subject,
+    text: plainText,
+    html: wrapHtmlEmail(t.subject, htmlContent, verifyUrl, t.button)
+  }
+}
+
+export function generatePasswordResetEmail(
+  email: string,
+  token: string,
+  locale: 'en' | 'zh' = 'en'
+) {
+  const resetUrl = `${getBaseUrl()}/${locale}/login/reset-password?token=${token}`
+
+  const content = {
+    en: {
+      subject: 'Reset your password for Kid Party RSVP',
+      greeting: 'Password Reset Request',
+      body: 'You requested to reset your password. Click the button below to set a new password. This link will expire in 1 hour.',
+      button: 'Reset Password',
+      footer: 'If you did not request this, please ignore this email.'
+    },
+    zh: {
+      subject: '重置您的 Kid Party RSVP 密码',
+      greeting: '重置密码请求',
+      body: '您申请了重置密码。点击下方按钮设置新密码。此链接将在 1 小时内失效。',
+      button: '重置密码',
+      footer: '如果您没有提交此请求，请忽略此邮件。'
+    }
+  }
+
+  const t = content[locale]
+
+  const plainText = `${t.greeting}\n\n${t.body}\n\n${t.button}: ${resetUrl}\n\n${t.footer}`
+
+  const htmlContent = `
+    <p class="greeting">${t.greeting}</p>
+    <p>${t.body}</p>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #6b7280;">${t.footer}</p>
+  `
+
+  return {
+    subject: t.subject,
+    text: plainText,
+    html: wrapHtmlEmail(t.subject, htmlContent, resetUrl, t.button)
+  }
+}

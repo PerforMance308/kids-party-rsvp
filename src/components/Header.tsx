@@ -4,9 +4,13 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import UserNav from './UserNav'
 import { useLocale } from '@/contexts/LanguageContext'
+import { useSession } from 'next-auth/react'
+import VerificationBanner from './VerificationBanner'
 
 export default function Header() {
   const locale = useLocale()
+  const { data: session } = useSession()
+
   return (
     <header className="bg-white/95 backdrop-blur-sm border-b border-neutral-200 sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -20,6 +24,9 @@ export default function Header() {
           </Suspense>
         </div>
       </div>
+      {!session?.user?.emailVerified && session?.user?.email && (
+        <VerificationBanner email={session.user.email} />
+      )}
     </header>
   )
 }

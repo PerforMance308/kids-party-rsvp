@@ -207,6 +207,11 @@ function LoginForm() {
             >
               {isLoading ? t('login.signingIn') : t('login.signIn')}
             </button>
+            <div className="text-center mt-2">
+              <Link href={`/${locale}/login/forgot-password`} className="text-sm text-primary-600 hover:text-primary-700">
+                Forgot password?
+              </Link>
+            </div>
           </form>
 
           <div className="text-center mt-6">
