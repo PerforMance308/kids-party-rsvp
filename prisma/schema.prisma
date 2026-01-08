@@ -91,7 +91,7 @@ model Party {
   theme                 String?
   notes                 String?
   template              String     @default("free")
-  templatePaid          Boolean    @default(false) @map("template_paid")
+  paidTemplates         String[]   @default([]) @map("paid_templates")
   publicRsvpToken       String     @unique @default(uuid()) @map("public_rsvp_token")
   photoSharingPaid      Boolean    @default(false) @map("photo_sharing_paid")
   allowPhotoSharing     Boolean    @default(false) @map("allow_photo_sharing")

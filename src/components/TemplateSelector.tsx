@@ -20,13 +20,13 @@ interface TemplateSelectorProps {
   onTemplateSelect: (template: string) => void
   partyId: string
   currentTemplate: string
-  templatePaid: boolean
+  paidTemplates: string[]
 }
 
 type TemplateType = 'free' | 'premium1' | 'premium2' | 'premium3' | 'premium4'
 
 
-export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplateSelect, partyId, currentTemplate, templatePaid }: TemplateSelectorProps) {
+export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplateSelect, partyId, currentTemplate, paidTemplates }: TemplateSelectorProps) {
   const t = useTranslations('templates')
   
   // 添加CSS样式来隐藏滚动条
@@ -83,15 +83,21 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
   const [selectedTemplate, setSelectedTemplate] = useState('')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
+  // 检查某个模板是否已购买
+  const isTemplatePurchased = (templateId: string) => {
+    return paidTemplates.includes(templateId)
+  }
+
   const handleTemplateClick = (templateId: string) => {
     const template = templates.find(t => t.id === templateId)
-    
-    if (template?.isPremium && !templatePaid) {
+
+    // 如果是付费模板且未购买，显示支付弹窗
+    if (template?.isPremium && !isTemplatePurchased(templateId)) {
       setSelectedTemplate(templateId)
       setShowPayment(true)
       return
     }
-    
+
     onTemplateSelect(templateId)
   }
 
@@ -192,14 +198,13 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
           {templates.map((template) => (
             <div
               key={template.id}
-              className={`relative group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center ${
+              className={`relative group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center w-[280px] sm:w-[calc((100%-48px)/2)] lg:w-[calc((100%-96px)/3)] ${
                 currentTemplate === template.id
                   ? 'border-primary-500 bg-primary-50 shadow-lg'
-                  : template.isPremium && !templatePaid 
-                  ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:border-orange-300 hover:shadow-lg' 
+                  : template.isPremium && !isTemplatePurchased(template.id)
+                  ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:border-orange-300 hover:shadow-lg'
                   : 'border-neutral-200 bg-white hover:border-primary-300 hover:shadow-lg'
               }`}
-              style={{ width: 'calc((100% - 48px - 48px) / 3)' }}
               onClick={() => handleTemplateClick(template.id)}
             >
               {/* Premium 标签 */}
@@ -239,7 +244,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                     }`}>
                       {template.price}
                     </span>
-                    {template.isPremium && !templatePaid && (
+                    {template.isPremium && !isTemplatePurchased(template.id) && (
                       <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
                         {t('needsPurchase')}
                       </span>
@@ -266,7 +271,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                   className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
                     currentTemplate === template.id
                       ? 'bg-green-600 text-white'
-                      : template.isPremium && !templatePaid
+                      : template.isPremium && !isTemplatePurchased(template.id)
                       ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600'
                       : 'bg-primary-600 text-white hover:bg-primary-700'
                   }`}
@@ -278,14 +283,14 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                 >
                   {currentTemplate === template.id 
                     ? t('currentlyUsing') 
-                    : template.isPremium && !templatePaid 
+                    : template.isPremium && !isTemplatePurchased(template.id) 
                     ? t('purchaseUse') 
                     : t('selectTemplate')}
                 </button>
               </div>
 
               {/* 锁定遮罩 */}
-              {template.isPremium && !templatePaid && (
+              {template.isPremium && !isTemplatePurchased(template.id) && (
                 <div className="absolute top-0 left-0 right-0 bottom-0 bg-black/10 pointer-events-none">
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 rounded-full p-3 shadow-lg">
                     <svg className="w-8 h-8 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
@@ -299,35 +304,6 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
           </div>
         </div>
 
-        {/* 付费模板介绍 */}
-        {!templatePaid && (
-          <div className="mt-8 p-6 bg-gradient-to-r from-orange-50 via-yellow-50 to-orange-50 border border-orange-200 rounded-xl">
-            <div className="text-center">
-              <div className="text-orange-500 mb-3">
-                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h4 className="text-xl font-bold text-orange-800 mb-2">购买精美付费模板</h4>
-              <p className="text-orange-700 mb-4 max-w-md mx-auto">
-                为这个派对购买专业设计的邀请卡模板，让邀请更加精美特别！每个模板仅需¥9.9
-              </p>
-              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mb-4 text-sm">
-                <div className="text-center p-3 bg-white rounded-lg">
-                  <div className="font-bold text-orange-600">按需购买</div>
-                  <div className="text-orange-700">¥9.9 / 模板</div>
-                </div>
-                <div className="text-center p-3 bg-white rounded-lg">
-                  <div className="font-bold text-orange-600">专业设计</div>
-                  <div className="text-orange-700">4款精美样式</div>
-                </div>
-              </div>
-              <p className="text-sm text-orange-600">
-                点击上方付费模板的"购买使用"按钮即可购买使用
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 支付弹窗 */}

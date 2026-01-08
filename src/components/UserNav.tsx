@@ -69,15 +69,7 @@ export default function UserNav() {
                         </svg>
                     </button>
 
-                    {/* Primary action - always visible */}
-                    <Link 
-                        href={`/${locale}/party/new`} 
-                        className="btn btn-primary text-sm whitespace-nowrap flex items-center justify-center min-w-fit px-4 py-2"
-                    >
-                        {t('nav.newParty')}
-                    </Link>
-                    
-                    {/* Secondary action - hidden on mobile */}
+                    {/* Logout button - hidden on mobile (available in mobile menu) */}
                     <button
                         onClick={() => signOut({ callbackUrl: `/${locale}` })}
                         className="hidden md:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm"

@@ -36,15 +36,21 @@ export async function POST(
       return NextResponse.json({ error: 'Template is not premium' }, { status: 400 })
     }
 
+    // Check if this template is already purchased
+    const alreadyPurchased = (party.paidTemplates || []).includes(template)
+
     // TODO: 这里应该集成真实的支付系统（微信支付、支付宝等）
     // 现在暂时模拟支付成功
-    
-    // Update party to mark template as paid and set the template
+
+    // Update party: add template to paidTemplates if not already purchased
     const updatedParty = await prisma.party.update({
       where: { id },
       data: {
         template,
-        templatePaid: true
+        // Only add to paidTemplates if not already purchased
+        paidTemplates: alreadyPurchased
+          ? undefined
+          : { push: template }
       },
       include: {
         child: true,
@@ -79,7 +85,7 @@ export async function POST(
       theme: updatedParty.theme,
       notes: updatedParty.notes,
       template: updatedParty.template,
-      templatePaid: updatedParty.templatePaid,
+      paidTemplates: updatedParty.paidTemplates,
       publicRsvpToken: updatedParty.publicRsvpToken,
       rsvpUrl: `${getBaseUrl()}/rsvp/${updatedParty.publicRsvpToken}`,
       guests: updatedParty.guests,
