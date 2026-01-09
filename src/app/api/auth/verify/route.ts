@@ -9,9 +9,10 @@ import { authOptions } from '@/lib/auth-config'
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
+    const baseUrl = new URL(request.url).origin
 
     if (!token) {
-        return NextResponse.json({ error: 'Missing token' }, { status: 400 })
+        return NextResponse.redirect(`${baseUrl}/en/verify-result?status=error&reason=missing`)
     }
 
     try {
@@ -19,8 +20,15 @@ export async function GET(request: NextRequest) {
             where: { token }
         })
 
-        if (!verificationToken || verificationToken.expires < new Date()) {
-            return NextResponse.json({ error: 'Invalid or expired token' }, { status: 400 })
+        if (!verificationToken) {
+            // Token not found - might already be verified
+            return NextResponse.redirect(`${baseUrl}/en/verify-result?status=error&reason=invalid`)
+        }
+
+        if (verificationToken.expires < new Date()) {
+            // Token expired
+            await prisma.verificationToken.delete({ where: { token } })
+            return NextResponse.redirect(`${baseUrl}/en/verify-result?status=error&reason=expired`)
         }
 
         // Update user
@@ -34,12 +42,10 @@ export async function GET(request: NextRequest) {
             where: { token }
         })
 
-        // Redirect to dashboard with success message
-        const baseUrl = new URL(request.url).origin
-        return NextResponse.redirect(`${baseUrl}/en/dashboard?verified=true`)
+        // Redirect to success page
+        return NextResponse.redirect(`${baseUrl}/en/verify-result?status=success`)
     } catch (error) {
-        console.error('Email verification error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return NextResponse.redirect(`${baseUrl}/en/verify-result?status=error&reason=server`)
     }
 }
 
