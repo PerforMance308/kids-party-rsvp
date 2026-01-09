@@ -68,7 +68,7 @@ function LoginForm() {
         setError('Invalid email or password')
         setIsLoading(false)
       } else if (result?.ok) {
-        window.location.href = (redirectUrl || '/dashboard') as string
+        window.location.href = redirectUrl || `/${locale}/dashboard`
       }
     } catch {
       setError('An error occurred. Please try again.')

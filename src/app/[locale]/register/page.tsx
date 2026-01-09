@@ -49,8 +49,7 @@ function RegisterForm() {
         })
 
         if (loginResult?.ok) {
-          router.push((redirectUrl || `/${locale}`) as any)
-          router.refresh()
+          window.location.href = redirectUrl || `/${locale}/dashboard`
         }
         return
       } else {
