@@ -66,17 +66,13 @@ export default function PartyDashboard() {
   const loadQRCode = async () => {
     if (!id) return
     try {
-      console.log('Loading QR code for party:', id)
       const response = await fetch(`/api/parties/${id}/qr`)
       if (response.ok) {
         const data = await response.json()
-        console.log('QR code loaded:', data.qrCode ? 'success' : 'failed')
         setQrCode(data.qrCode)
-      } else {
-        console.error('QR code response not ok:', response.status, response.statusText)
       }
-    } catch (error) {
-      console.error('Failed to load QR code:', error)
+    } catch {
+      // Failed to load QR code
     }
   }
 
@@ -85,12 +81,10 @@ export default function PartyDashboard() {
       if (!id) return
 
       try {
-        console.log('Fetching party:', id)
         const response = await fetch(`/api/parties/${id}`)
         if (response.ok) {
           const data = await response.json()
           setParty(data)
-          console.log('Party loaded, now loading QR code')
           // Load QR code after party is loaded
           await loadQRCode()
         } else {

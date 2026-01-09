@@ -16,21 +16,16 @@ export default function HomePage() {
   const [sessionError, setSessionError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log('HomePage session check:', { status, session: !!session, userId: session?.user?.id })
-
     if (status === 'loading') {
       setIsAuthenticated(null)
       setSessionError(null)
     } else if (status === 'authenticated' && session?.user?.id) {
-      console.log('User authenticated:', session.user.email)
       setIsAuthenticated(true)
       setSessionError(null)
     } else if (status === 'unauthenticated') {
-      console.log('User not authenticated')
       setIsAuthenticated(false)
       setSessionError(null)
     } else {
-      console.error('Session status unclear:', { status, session })
       setSessionError('Session check failed')
       setIsAuthenticated(false)
     }
@@ -40,7 +35,6 @@ export default function HomePage() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (status === 'loading') {
-        console.warn('Session loading timeout, falling back to unauthenticated state')
         setSessionError('Connection timeout')
         setIsAuthenticated(false)
       }
@@ -113,28 +107,6 @@ export default function HomePage() {
               </h3>
               <p className="text-neutral-600">
                 {t('features.qrCode.desc')}
-              </p>
-            </div>
-
-
-
-            <div className="card text-center">
-              <div className="text-4xl mb-4">📊</div>
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3">
-                {t('features.dashboard.title')}
-              </h3>
-              <p className="text-neutral-600">
-                {t('features.dashboard.desc')}
-              </p>
-            </div>
-
-            <div className="card text-center">
-              <div className="text-4xl mb-4">🔄</div>
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3">
-                {t('features.contacts.title')}
-              </h3>
-              <p className="text-neutral-600">
-                {t('features.contacts.desc')}
               </p>
             </div>
 

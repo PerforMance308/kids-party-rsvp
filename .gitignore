@@ -51,6 +51,10 @@ next-env.d.ts
 # logs
 logs
 *.log
+build_log.txt
+build_output.txt
+build_output_utf8.txt
+build_output_*.txt
 
 # runtime data
 pids

@@ -9,14 +9,6 @@ import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 export default function UserNav() {
     const { data: session, status } = useSession()
 
-    // Debug logging
-    console.log('[DEBUG] UserNav status:', {
-        status,
-        hasSession: !!session,
-        user: session?.user?.email,
-        path: typeof window !== 'undefined' ? window.location.pathname : ''
-    })
-
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const locale = useLocale()

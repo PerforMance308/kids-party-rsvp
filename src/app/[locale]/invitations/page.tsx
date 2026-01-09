@@ -56,25 +56,24 @@ export default function InvitationsPage() {
     }
 
     if (status === 'authenticated') {
+      const loadInvitations = async () => {
+        try {
+          const response = await fetch('/api/invitations')
+          if (response.ok) {
+            const data = await response.json()
+            setInvitations(data)
+          } else {
+            setError(t('error.loadingError'))
+          }
+        } catch (error) {
+          setError(t('error.loadingError'))
+        } finally {
+          setIsLoading(false)
+        }
+      }
       loadInvitations()
     }
-  }, [status, router])
-
-  const loadInvitations = async () => {
-    try {
-      const response = await fetch('/api/invitations')
-      if (response.ok) {
-        const data = await response.json()
-        setInvitations(data)
-      } else {
-        setError(t('error.loadingError'))
-      }
-    } catch (error) {
-      setError(t('error.loadingError'))
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  }, [status, router, locale, t])
 
   if (status === 'loading' || isLoading) {
     return (

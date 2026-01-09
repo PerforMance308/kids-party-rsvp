@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { formatDateForInput } from '@/lib/utils'
 import { useLocale } from '@/contexts/LanguageContext'
+import Link from 'next/link'
 
 interface Party {
   id: string
@@ -178,7 +179,7 @@ export default function EditPartyPage() {
                   {party.childName}'s {party.childAge}th Birthday Party
                 </p>
                 <p className="text-sm text-neutral-600 mt-1">
-                  To update child information, visit the <a href="/children" className="text-primary-600 hover:text-primary-700">Children Management</a> page
+                  To update child information, visit the <Link href={`/${locale}/children`} className="text-primary-600 hover:text-primary-700">Children Management</Link> page
                 </p>
               </div>
             </div>

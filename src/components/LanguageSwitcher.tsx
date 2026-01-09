@@ -13,7 +13,6 @@ export default function LanguageSwitcher() {
   const switchLanguage = (newLocale: string) => {
     const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '')
     const newPath = `/${newLocale}${pathWithoutLocale}`
-    console.log('Switching language:', { from: locale, to: newLocale, currentPath: pathname, newPath })
     router.push(newPath as any)
     setIsOpen(false)
   }

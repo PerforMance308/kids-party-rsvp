@@ -25,7 +25,7 @@ export default function ChildrenPage() {
   const [showForm, setShowForm] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
-  
+
   // Form state
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
@@ -37,11 +37,11 @@ export default function ChildrenPage() {
       router.push(`/${locale}/login?redirect=/${locale}/children`)
       return
     }
-    
+
     if (status === 'authenticated') {
       loadChildren()
     }
-  }, [status, router])
+  }, [status, router, locale])
 
   const loadChildren = async () => {
     try {
@@ -133,7 +133,7 @@ export default function ChildrenPage() {
             <h2 className="text-xl font-semibold text-neutral-900 mb-4">
               {t('children.addChild')}
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -257,7 +257,7 @@ export default function ChildrenPage() {
                     {child.age} {t('children.years')}
                   </span>
                 </div>
-                
+
                 <div className="space-y-2 text-sm text-neutral-600 mb-4">
                   <p>
                     <strong>{t('children.born')}</strong> {new Date(child.birthDate).toLocaleDateString()}

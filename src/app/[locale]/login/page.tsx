@@ -19,22 +19,10 @@ function LoginForm() {
   const redirectUrl = searchParams.get('redirect')
   const { data: session, status } = useSession()
 
-  // Check for session
-  useEffect(() => {
-    console.log('[DEBUG] Login page - Auth status:', {
-      status,
-      session: session ? 'exists' : 'null',
-      userId: session?.user?.id,
-      email: session?.user?.email,
-      cookie: typeof document !== 'undefined' ? document.cookie.split(';').map(c => c.trim().split('=')[0]) : 'no-document'
-    })
-  }, [status, session])
-
   // If fully authenticated, auto-redirect
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
       const target = (redirectUrl || `/${locale}/dashboard`) as string
-      console.log('[DEBUG] User already authenticated, redirecting to:', target)
       window.location.href = target
     }
   }, [status, session, redirectUrl, locale])
@@ -69,7 +57,6 @@ function LoginForm() {
     setError('')
 
     try {
-      console.log('Attempting credentials login for:', email)
       const result = await signIn('credentials', {
         email,
         password,
@@ -77,20 +64,13 @@ function LoginForm() {
         callbackUrl: redirectUrl || '/dashboard',
       })
 
-      console.log('Login result:', result)
-
       if (result?.error) {
         setError('Invalid email or password')
         setIsLoading(false)
       } else if (result?.ok) {
-        // Manual redirect on success
-        console.log('Login successful, redirecting manually...')
-        // Use window.location.href instead of router.push to force a full page reload
-        // This ensures the session cookie is properly sent to the server for the new page
         window.location.href = (redirectUrl || '/dashboard') as string
       }
-    } catch (error) {
-      console.error('Login error:', error)
+    } catch {
       setError('An error occurred. Please try again.')
       setIsLoading(false)
     }
@@ -99,12 +79,10 @@ function LoginForm() {
   const handleGoogleSignIn = async () => {
     try {
       const callbackUrl = redirectUrl || `/${locale}`
-      console.log('Starting Google sign-in with callbackUrl:', callbackUrl)
       await signIn('google', {
         callbackUrl
       })
-    } catch (error) {
-      console.error('Google sign-in error:', error)
+    } catch {
       setError('Google sign-in failed. Please try again.')
     }
   }

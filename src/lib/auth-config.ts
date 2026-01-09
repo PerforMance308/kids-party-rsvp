@@ -77,7 +77,6 @@ export const authOptions: NextAuthOptions = {
           select: { emailVerified: true }
         })
         token.emailVerified = dbUser?.emailVerified
-        console.log(`[AUTH DEBUG] JWT Callback - User: ${token.userId}, emailVerified:`, token.emailVerified)
       }
 
       return token
@@ -89,7 +88,6 @@ export const authOptions: NextAuthOptions = {
           session.user.id = token.userId as string
         }
         session.user.emailVerified = token.emailVerified as any
-        console.log(`[AUTH DEBUG] Session Callback - User: ${session.user.id}, emailVerified:`, session.user.emailVerified)
       }
       return session
     }

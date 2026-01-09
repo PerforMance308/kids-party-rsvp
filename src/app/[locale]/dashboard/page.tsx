@@ -10,16 +10,6 @@ import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
-
-  useEffect(() => {
-    if (session) {
-      console.log('[DEBUG] Dashboard session user:', {
-        email: session.user.email,
-        emailVerified: session.user.emailVerified,
-        id: session.user.id
-      })
-    }
-  }, [session])
   const router = useRouter()
   const locale = useLocale()
   const { t } = useLanguage()
@@ -33,7 +23,6 @@ export default function DashboardPage() {
     if (status === 'loading') return
 
     if (status === 'unauthenticated' || !session?.user?.id) {
-      console.log('Dashboard - Not authenticated, redirecting to login')
       router.push(`/${locale}/login?redirect=/${locale}/dashboard`)
     }
   }, [status, session, router, locale])
@@ -51,7 +40,6 @@ export default function DashboardPage() {
           const data = await response.json()
           setParties(data)
         } else if (response.status === 401) {
-          console.log('Unauthorized, redirecting to login')
           window.location.href = `/${locale}/login?redirect=/${locale}/dashboard`
           return
         } else {
@@ -65,7 +53,7 @@ export default function DashboardPage() {
     }
 
     fetchParties()
-  }, [status, session])
+  }, [status, session, locale])
 
   const handleDeleteParty = async (partyId: string) => {
     setDeletingParty(partyId)
