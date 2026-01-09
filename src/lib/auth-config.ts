@@ -64,6 +64,16 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
+    signIn: async ({ user, account, profile }) => {
+      // If the user is signing in with Google, we can assume the email is verified
+      if (account?.provider === 'google' && (profile as any)?.email_verified) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerified: new Date() }
+        })
+      }
+      return true
+    },
     jwt: async ({ token, user }) => {
       // Store user ID in token for session access
       if (user) {
