@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { formatDate } from '@/lib/utils'
-import { useLanguage, useTranslations } from '@/contexts/LanguageContext'
+import Link from 'next/link'
+import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageContext'
 
 interface Party {
   id: string
@@ -26,6 +27,7 @@ export default function RSVPPage() {
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const { t } = useLanguage()
+  const locale = useLocale()
   const tr = useTranslations('rsvp')
   const [showRegistration, setShowRegistration] = useState(false)
   const [userChildren, setUserChildren] = useState<any[]>([])
@@ -44,6 +46,7 @@ export default function RSVPPage() {
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [showRegPassword, setShowRegPassword] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // Form state
   const [parentName, setParentName] = useState('')
@@ -163,6 +166,12 @@ export default function RSVPPage() {
     e.preventDefault()
     setIsSubmitting(true)
     setError('')
+
+    if (!agreedToTerms) {
+      setError(t('register.agreeToTerms'))
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       const response = await fetch('/api/auth/register', {
@@ -329,12 +338,12 @@ export default function RSVPPage() {
               </p>
             </div>
 
-            <a
-              href={`/party/guest/${token}`}
-              className="w-full btn btn-primary"
+            <Link
+              href={`/${locale}/party/guest/${token}`}
+              className="w-full btn btn-primary block text-center"
             >
               {tr('goGuestPage')}
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -459,6 +468,26 @@ export default function RSVPPage() {
                       <li>• {t('register.oneNumber')} (!@#$%^&*)</li>
                     </ul>
                   </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                  />
+                  <label htmlFor="terms" className="text-sm text-neutral-600">
+                    {t('register.iAgreeTo')}{' '}
+                    <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline" target="_blank">
+                      {t('register.termsOfService')}
+                    </Link>{' '}
+                    {t('common.and')}{' '}
+                    <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline" target="_blank">
+                      {t('register.privacyPolicy')}
+                    </Link>
+                  </label>
                 </div>
 
                 {error && (

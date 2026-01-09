@@ -4,12 +4,14 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 function RegisterForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -20,6 +22,12 @@ function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy')
+      return
+    }
+
     setIsLoading(true)
     setError('')
 
@@ -38,12 +46,11 @@ function RegisterForm() {
           email,
           password,
           redirect: false,
-          callbackUrl: redirectUrl || '/dashboard',
+          callbackUrl: redirectUrl || '/',
         })
 
         if (loginResult?.ok) {
-          router.push((redirectUrl || '/dashboard') as any)
-          router.refresh()
+          window.location.href = redirectUrl || `/${locale}`
         }
         return
       } else {
@@ -58,12 +65,16 @@ function RegisterForm() {
   }
 
   const handleGoogleSignIn = async () => {
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy')
+      return
+    }
+
     try {
       await signIn('google', {
-        callbackUrl: redirectUrl || '/dashboard',
+        callbackUrl: redirectUrl || `/${locale}`,
       })
-    } catch (error) {
-      console.error('Google sign-up error:', error)
+    } catch {
       setError(t('register.googleSignUpFailed'))
     }
   }
@@ -72,7 +83,17 @@ function RegisterForm() {
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="card">
-          <div className="text-center mb-6">
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/logo.png"
+                alt="Kid Party RSVP"
+                width={280}
+                height={70}
+                className="h-16 w-auto object-contain"
+                priority
+              />
+            </div>
             <h1 className="text-2xl font-bold text-neutral-900">
               {t('register.title')}
             </h1>
@@ -162,6 +183,26 @@ function RegisterForm() {
                   <li>• One special character (!@#$%^&*)</li>
                 </ul>
               </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+              />
+              <label htmlFor="terms" className="text-sm text-neutral-600">
+                I agree to the{' '}
+                <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline" target="_blank">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline" target="_blank">
+                  Privacy Policy
+                </Link>
+              </label>
             </div>
 
             {error && (

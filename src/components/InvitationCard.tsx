@@ -234,11 +234,10 @@ export default function InvitationCard({ party, qrCodeUrl, rsvpUrl }: Invitation
   return (
     <div className="space-y-6">
       {/* 可折叠邀请卡预览 - 等比缩放设计 */}
-      <div 
+      <div
         ref={cardRef}
-        className="invitation-card border border-amber-800 rounded-lg shadow-lg overflow-hidden relative mx-auto w-full"
-        style={{ 
-          aspectRatio: '3/2', // 保持宽高比 3:2
+        className="invitation-card border border-amber-800 rounded-lg shadow-lg overflow-visible relative mx-auto w-full aspect-auto min-h-[420px] sm:aspect-[3/2] sm:min-h-0"
+        style={{
           background: 'linear-gradient(135deg, #FFE5F1 0%, #FFCCCB 30%, #FFE4B5 100%)',
           maxWidth: '100%',
           fontSize: 'clamp(0.75rem, 2.5vw, 1rem)' // 基于视口宽度的等比缩放
@@ -390,13 +389,13 @@ export default function InvitationCard({ party, qrCodeUrl, rsvpUrl }: Invitation
                      padding: 'clamp(0.5rem, 2vw, 1rem)',
                      marginBottom: 'clamp(0.5rem, 2vw, 1rem)'
                    }}>
-                <img 
-                  src={qrCodeUrl} 
-                  alt="RSVP QR Code" 
+                <img
+                  src={qrCodeUrl}
+                  alt="RSVP QR Code"
                   className="mx-auto rounded border border-gray-200"
                   style={{
-                    width: 'clamp(3rem, 12vw, 8rem)',
-                    height: 'clamp(3rem, 12vw, 8rem)',
+                    width: 'clamp(5rem, 18vw, 12rem)',
+                    height: 'clamp(5rem, 18vw, 12rem)',
                     marginBottom: 'clamp(0.3rem, 1vw, 0.8rem)'
                   }}
                 />

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
+import { calculateAge } from '@/lib/utils'
 
 // Get user's children
 export async function GET(request: NextRequest) {
@@ -16,18 +17,11 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    // Calculate age for each child
-    const childrenWithAge = children.map(child => {
-      const today = new Date()
-      const birthDate = new Date(child.birthDate)
-      const age = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-      
-      return {
-        ...child,
-        age,
-        birthDate: child.birthDate.toISOString().split('T')[0] // Format for input
-      }
-    })
+    const childrenWithAge = children.map(child => ({
+      ...child,
+      age: calculateAge(child.birthDate),
+      birthDate: child.birthDate.toISOString().split('T')[0]
+    }))
 
     return NextResponse.json(childrenWithAge)
   } catch (error) {
@@ -67,13 +61,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Calculate age for response
-    const today = new Date()
-    const age = Math.floor((today.getTime() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-
     return NextResponse.json({
       ...child,
-      age,
+      age: calculateAge(child.birthDate),
       birthDate: child.birthDate.toISOString().split('T')[0]
     }, { status: 201 })
   } catch (error) {

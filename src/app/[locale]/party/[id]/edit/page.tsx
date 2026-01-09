@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { formatDateForInput } from '@/lib/utils'
+import { useLocale } from '@/contexts/LanguageContext'
+import Link from 'next/link'
 
 interface Party {
   id: string
@@ -13,12 +15,14 @@ interface Party {
   location: string
   theme?: string
   notes?: string
+  targetAge?: number
 }
 
 export default function EditPartyPage() {
   const { id } = useParams()
   const router = useRouter()
   const { data: session, status } = useSession()
+  const locale = useLocale()
   const [party, setParty] = useState<Party | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -30,13 +34,14 @@ export default function EditPartyPage() {
   const [location, setLocation] = useState('')
   const [theme, setTheme] = useState('')
   const [notes, setNotes] = useState('')
+  const [targetAge, setTargetAge] = useState('')
 
   // Check authentication
   useEffect(() => {
     if (status === 'loading') return
 
     if (status === 'unauthenticated' || !session?.user?.id) {
-      router.push(('/login?redirect=' + encodeURIComponent('/party/' + id + '/edit')) as any)
+      router.push(`/${locale}/login?redirect=${encodeURIComponent(`/${locale}/party/${id}/edit`)}`)
       return
     }
   }, [status, session, router, id])
@@ -60,6 +65,7 @@ export default function EditPartyPage() {
           setLocation(partyData.location)
           setTheme(partyData.theme || '')
           setNotes(partyData.notes || '')
+          setTargetAge(partyData.targetAge != null ? partyData.targetAge.toString() : '')
         } else {
           const errorData = await response.json()
           setError(errorData.error || 'Failed to fetch party')
@@ -94,6 +100,7 @@ export default function EditPartyPage() {
           location,
           theme: theme || undefined,
           notes: notes || undefined,
+          targetAge: targetAge ? parseInt(targetAge) : undefined,
         }),
       })
 
@@ -102,7 +109,7 @@ export default function EditPartyPage() {
 
         // Redirect to party dashboard after a short delay
         setTimeout(() => {
-          router.push(`/party/${id}/dashboard`)
+          router.push(`/${locale}/party/${id}/dashboard`)
         }, 2000)
       } else {
         const errorData = await response.json()
@@ -172,7 +179,7 @@ export default function EditPartyPage() {
                   {party.childName}'s {party.childAge}th Birthday Party
                 </p>
                 <p className="text-sm text-neutral-600 mt-1">
-                  To update child information, visit the <a href="/children" className="text-primary-600 hover:text-primary-700">Children Management</a> page
+                  To update child information, visit the <Link href={`/${locale}/children`} className="text-primary-600 hover:text-primary-700">Children Management</Link> page
                 </p>
               </div>
             </div>
@@ -236,6 +243,25 @@ export default function EditPartyPage() {
               rows={3}
               placeholder="Any special instructions, dietary considerations, or additional information..."
             />
+          </div>
+
+          <div>
+            <label htmlFor="targetAge" className="block text-sm font-medium text-neutral-700 mb-1">
+              Celebrating which birthday?
+            </label>
+            <input
+              type="number"
+              id="targetAge"
+              value={targetAge}
+              onChange={(e) => setTargetAge(e.target.value)}
+              className="input"
+              placeholder="e.g., 5"
+              min="1"
+              max="18"
+            />
+            <p className="mt-1 text-xs text-neutral-500">
+              If left blank, it will be calculated from birth date. Fill this if the party is held before the actual birthday.
+            </p>
           </div>
 
           <div className="flex gap-4 pt-4">

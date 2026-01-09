@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useLocale } from '@/contexts/LanguageContext'
 
 interface Party {
   id: string
@@ -17,6 +18,7 @@ interface PhotoSharingSectionProps {
 }
 
 export default function PhotoSharingSection({ party, onUpdate }: PhotoSharingSectionProps) {
+  const locale = useLocale()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -69,7 +71,7 @@ export default function PhotoSharingSection({ party, onUpdate }: PhotoSharingSec
               </>
             ) : (
               <Link
-                href={`/payment/photo-sharing/${party.id}`}
+                href={`/${locale}/payment/photo-sharing/${party.id}`}
                 className="btn btn-primary text-sm"
               >
                 Enable Photo Sharing - $2.99

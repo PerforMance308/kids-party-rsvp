@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PartyWithStats } from '@/types'
-import { formatDate, getDaysUntilEvent } from '@/lib/utils'
+import { formatDate, getDaysUntilEvent, getDaysUntilColor } from '@/lib/utils'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 export default function DashboardPage() {
@@ -20,31 +20,12 @@ export default function DashboardPage() {
 
   // Check authentication
   useEffect(() => {
-    console.log('Dashboard - Auth check:', {
-      status,
-      hasSession: !!session,
-      userId: session?.user?.id,
-      email: session?.user?.email
-    })
-    
-    if (status === 'loading') {
-      console.log('Dashboard - Still loading auth...')
-      return // Still loading
-    }
-    
+    if (status === 'loading') return
+
     if (status === 'unauthenticated' || !session?.user?.id) {
-      console.log('Dashboard - Not authenticated, redirecting to login')
-      
-      // Clear any redirect flag and redirect to login
-      sessionStorage.removeItem('hasRedirected')
-      setTimeout(() => {
-        window.location.href = `/${locale}/login?redirect=/${locale}/dashboard`
-      }, 100)
-      return
+      router.push(`/${locale}/login?redirect=/${locale}/dashboard`)
     }
-    
-    console.log('Dashboard - User is authenticated, proceeding...')
-  }, [status, session, router])
+  }, [status, session, router, locale])
 
   useEffect(() => {
     const fetchParties = async () => {
@@ -59,7 +40,6 @@ export default function DashboardPage() {
           const data = await response.json()
           setParties(data)
         } else if (response.status === 401) {
-          console.log('Unauthorized, redirecting to login')
           window.location.href = `/${locale}/login?redirect=/${locale}/dashboard`
           return
         } else {
@@ -73,18 +53,18 @@ export default function DashboardPage() {
     }
 
     fetchParties()
-  }, [status, session, router])
+  }, [status, session, locale])
 
   const handleDeleteParty = async (partyId: string) => {
     setDeletingParty(partyId)
     setError('')
-    
+
     try {
       const response = await fetch(`/api/parties/${partyId}`, {
         method: 'DELETE',
         credentials: 'include'
       })
-      
+
       if (response.ok) {
         // Remove the party from the local state
         setParties(parties.filter(party => party.id !== partyId))
@@ -161,26 +141,20 @@ export default function DashboardPage() {
             {parties.map((party) => {
               const daysUntil = getDaysUntilEvent(new Date(party.eventDatetime))
               const isUpcoming = daysUntil >= 0
-              
+
               return (
                 <div key={party.id} className="card hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="font-semibold text-neutral-900">
-{t('dashboard.partyTitle', { childName: party.childName, age: party.childAge })}
+                        {t('dashboard.partyTitle', { childName: party.childName, age: party.childAge })}
                       </h3>
                       {party.theme && (
                         <p className="text-sm text-primary-600">{party.theme}</p>
                       )}
                     </div>
                     {isUpcoming && (
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        daysUntil === 0 
-                          ? 'bg-red-100 text-red-700' 
-                          : daysUntil <= 3 
-                          ? 'bg-yellow-100 text-yellow-700' 
-                          : 'bg-green-100 text-green-700'
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDaysUntilColor(daysUntil)}`}>
                         {daysUntil === 0 ? t('dashboard.today') : t('dashboard.daysLeft', { days: daysUntil })}
                       </span>
                     )}
@@ -219,21 +193,21 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Link 
+                    <Link
                       href={`/${locale}/party/${party.id}/dashboard`}
                       className="w-full btn btn-primary text-center block"
                     >
                       {t('dashboard.manageParty')}
                     </Link>
-                    
+
                     <div className="flex gap-2">
-                      <Link 
+                      <Link
                         href={`/${locale}/party/${party.id}/edit`}
                         className="flex-1 btn btn-secondary text-center text-sm"
                       >
                         ✏️ {t('dashboard.edit')}
                       </Link>
-                      <button 
+                      <button
                         onClick={() => {
                           if (window.confirm(t('dashboard.deleteConfirm', { childName: party.childName }))) {
                             handleDeleteParty(party.id)

@@ -41,20 +41,21 @@ export async function POST(
         // Calculate child age
         const today = new Date()
         const birthDate = new Date(party.child.birthDate)
-        const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-        
-        // Generate email content
+        const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+        const childAge = party.targetAge ?? calculatedAge
+
         const emailContent = generateInvitationEmail(
             {
                 childName: party.child.name,
-                childAge: childAge,
+                childAge,
                 eventDatetime: party.eventDatetime,
                 location: party.location,
                 theme: party.theme || undefined,
                 notes: party.notes || undefined,
                 publicRsvpToken: party.publicRsvpToken
             },
-            party.user.name || party.user.email || 'The Host'
+            party.user.name || 'Your friend'
         )
 
         // Send emails in parallel
@@ -62,7 +63,8 @@ export async function POST(
             sendEmail({
                 to: email,
                 subject: emailContent.subject,
-                text: emailContent.text
+                text: emailContent.text,
+                html: emailContent.html
             }).catch(err => {
                 console.error(`Failed to send invite to ${email}:`, err)
                 return null

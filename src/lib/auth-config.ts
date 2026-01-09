@@ -12,6 +12,7 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -63,42 +64,51 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    jwt: async ({ token, user, account }) => {
-      // Store user ID in token for session access
-      if (user && account) {
-        if (account.provider === 'credentials') {
-          token.userId = user.id
-        } else if (account.provider === 'google') {
-          // For Google OAuth, find or create user in database
-          try {
-            let dbUser = await prisma.user.findUnique({
-              where: { email: user.email! }
-            })
-            
-            if (!dbUser) {
-              dbUser = await prisma.user.create({
-                data: {
-                  email: user.email!,
-                  name: user.name,
-                  image: user.image,
-                  emailVerified: new Date(),
-                }
-              })
+    signIn: async ({ user, account, profile }) => {
+      // If the user is signing in with Google, mark email as verified
+      if (account?.provider === 'google' && (profile as any)?.email_verified && user.email) {
+        try {
+          // Use upsert to handle both new and existing users
+          await prisma.user.upsert({
+            where: { email: user.email },
+            update: { emailVerified: new Date() },
+            create: {
+              email: user.email,
+              name: user.name || profile?.name || null,
+              image: user.image || (profile as any)?.picture || null,
+              emailVerified: new Date(),
             }
-            
-            token.userId = dbUser.id
-          } catch (error) {
-            console.error('Database error in JWT callback:', error)
-            return null
-          }
+          })
+        } catch (error) {
+          // Ignore errors - adapter will handle user creation
         }
       }
+      return true
+    },
+    jwt: async ({ token, user }) => {
+      // Store user ID in token for session access
+      if (user) {
+        token.userId = user.id
+      }
+
+      // Always fetch latest emailVerified status for the token if we have a userId
+      if (token.userId) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.userId as string },
+          select: { emailVerified: true }
+        })
+        token.emailVerified = dbUser?.emailVerified
+      }
+
       return token
     },
     session: async ({ session, token }) => {
-      // Add user ID to session from token
-      if (token?.userId && session?.user) {
-        session.user.id = token.userId as string
+      // Add user ID and verification status to session from token
+      if (session?.user) {
+        if (token?.userId) {
+          session.user.id = token.userId as string
+        }
+        session.user.emailVerified = token.emailVerified as any
       }
       return session
     }

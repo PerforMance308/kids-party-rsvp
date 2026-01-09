@@ -162,9 +162,9 @@ export default function InvitationTemplate({ party, qrCodeUrl, rsvpUrl, template
 // 免费模板 (现有样式)
 function FreeTemplate({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeUrl?: string, rsvpUrl?: string }) {
   return (
-    <div 
+    <div
       className="invitation-card border border-amber-800 rounded-lg shadow-lg overflow-hidden relative mx-auto w-full"
-      style={{ 
+      style={{
         aspectRatio: '3/2',
         background: 'linear-gradient(135deg, #FFE5F1 0%, #FFCCCB 30%, #FFE4B5 100%)',
         maxWidth: '100%',
@@ -193,9 +193,9 @@ function FreeTemplate({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeUrl?:
           </div>
           {qrCodeUrl && (
             <img 
-              src={qrCodeUrl} 
-              alt="RSVP QR Code" 
-              className="w-12 h-12 border border-amber-700 rounded"
+              src={qrCodeUrl}
+              alt="RSVP QR Code"
+              className="w-14 h-14 sm:w-16 sm:h-16 border border-amber-700 rounded"
             />
           )}
         </div>
@@ -207,9 +207,9 @@ function FreeTemplate({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeUrl?:
 // 付费模板1 - 优雅花卉
 function PremiumTemplate1({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeUrl?: string, rsvpUrl?: string }) {
   return (
-    <div 
+    <div
       className="invitation-card relative mx-auto w-full overflow-hidden rounded-2xl shadow-2xl"
-      style={{ 
+      style={{
         aspectRatio: '3/2',
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         maxWidth: '100%',
@@ -222,37 +222,37 @@ function PremiumTemplate1({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
         <div className="absolute top-1/2 left-1/4 w-8 h-8 bg-white/10 rounded-full"></div>
       </div>
 
-      <div className="relative h-full p-6 flex flex-col justify-between text-white">
+      <div className="relative h-full p-3 sm:p-4 flex flex-col justify-between text-white">
         {/* Header */}
         <div className="text-center">
-          <div className="inline-block px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm mb-3">
-            <h1 className="text-lg font-bold">✨ Special Invitation ✨</h1>
+          <div className="inline-block px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm mb-1">
+            <h1 className="text-sm sm:text-base font-bold">✨ Special Invitation ✨</h1>
           </div>
-          <h2 className="text-2xl font-bold mb-2">
+          <h2 className="text-lg sm:text-xl font-bold mb-1">
             {party.childName}'s {party.childAge}th Birthday
           </h2>
           {party.theme && (
-            <div className="inline-block px-3 py-1 bg-white/20 rounded-full">
-              <p className="text-sm font-medium">{party.theme} Theme</p>
+            <div className="inline-block px-2 py-0.5 bg-white/20 rounded-full">
+              <p className="text-xs font-medium">{party.theme} Theme</p>
             </div>
           )}
         </div>
 
         {/* Details */}
-        <div className="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
-          <div className="space-y-2 text-sm">
+        <div className="bg-white/20 rounded-xl p-2 sm:p-3 backdrop-blur-sm">
+          <div className="space-y-1 text-xs sm:text-sm">
             <div className="flex items-center">
-              <span className="text-lg mr-2">📅</span>
+              <span className="text-sm mr-1">📅</span>
               <span>{formatDate(new Date(party.eventDatetime))}</span>
             </div>
             <div className="flex items-center">
-              <span className="text-lg mr-2">📍</span>
+              <span className="text-sm mr-1">📍</span>
               <span>{party.location}</span>
             </div>
             {party.notes && (
-              <div className="flex items-start mt-3">
-                <span className="text-lg mr-2">💌</span>
-                <span className="flex-1">{party.notes}</span>
+              <div className="flex items-start">
+                <span className="text-sm mr-1">💌</span>
+                <span className="flex-1 line-clamp-2">{party.notes}</span>
               </div>
             )}
           </div>
@@ -260,16 +260,16 @@ function PremiumTemplate1({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
 
         {/* Footer */}
         <div className="flex justify-between items-center">
-          <div className="text-sm">
+          <div className="text-xs">
             <p className="font-semibold">RSVP Required</p>
             <p className="text-white/80">Scan to respond →</p>
           </div>
           {qrCodeUrl && (
-            <div className="p-2 bg-white rounded-xl shadow-lg">
-              <img 
-                src={qrCodeUrl} 
-                alt="RSVP QR Code" 
-                className="w-16 h-16"
+            <div className="p-1 bg-white rounded-lg shadow-lg">
+              <img
+                src={qrCodeUrl}
+                alt="RSVP QR Code"
+                className="w-12 h-12 sm:w-14 sm:h-14"
               />
             </div>
           )}
@@ -282,9 +282,9 @@ function PremiumTemplate1({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
 // 付费模板2 - 可爱卡通
 function PremiumTemplate2({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeUrl?: string, rsvpUrl?: string }) {
   return (
-    <div 
+    <div
       className="invitation-card relative mx-auto w-full overflow-hidden rounded-3xl shadow-2xl"
-      style={{ 
+      style={{
         aspectRatio: '3/2',
         background: 'linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)',
         maxWidth: '100%',
@@ -299,42 +299,41 @@ function PremiumTemplate2({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-6xl opacity-10">🎉</div>
       </div>
 
-      <div className="relative h-full p-6 flex flex-col justify-between">
+      <div className="relative h-full p-3 sm:p-4 flex flex-col justify-between">
         {/* Header */}
         <div className="text-center">
-          <div className="inline-block mb-3">
-            <h1 className="text-2xl font-bold text-pink-800 mb-1">🌟 Birthday Party 🌟</h1>
-            <div className="w-full h-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full"></div>
+          <div className="inline-block mb-1">
+            <h1 className="text-base sm:text-lg font-bold text-pink-800">🌟 Birthday Party 🌟</h1>
           </div>
-          <h2 className="text-3xl font-black text-purple-800 mb-2 transform -rotate-1">
+          <h2 className="text-xl sm:text-2xl font-black text-purple-800 mb-1 transform -rotate-1">
             {party.childName}
           </h2>
-          <div className="inline-block px-4 py-2 bg-white rounded-full shadow-lg">
-            <p className="text-lg font-bold text-pink-600">Turning {party.childAge}!</p>
+          <div className="inline-block px-3 py-1 bg-white rounded-full shadow-lg">
+            <p className="text-sm font-bold text-pink-600">Turning {party.childAge}!</p>
           </div>
           {party.theme && (
-            <div className="mt-2 inline-block px-3 py-1 bg-yellow-300 rounded-full shadow-md transform rotate-1">
-              <p className="text-sm font-bold text-yellow-800">{party.theme} Fun!</p>
+            <div className="ml-1 inline-block px-2 py-0.5 bg-yellow-300 rounded-full shadow-md">
+              <p className="text-xs font-bold text-yellow-800">{party.theme}</p>
             </div>
           )}
         </div>
 
         {/* Details Card */}
-        <div className="bg-white/90 rounded-2xl p-4 shadow-lg border-2 border-pink-200">
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center bg-blue-50 rounded-lg p-2">
-              <span className="text-xl mr-3">⏰</span>
+        <div className="bg-white/90 rounded-xl p-2 shadow-lg border-2 border-pink-200">
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center bg-blue-50 rounded-lg p-1.5">
+              <span className="text-sm mr-2">⏰</span>
               <span className="font-semibold text-blue-800">{formatDate(new Date(party.eventDatetime))}</span>
             </div>
-            <div className="flex items-center bg-green-50 rounded-lg p-2">
-              <span className="text-xl mr-3">🏠</span>
+            <div className="flex items-center bg-green-50 rounded-lg p-1.5">
+              <span className="text-sm mr-2">🏠</span>
               <span className="font-semibold text-green-800 flex-1">{party.location}</span>
             </div>
             {party.notes && (
-              <div className="bg-purple-50 rounded-lg p-2">
+              <div className="bg-purple-50 rounded-lg p-1.5">
                 <div className="flex items-start">
-                  <span className="text-xl mr-3">💌</span>
-                  <span className="font-semibold text-purple-800 flex-1">{party.notes}</span>
+                  <span className="text-sm mr-2">💌</span>
+                  <span className="font-semibold text-purple-800 flex-1 line-clamp-1">{party.notes}</span>
                 </div>
               </div>
             )}
@@ -343,16 +342,16 @@ function PremiumTemplate2({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
 
         {/* Footer */}
         <div className="flex justify-between items-end">
-          <div className="bg-white/80 rounded-xl p-3 shadow-lg">
-            <p className="text-sm font-bold text-pink-700">Please RSVP!</p>
+          <div className="bg-white/80 rounded-lg p-2 shadow-lg">
+            <p className="text-xs font-bold text-pink-700">Please RSVP!</p>
             <p className="text-xs text-pink-600">Scan the code →</p>
           </div>
           {qrCodeUrl && (
-            <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-pink-300">
-              <img 
-                src={qrCodeUrl} 
-                alt="RSVP QR Code" 
-                className="w-16 h-16"
+            <div className="p-1.5 bg-white rounded-xl shadow-xl border-2 border-pink-300">
+              <img
+                src={qrCodeUrl}
+                alt="RSVP QR Code"
+                className="w-12 h-12 sm:w-14 sm:h-14"
               />
             </div>
           )}
@@ -365,9 +364,9 @@ function PremiumTemplate2({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
 // 付费模板3 - 简约现代
 function PremiumTemplate3({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeUrl?: string, rsvpUrl?: string }) {
   return (
-    <div 
+    <div
       className="invitation-card relative mx-auto w-full overflow-hidden shadow-2xl"
-      style={{ 
+      style={{
         aspectRatio: '3/2',
         background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
         maxWidth: '100%',
@@ -379,63 +378,58 @@ function PremiumTemplate3({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 transform -rotate-45 -translate-x-12 translate-y-12"></div>
       </div>
 
-      <div className="relative h-full p-8 flex flex-col justify-between text-white">
+      <div className="relative h-full p-3 sm:p-4 flex flex-col justify-between text-white">
         {/* Header */}
         <div>
-          <div className="flex items-center mb-4">
-            <div className="w-1 h-12 bg-gradient-to-b from-blue-300 to-blue-500 mr-4"></div>
+          <div className="flex items-center mb-2">
+            <div className="w-0.5 h-8 bg-gradient-to-b from-blue-300 to-blue-500 mr-2"></div>
             <div>
-              <h1 className="text-lg font-light tracking-wide">BIRTHDAY INVITATION</h1>
-              <div className="w-16 h-px bg-blue-300 mt-1"></div>
+              <h1 className="text-xs sm:text-sm font-light tracking-wide">BIRTHDAY INVITATION</h1>
             </div>
           </div>
-          
-          <h2 className="text-4xl font-thin mb-2">
+
+          <h2 className="text-2xl sm:text-3xl font-thin mb-1">
             {party.childName}
           </h2>
-          <div className="flex items-baseline space-x-2 mb-4">
-            <span className="text-2xl font-light">turns</span>
-            <span className="text-6xl font-thin text-blue-300">{party.childAge}</span>
+          <div className="flex items-baseline space-x-1">
+            <span className="text-base font-light">turns</span>
+            <span className="text-3xl sm:text-4xl font-thin text-blue-300">{party.childAge}</span>
+            {party.theme && (
+              <span className="ml-2 text-xs text-blue-200 uppercase">{party.theme}</span>
+            )}
           </div>
-          
-          {party.theme && (
-            <div className="inline-block">
-              <p className="text-sm font-light text-blue-200 uppercase tracking-wider">{party.theme}</p>
-              <div className="w-full h-px bg-blue-400 mt-1"></div>
-            </div>
-          )}
         </div>
 
         {/* Details */}
-        <div className="space-y-3">
+        <div className="space-y-1">
           <div>
-            <p className="text-xs uppercase tracking-wider text-blue-300 mb-1">DATE & TIME</p>
-            <p className="text-lg font-light">{formatDate(new Date(party.eventDatetime))}</p>
+            <p className="text-xs uppercase tracking-wider text-blue-300">DATE & TIME</p>
+            <p className="text-sm font-light">{formatDate(new Date(party.eventDatetime))}</p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wider text-blue-300 mb-1">LOCATION</p>
-            <p className="text-lg font-light">{party.location}</p>
+            <p className="text-xs uppercase tracking-wider text-blue-300">LOCATION</p>
+            <p className="text-sm font-light">{party.location}</p>
           </div>
           {party.notes && (
             <div>
-              <p className="text-xs uppercase tracking-wider text-blue-300 mb-1">SPECIAL NOTE</p>
-              <p className="text-sm font-light text-blue-100">{party.notes}</p>
+              <p className="text-xs uppercase tracking-wider text-blue-300">NOTE</p>
+              <p className="text-xs font-light text-blue-100 line-clamp-1">{party.notes}</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-end pt-4 border-t border-white/20">
+        <div className="flex justify-between items-end pt-2 border-t border-white/20">
           <div>
-            <p className="text-xs uppercase tracking-wider text-blue-300">RSVP REQUIRED</p>
-            <p className="text-sm font-light">Scan to respond</p>
+            <p className="text-xs uppercase tracking-wider text-blue-300">RSVP</p>
+            <p className="text-xs font-light">Scan to respond</p>
           </div>
           {qrCodeUrl && (
-            <div className="p-3 bg-white/10 backdrop-blur-sm rounded-lg">
-              <img 
-                src={qrCodeUrl} 
-                alt="RSVP QR Code" 
-                className="w-14 h-14"
+            <div className="p-1.5 bg-white/10 backdrop-blur-sm rounded-lg">
+              <img
+                src={qrCodeUrl}
+                alt="RSVP QR Code"
+                className="w-12 h-12 sm:w-14 sm:h-14"
               />
             </div>
           )}
@@ -448,9 +442,9 @@ function PremiumTemplate3({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
 // 付费模板4 - 节日主题
 function PremiumTemplate4({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeUrl?: string, rsvpUrl?: string }) {
   return (
-    <div 
+    <div
       className="invitation-card relative mx-auto w-full overflow-hidden rounded-2xl shadow-2xl"
-      style={{ 
+      style={{
         aspectRatio: '3/2',
         background: 'linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)',
         maxWidth: '100%',
@@ -466,83 +460,65 @@ function PremiumTemplate4({ party, qrCodeUrl, rsvpUrl }: { party: Party, qrCodeU
         <div className="absolute bottom-1/3 left-1/3 text-sm animate-pulse delay-1000">⭐</div>
       </div>
 
-      <div className="relative h-full p-6 flex flex-col justify-between text-white">
+      <div className="relative h-full p-3 sm:p-4 flex flex-col justify-between text-white">
         {/* Festive Header */}
         <div className="text-center">
-          <div className="relative mb-4">
-            <h1 className="text-2xl font-bold mb-2 transform -rotate-2">
-              🎉 LET'S CELEBRATE! 🎉
-            </h1>
-            <div className="absolute -top-1 -right-1 w-full h-full border-2 border-white/30 rounded-lg transform rotate-2"></div>
-          </div>
-          
-          <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 mb-3 transform -rotate-1">
-            <h2 className="text-3xl font-black text-yellow-100 mb-1">
+          <h1 className="text-base sm:text-lg font-bold mb-1">
+            🎉 LET'S CELEBRATE! 🎉
+          </h1>
+
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-2 mb-1">
+            <h2 className="text-xl sm:text-2xl font-black text-yellow-100">
               {party.childName}
             </h2>
-            <div className="flex justify-center items-center space-x-2">
-              <span className="text-lg">is turning</span>
-              <span className="text-4xl font-bold text-yellow-200">{party.childAge}</span>
-              <span className="text-lg">!</span>
+            <div className="flex justify-center items-center space-x-1">
+              <span className="text-sm">is turning</span>
+              <span className="text-2xl sm:text-3xl font-bold text-yellow-200">{party.childAge}</span>
+              <span className="text-sm">!</span>
             </div>
           </div>
-          
+
           {party.theme && (
-            <div className="inline-block transform rotate-1">
-              <div className="bg-yellow-300 text-orange-800 px-4 py-2 rounded-full shadow-lg">
-                <p className="text-sm font-bold">🌟 {party.theme} Party 🌟</p>
-              </div>
+            <div className="inline-block bg-yellow-300 text-orange-800 px-2 py-0.5 rounded-full shadow-lg">
+              <p className="text-xs font-bold">🌟 {party.theme} 🌟</p>
             </div>
           )}
         </div>
 
         {/* Party Details */}
-        <div className="space-y-3">
-          <div className="bg-white/90 rounded-xl p-3 text-orange-800 shadow-lg transform -rotate-1">
-            <div className="flex items-center">
-              <span className="text-xl mr-3">🗓️</span>
-              <div>
-                <p className="text-xs font-semibold text-orange-600">PARTY TIME</p>
-                <p className="text-sm font-bold">{formatDate(new Date(party.eventDatetime))}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white/90 rounded-xl p-3 text-orange-800 shadow-lg transform rotate-1">
-            <div className="flex items-center">
-              <span className="text-xl mr-3">📍</span>
-              <div className="flex-1">
-                <p className="text-xs font-semibold text-orange-600">PARTY LOCATION</p>
-                <p className="text-sm font-bold">{party.location}</p>
-              </div>
+        <div className="space-y-1">
+          <div className="bg-white/90 rounded-lg p-2 text-orange-800 shadow-lg flex items-center">
+            <span className="text-sm mr-2">🗓️</span>
+            <div>
+              <p className="text-xs font-bold">{formatDate(new Date(party.eventDatetime))}</p>
             </div>
           </div>
 
+          <div className="bg-white/90 rounded-lg p-2 text-orange-800 shadow-lg flex items-center">
+            <span className="text-sm mr-2">📍</span>
+            <p className="text-xs font-bold flex-1">{party.location}</p>
+          </div>
+
           {party.notes && (
-            <div className="bg-white/90 rounded-xl p-3 text-orange-800 shadow-lg">
-              <div className="flex items-start">
-                <span className="text-xl mr-3">💝</span>
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-orange-600">SPECIAL MESSAGE</p>
-                  <p className="text-sm font-bold">{party.notes}</p>
-                </div>
-              </div>
+            <div className="bg-white/90 rounded-lg p-2 text-orange-800 shadow-lg flex items-center">
+              <span className="text-sm mr-2">💝</span>
+              <p className="text-xs font-bold flex-1 line-clamp-1">{party.notes}</p>
             </div>
           )}
         </div>
 
         {/* RSVP Section */}
         <div className="flex justify-between items-center">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3">
-            <p className="text-sm font-bold">📱 RSVP NOW!</p>
-            <p className="text-xs">Scan & Join the Fun!</p>
+          <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+            <p className="text-xs font-bold">📱 RSVP NOW!</p>
+            <p className="text-xs">Scan & Join!</p>
           </div>
           {qrCodeUrl && (
-            <div className="p-3 bg-white rounded-xl shadow-xl border-4 border-yellow-300 transform rotate-3 hover:rotate-0 transition-transform">
-              <img 
-                src={qrCodeUrl} 
-                alt="RSVP QR Code" 
-                className="w-16 h-16"
+            <div className="p-1.5 bg-white rounded-lg shadow-xl border-2 border-yellow-300">
+              <img
+                src={qrCodeUrl}
+                alt="RSVP QR Code"
+                className="w-12 h-12 sm:w-14 sm:h-14"
               />
             </div>
           )}

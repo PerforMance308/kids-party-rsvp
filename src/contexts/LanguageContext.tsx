@@ -25,7 +25,7 @@ const translations = {
 
     // 主页
     'home.title': 'Kid Party RSVP',
-    'home.subtitle': '简单、精美的儿童派对邀请函和RSVP管理系统。客人无需登录！',
+    'home.subtitle': '简单、精美的儿童派对邀请函和RSVP管理系统。管理客人的回复从未如此轻松！',
     'home.loading': '加载中...',
     'home.goToDashboard': '前往仪表板',
     'home.createNewParty': '创建新派对',
@@ -38,8 +38,8 @@ const translations = {
     // 功能介绍
     'features.qrCode.title': '二维码邀请函',
     'features.qrCode.desc': '为您的纸质邀请函生成精美的二维码。客人只需扫描即可回复！',
-    'features.noLogin.title': '客人无需登录',
-    'features.noLogin.desc': '您的客人无需创建账户。他们只需点击、填写表单，就完成了。',
+    'features.noLogin.title': '安全管理',
+    'features.noLogin.desc': '客人通过简单的验证即可回复，确保派对信息的私密与安全。',
     'features.dashboard.title': '实时仪表板',
     'features.dashboard.desc': '实时跟踪RSVP。查看谁来参加、饮食限制和家长联系信息。',
     'features.contacts.title': '重复使用联系人',
@@ -103,6 +103,9 @@ const translations = {
     'newParty.addNewChild': '+ 添加新孩子',
     'newParty.enterManually': '手动输入孩子信息',
     'newParty.selectExisting': '← 改为从现有孩子中选择',
+    'newParty.celebratingAge': '庆祝几岁生日？',
+    'newParty.agePlaceholder': '例如：5',
+    'newParty.ageHelp': '如果不填写，将根据孩子生日自动计算。如果派对提前举行，请手动填写。',
     'newParty.childName': '孩子姓名',
     'newParty.age': '年龄',
     'newParty.date': '日期',
@@ -294,7 +297,7 @@ const translations = {
 
     // 主页
     'home.title': 'Kid Party RSVP',
-    'home.subtitle': 'Simple, beautiful party invitations and RSVP management for children\'s parties. No logins required for your guests!',
+    'home.subtitle': 'Simple, beautiful party invitations and RSVP management for children\'s parties. Managing guest responses has never been easier!',
     'home.loading': 'Loading...',
     'home.goToDashboard': 'Go to Dashboard',
     'home.createNewParty': 'Create New Party',
@@ -307,8 +310,8 @@ const translations = {
     // 功能介绍
     'features.qrCode.title': 'QR Code Invitations',
     'features.qrCode.desc': 'Generate beautiful QR codes for your paper invitations. Guests just scan and RSVP!',
-    'features.noLogin.title': 'No Guest Logins',
-    'features.noLogin.desc': 'Your guests never need to create accounts. They just click, fill out the form, and they\'re done.',
+    'features.noLogin.title': 'Secure Access',
+    'features.noLogin.desc': 'Guests log in to RSVP, keeping your party details private and secure.',
     'features.dashboard.title': 'Real-time Dashboard',
     'features.dashboard.desc': 'Track RSVPs in real-time. See who\'s coming, dietary restrictions, and parent contact info.',
     'features.contacts.title': 'Reuse Contacts',
@@ -319,8 +322,13 @@ const translations = {
     'features.privacy.desc': 'Your parties are completely private. Guests can\'t see other attendees\' information.',
 
     // CTA部分
-    'cta.title': 'Ready to Plan Your Party?',
-    'cta.subtitle': 'Join thousands of parents who\'ve made party planning simple and stress-free.',
+    'cta.title': 'Ready to make your child\'s day special?',
+    'cta.subtitle': 'Join thousands of parents who use Kid Party RSVP to plan perfect, stress-free birthday celebrations.',
+    'auth.verifySent': 'Verification email sent to',
+    'auth.verifyReminder': 'Your email is not verified. Please check your inbox at',
+    'auth.resendVerify': 'Resend verification email',
+    'auth.sending': 'Sending...',
+    'auth.sendFailed': 'Failed to send. Please try again later.',
 
     // Dashboard
     'dashboard.title': 'My Dashboard',
@@ -372,6 +380,9 @@ const translations = {
     'newParty.addNewChild': '+ Add New Child',
     'newParty.enterManually': 'Enter child details manually',
     'newParty.selectExisting': '← Select from existing children instead',
+    'newParty.celebratingAge': 'Celebrating which birthday?',
+    'newParty.agePlaceholder': 'e.g., 5',
+    'newParty.ageHelp': 'If left blank, it will be calculated from birth date. Fill this if the party is held before the actual birthday.',
     'newParty.childName': 'Child\'s Name',
     'newParty.age': 'Age',
     'newParty.date': 'Date',
@@ -563,10 +574,6 @@ export function LanguageProvider({
   const normalizedLocale = (locale as string).startsWith('zh') ? 'zh' : 'en' as Locale
 
   const t = (key: string, params?: Record<string, any>) => {
-    // 规范化 locale，处理 zh-CN 等情况
-    // const normalizedLocale = (locale as string).startsWith('zh') ? 'zh' : 'en' as Locale
-    // Use the outer normalizedLocale variable
-
     // Fallback to English if translation is missing for the key
     const localeTranslations = (translations as any)[normalizedLocale] || translations.en
     let translation = localeTranslations[key] || key

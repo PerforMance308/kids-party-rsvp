@@ -29,7 +29,7 @@ export default function NewPartyPage() {
   const locale = useLocale()
   const { t } = useLanguage()
   const preSelectedChildId = searchParams.get('childId')
-  
+
   const [children, setChildren] = useState<Child[]>([])
   const [selectedChildId, setSelectedChildId] = useState(preSelectedChildId || '')
   const [showLegacyForm, setShowLegacyForm] = useState(false)
@@ -42,17 +42,18 @@ export default function NewPartyPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingChildren, setIsLoadingChildren] = useState(true)
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
-  
+
   // Legacy form fields
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState('')
+  const [targetAge, setTargetAge] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push(`/${locale}/login?redirect=/${locale}/party/new`)
       return
     }
-    
+
     if (status === 'authenticated') {
       loadChildren()
     }
@@ -64,7 +65,7 @@ export default function NewPartyPage() {
       if (response.ok) {
         const data = await response.json()
         setChildren(data)
-        
+
         // If no children exist, show legacy form
         if (data.length === 0) {
           setShowLegacyForm(true)
@@ -86,7 +87,7 @@ export default function NewPartyPage() {
 
     try {
       const eventDatetime = new Date(`${eventDate}T${eventTime}`)
-      
+
       let requestBody
       if (showLegacyForm) {
         // Legacy form submission
@@ -105,16 +106,17 @@ export default function NewPartyPage() {
           setIsLoading(false)
           return
         }
-        
+
         requestBody = {
           childId: selectedChildId,
           eventDatetime: eventDatetime.toISOString(),
           location,
           theme: theme || undefined,
           notes: notes || undefined,
+          targetAge: targetAge ? parseInt(targetAge) : undefined,
         }
       }
-      
+
       const response = await fetch('/api/parties', {
         method: 'POST',
         headers: {
@@ -125,7 +127,7 @@ export default function NewPartyPage() {
 
       if (response.ok) {
         const party = await response.json()
-        
+
         // If contacts were selected, add them as guests
         if (selectedContacts.length > 0) {
           try {
@@ -150,7 +152,7 @@ export default function NewPartyPage() {
             console.error('Failed to add some contacts:', error)
           }
         }
-        
+
         router.push(`/${locale}/party/${party.id}/dashboard`)
       } else {
         const data = await response.json()
@@ -207,10 +209,28 @@ export default function NewPartyPage() {
                   <option value="">{t('newParty.chooseChild')}</option>
                   {children.map((child) => (
                     <option key={child.id} value={child.id}>
-                      {child.name} ({child.age} years old)
+                      {child.name} ({child.age} {t('children.years')})
                     </option>
                   ))}
                 </select>
+                <div className="mt-4">
+                  <label htmlFor="targetAge" className="block text-sm font-medium text-neutral-700 mb-1">
+                    {t('newParty.celebratingAge')}
+                  </label>
+                  <input
+                    type="number"
+                    id="targetAge"
+                    value={targetAge}
+                    onChange={(e) => setTargetAge(e.target.value)}
+                    className="input"
+                    placeholder={t('newParty.agePlaceholder')}
+                    min="1"
+                    max="18"
+                  />
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {t('newParty.ageHelp')}
+                  </p>
+                </div>
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"

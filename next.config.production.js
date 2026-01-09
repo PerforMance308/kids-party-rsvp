@@ -20,7 +20,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: process.env.ALLOWED_ORIGINS || 'https://*.pages.dev',
+            value: process.env.ALLOWED_ORIGINS || 'https://kids-party-rsvp.zeabur.app',
           },
           {
             key: 'Access-Control-Allow-Methods',

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
+import { getBaseUrl } from '@/lib/utils'
 
 export async function POST() {
-  const response = NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_BASE_URL!))
+  const response = NextResponse.redirect(new URL('/', getBaseUrl()))
   
   response.cookies.set('token', '', {
     httpOnly: true,

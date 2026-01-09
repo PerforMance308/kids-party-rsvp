@@ -3,7 +3,7 @@ import { createTransporter } from './email'
 export interface EmailProvider {
   name: string
   test: () => Promise<boolean>
-  send: (to: string, subject: string, content: string) => Promise<void>
+  send: (to: string, subject: string, text: string, html?: string) => Promise<void>
 }
 
 // Gmail Provider
@@ -13,25 +13,34 @@ export const gmailProvider: EmailProvider = {
     if (!process.env.SMTP_HOST || process.env.SMTP_HOST === 'localhost') {
       return false
     }
-    
+
     try {
       const transporter = createTransporter()
+      if (!transporter) {
+        console.warn('⚠️ Gmail provider: createTransporter returned null. Check SMTP_HOST/USER/PASS env vars.')
+        return false
+      }
       await transporter.verify()
       return true
     } catch (error) {
-      console.error('Gmail SMTP test failed:', error)
+      console.error('❌ Gmail SMTP test failed:', error)
       return false
     }
   },
-  
-  async send(to: string, subject: string, content: string) {
+
+  async send(to: string, subject: string, text: string, html?: string) {
     const transporter = createTransporter()
+    if (!transporter) {
+      throw new Error('Email transporter not available')
+    }
     await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: process.env.SMTP_FROM?.includes('@')
+        ? process.env.SMTP_FROM
+        : `Kid Party RSVP <${process.env.SMTP_USER}>`,
       to,
       subject,
-      text: content,
-      html: content.replace(/\n/g, '<br>')
+      text,
+      html: html || text.replace(/\n/g, '<br>')
     })
   }
 }
@@ -42,13 +51,16 @@ export const consoleProvider: EmailProvider = {
   async test() {
     return true // Console always works
   },
-  
-  async send(to: string, subject: string, content: string) {
+
+  async send(to: string, subject: string, text: string, html?: string) {
     console.log('\n=== EMAIL NOTIFICATION (Console Provider) ===')
     console.log(`To: ${to}`)
     console.log(`Subject: ${subject}`)
-    console.log('Content:')
-    console.log(content)
+    console.log('Text content:')
+    console.log(text)
+    if (html) {
+      console.log('HTML content available (rich format)')
+    }
     console.log('===========================================\n')
   }
 }
@@ -56,14 +68,14 @@ export const consoleProvider: EmailProvider = {
 // Auto-select the best available provider
 export async function getEmailProvider(): Promise<EmailProvider> {
   const providers = [gmailProvider, consoleProvider]
-  
+
   for (const provider of providers) {
     if (await provider.test()) {
       console.log(`📧 Using email provider: ${provider.name}`)
       return provider
     }
   }
-  
+
   // Fallback to console
   return consoleProvider
 }
@@ -72,7 +84,7 @@ export async function getEmailProvider(): Promise<EmailProvider> {
 export async function testEmailProviders() {
   const providers = [gmailProvider, consoleProvider]
   const results = []
-  
+
   for (const provider of providers) {
     try {
       const isWorking = await provider.test()
@@ -89,6 +101,6 @@ export async function testEmailProviders() {
       })
     }
   }
-  
+
   return results
 }

@@ -8,6 +8,7 @@ import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 export default function UserNav() {
     const { data: session, status } = useSession()
+
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const locale = useLocale()
@@ -69,18 +70,10 @@ export default function UserNav() {
                         </svg>
                     </button>
 
-                    {/* Primary action - always visible */}
-                    <Link 
-                        href={`/${locale}/party/new`} 
-                        className="btn btn-primary text-sm whitespace-nowrap flex items-center justify-center min-w-fit px-4 py-2"
-                    >
-                        {t('nav.newParty')}
-                    </Link>
-                    
-                    {/* Secondary action - hidden on mobile */}
+                    {/* Logout button - hidden on mobile (available in mobile menu) */}
                     <button
                         onClick={() => signOut({ callbackUrl: `/${locale}` })}
-                        className="hidden md:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm"
+                        className="hidden md:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
                     >
                         {t('nav.logout')}
                     </button>
@@ -94,7 +87,7 @@ export default function UserNav() {
                             className="fixed inset-0 bg-black bg-opacity-25 z-40 sm:hidden"
                             onClick={closeMobileMenu}
                         />
-                        
+
                         {/* Mobile Menu */}
                         <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-50 sm:hidden">
                             <Link
@@ -139,12 +132,12 @@ export default function UserNav() {
         <nav className="flex items-center space-x-2 md:space-x-4">
             <Link
                 href={`/${locale}/login?redirect=${encodeURIComponent(pathname + (searchParams.toString() ? `?${searchParams.toString()}` : ''))}`}
-                className="px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors text-sm md:text-base"
+                className="px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
             >
                 {t('nav.login')}
             </Link>
-            <Link 
-                href={`/${locale}/register`} 
+            <Link
+                href={`/${locale}/register`}
                 className="btn btn-primary text-sm whitespace-nowrap flex items-center justify-center min-w-fit"
             >
                 {t('nav.signUp')}

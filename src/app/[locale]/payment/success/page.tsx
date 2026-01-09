@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
+import { useLocale } from '@/contexts/LanguageContext'
 
 function PaymentSuccessContent() {
+  const locale = useLocale()
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-blue-50 flex items-center justify-center">
       <div className="container mx-auto px-4">
@@ -12,13 +14,13 @@ function PaymentSuccessContent() {
               Payment Successful!
             </h1>
             <p className="text-neutral-600 mb-6">
-              Your photo sharing feature has been enabled successfully. 
+              Your photo sharing feature has been enabled successfully.
               Guests will now be able to upload and share photos from your party.
             </p>
-            
+
             <div className="space-y-3">
-              <Link 
-                href="/dashboard"
+              <Link
+                href={`/${locale}/dashboard`}
                 className="btn btn-primary w-full"
               >
                 Return to Dashboard

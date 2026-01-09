@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
-import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { sendPartyUpdateEmail } from '@/lib/email'
+import { getBaseUrl, calculateAge } from '@/lib/utils'
 
 export async function GET(
   request: NextRequest,
@@ -63,17 +63,14 @@ export async function GET(
       maybe: rsvpStats.find(s => s.status === 'MAYBE')?._count.status || 0,
     }
 
-    // Calculate child age
-    const today = new Date()
-    const birthDate = new Date(party.child.birthDate)
-    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
 
     const partyWithStats = {
       ...party,
       childName: party.child.name,
       childAge,
       stats,
-      rsvpUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${party.publicRsvpToken}`
+      rsvpUrl: `${getBaseUrl()}/rsvp/${party.publicRsvpToken}`
     }
 
     return NextResponse.json(partyWithStats)
@@ -119,7 +116,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    
+
     // For party updates, we only allow updating basic party details, not child info
     // Child info should be updated through the child management system
     const validatedData = {
@@ -128,6 +125,7 @@ export async function PUT(
       theme: body.theme || null,
       notes: body.notes || null,
       template: body.template || 'free',
+      targetAge: body.targetAge != null ? parseInt(body.targetAge) : null,
     }
 
     // Check if any important details changed (date, time, location)
@@ -147,6 +145,7 @@ export async function PUT(
         theme: validatedData.theme,
         notes: validatedData.notes,
         template: validatedData.template,
+        targetAge: validatedData.targetAge,
       },
       include: {
         child: true,
@@ -188,17 +187,14 @@ export async function PUT(
       maybe: rsvps.filter(r => r?.status === 'MAYBE').length,
     }
 
-    // Calculate child age
-    const today = new Date()
-    const birthDate = new Date(updatedParty.child.birthDate)
-    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const childAge = updatedParty.targetAge ?? calculateAge(updatedParty.child.birthDate)
 
     const partyWithStats = {
       ...updatedParty,
       childName: updatedParty.child.name,
       childAge,
       stats,
-      rsvpUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/rsvp/${updatedParty.publicRsvpToken}`
+      rsvpUrl: `${getBaseUrl()}/rsvp/${updatedParty.publicRsvpToken}`
     }
 
     return NextResponse.json(partyWithStats)
@@ -265,8 +261,6 @@ export async function DELETE(
       await tx.guest.deleteMany({
         where: { partyId: id }
       })
-
-
 
       // Finally delete the party
       await tx.party.delete({

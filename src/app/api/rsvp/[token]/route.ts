@@ -32,17 +32,21 @@ export async function GET(
     // Calculate child age
     const today = new Date()
     const birthDate = new Date(party.child.birthDate)
-    const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 
-    return NextResponse.json({
+    const childAge = (party as any).targetAge ?? calculatedAge
+
+    const partyData = {
       id: party.id,
       childName: party.child.name,
       childAge,
       eventDatetime: party.eventDatetime,
       location: party.location,
       theme: party.theme,
-      notes: party.notes,
-    })
+      notes: party.notes
+    }
+
+    return NextResponse.json(partyData)
   } catch (error) {
     console.error('Fetch party by token error:', error)
     return NextResponse.json(
@@ -72,7 +76,7 @@ export async function POST(
 
     const user = {
       id: session.user.id,
-      email: session.user.email
+      email: (session.user.email || '').toString()
     }
 
     const party = await prisma.party.findUnique({
@@ -85,6 +89,14 @@ export async function POST(
 
     if (!party) {
       return NextResponse.json({ error: 'Party not found' }, { status: 404 })
+    }
+
+    // Check if user is the host
+    if (party.userId === user.id) {
+      return NextResponse.json(
+        { error: '您不需要为您自己的派对提交接受邀请 (Host cannot RSVP to their own party)' },
+        { status: 400 }
+      )
     }
 
     const body = await request.json()
@@ -118,7 +130,7 @@ export async function POST(
     let existingGuest = await prisma.guest.findFirst({
       where: {
         partyId: party.id,
-        email: user.email
+        email: (user.email || '').toString()
       },
       include: {
         rsvp: true
@@ -126,42 +138,37 @@ export async function POST(
     })
 
     if (existingGuest) {
-      // Update existing guest
+      // If user already has an RSVP, block second submission
+      if (existingGuest.rsvp) {
+        return NextResponse.json(
+          { error: '您已经提交过该派对的回复了 (You have already RSVP\'d to this party)' },
+          { status: 400 }
+        )
+      }
+
+      // Update existing guest info if no RSVP yet (unlikely given logic, but for safety)
       await prisma.guest.update({
         where: { id: existingGuest.id },
         data: {
           parentName,
           childName,
-          childId: childId || null, // Link to child if selected
+          childId: childId || null,
           phone: phone || null,
-          userId: user.id, // Link to authenticated user
+          userId: user.id,
         }
       })
 
-      // Update or create RSVP
-      if (existingGuest.rsvp) {
-        await prisma.rSVP.update({
-          where: { id: existingGuest.rsvp.id },
-          data: {
-            status,
-            numChildren,
-            parentStaying,
-            allergies: allergies || null,
-            message: message || null,
-          }
-        })
-      } else {
-        await prisma.rSVP.create({
-          data: {
-            guestId: existingGuest.id,
-            status,
-            numChildren,
-            parentStaying,
-            allergies: allergies || null,
-            message: message || null,
-          }
-        })
-      }
+      // Create RSVP
+      await prisma.rSVP.create({
+        data: {
+          guestId: existingGuest.id,
+          status,
+          numChildren,
+          parentStaying,
+          allergies: allergies || null,
+          message: message || null,
+        }
+      })
     } else {
       // Create new guest and RSVP linked to authenticated user
       const newGuest = await prisma.guest.create({
@@ -170,7 +177,7 @@ export async function POST(
           parentName,
           childName,
           childId: childId || null, // Link to child if selected
-          email: user.email,
+          email: (user.email || '').toString(),
           phone: phone || null,
           userId: user.id, // Link to authenticated user
         }
@@ -216,7 +223,8 @@ export async function POST(
       await sendEmail({
         to: party.user.email,
         subject: hostNotificationEmail.subject,
-        text: hostNotificationEmail.text
+        text: hostNotificationEmail.text,
+        html: hostNotificationEmail.html
       })
 
       console.log(`📧 Notification sent to host: ${party.user.email}`)
@@ -230,7 +238,7 @@ export async function POST(
       const existingContact = await prisma.contact.findFirst({
         where: {
           userId: party.userId,
-          email: user.email
+          email: (user.email || '').toString()
         }
       })
 

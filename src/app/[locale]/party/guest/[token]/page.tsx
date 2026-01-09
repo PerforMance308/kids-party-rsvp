@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import { useLocale } from '@/contexts/LanguageContext'
 import PhotoUpload from '@/components/PhotoUpload'
 
 interface Party {
@@ -51,6 +52,7 @@ interface Photo {
 export default function GuestPartyPage() {
   const { token } = useParams()
   const router = useRouter()
+  const locale = useLocale()
   const { data: session, status: sessionStatus } = useSession()
   const [party, setParty] = useState<Party | null>(null)
   const [myRSVP, setMyRSVP] = useState<RSVP | null>(null)
@@ -81,7 +83,7 @@ export default function GuestPartyPage() {
           setError('Party not found or you don\'t have access')
         } else if (response.status === 401) {
           // Redirect to RSVP page if not RSVPed yet
-          router.push(`/rsvp/${token}`)
+          router.push(`/${locale}/rsvp/${token}`)
           return
         } else {
           setError('Failed to load party information')
@@ -97,7 +99,7 @@ export default function GuestPartyPage() {
   }, [token, isAuthenticated, router])
 
   const handleEditRSVP = () => {
-    router.push(`/rsvp/${token}`)
+    router.push(`/${locale}/rsvp/${token}`)
   }
 
   const handlePhotoUploadSuccess = (newPhoto: Photo) => {
@@ -120,7 +122,7 @@ export default function GuestPartyPage() {
           <p className="text-neutral-600 mb-4">
             You need to be signed in to access this party page.
           </p>
-          <a href={`/rsvp/${token}`} className="btn btn-primary">
+          <a href={`/${locale}/rsvp/${token}`} className="btn btn-primary">
             Go to RSVP
           </a>
         </div>

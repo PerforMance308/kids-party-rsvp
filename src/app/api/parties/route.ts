@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { createReminderSchedule } from '@/lib/scheduler'
+import { calculateAge } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,9 +14,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    
+
     let party
-    
+
     // Try new schema first (with childId)
     if (body.childId) {
       const validatedData = partySchema.parse({
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
           location: validatedData.location,
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
+          targetAge: validatedData.targetAge || null,
         },
         include: {
           child: true
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
           location: validatedData.location,
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
+          targetAge: validatedData.targetAge || null,
         },
         include: {
           child: true
@@ -90,7 +93,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(party, { status: 201 })
   } catch (error) {
     console.error('Party creation error:', error)
-    
+
     if (error instanceof Error && 'issues' in error) {
       return NextResponse.json(
         { error: 'Validation failed', details: error },
@@ -137,19 +140,16 @@ export async function GET(request: NextRequest) {
           status: true
         }
       })
-      
+
       const stats = {
         total: party._count.guests,
         attending: rsvpStats.find(s => s.status === 'YES')?._count.status || 0,
         notAttending: rsvpStats.find(s => s.status === 'NO')?._count.status || 0,
         maybe: rsvpStats.find(s => s.status === 'MAYBE')?._count.status || 0,
       }
-      
-      // Calculate child age
-      const today = new Date()
-      const birthDate = new Date(party.child.birthDate)
-      const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-      
+
+      const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
+
       return {
         id: party.id,
         childName: party.child.name,
@@ -158,8 +158,9 @@ export async function GET(request: NextRequest) {
         location: party.location,
         theme: party.theme,
         notes: party.notes,
+        targetAge: party.targetAge,
         template: party.template,
-        templatePaid: party.templatePaid,
+        templatePaid: party.paidTemplates.includes(party.template),
         publicRsvpToken: party.publicRsvpToken,
         stats
       }

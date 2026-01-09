@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn, getSession, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 function LoginForm() {
@@ -19,23 +20,13 @@ function LoginForm() {
   const redirectUrl = searchParams.get('redirect')
   const { data: session, status } = useSession()
 
-  // Check for session
-  useEffect(() => {
-    console.log('Login page - Auth status:', {
-      status,
-      hasSession: !!session,
-      userId: session?.user?.id,
-      email: session?.user?.email,
-    })
-  }, [status, session])
-
   // If fully authenticated, auto-redirect
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
-      console.log('User already authenticated, redirecting...')
-      window.location.href = (redirectUrl || `/${locale}/dashboard`) as string
+      const target = (redirectUrl || `/${locale}`) as string
+      window.location.href = target
     }
-  }, [status, session, redirectUrl])
+  }, [status, session, redirectUrl, locale])
 
   // Show loading state while checking authentication
   if (status === 'loading') {
@@ -67,28 +58,20 @@ function LoginForm() {
     setError('')
 
     try {
-      console.log('Attempting credentials login for:', email)
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
-        callbackUrl: redirectUrl || '/dashboard',
+        callbackUrl: redirectUrl || '/',
       })
-
-      console.log('Login result:', result)
 
       if (result?.error) {
         setError('Invalid email or password')
         setIsLoading(false)
       } else if (result?.ok) {
-        // Manual redirect on success
-        console.log('Login successful, redirecting manually...')
-        // Use window.location.href instead of router.push to force a full page reload
-        // This ensures the session cookie is properly sent to the server for the new page
-        window.location.href = (redirectUrl || '/dashboard') as string
+        window.location.href = redirectUrl || `/${locale}`
       }
-    } catch (error) {
-      console.error('Login error:', error)
+    } catch {
       setError('An error occurred. Please try again.')
       setIsLoading(false)
     }
@@ -96,12 +79,11 @@ function LoginForm() {
 
   const handleGoogleSignIn = async () => {
     try {
-      console.log('Starting Google sign-in...')
+      const callbackUrl = redirectUrl || `/${locale}`
       await signIn('google', {
-        callbackUrl: redirectUrl || '/dashboard',
+        callbackUrl
       })
-    } catch (error) {
-      console.error('Google sign-in error:', error)
+    } catch {
       setError('Google sign-in failed. Please try again.')
     }
   }
@@ -111,10 +93,20 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="card">
           <div className="text-center mb-6">
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/logo.png"
+                alt="Kid Party RSVP"
+                width={280}
+                height={70}
+                className="h-16 w-auto object-contain"
+                priority
+              />
+            </div>
             <h1 className="text-2xl font-bold text-neutral-900">
               {t('login.title')}
             </h1>
-            <p className="text-neutral-600 mt-2">
+            <p className="text-neutral-600 mt-1">
               {t('login.subtitle')}
             </p>
           </div>
@@ -134,7 +126,7 @@ function LoginForm() {
             {t('login.signInWithGoogle')}
           </button>
 
-          <div className="relative">
+          <div className="relative mt-6">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -204,6 +196,11 @@ function LoginForm() {
             >
               {isLoading ? t('login.signingIn') : t('login.signIn')}
             </button>
+            <div className="text-center mt-2">
+              <Link href={`/${locale}/login/forgot-password`} className="text-sm text-primary-600 hover:text-primary-700">
+                Forgot password?
+              </Link>
+            </div>
           </form>
 
           <div className="text-center mt-6">

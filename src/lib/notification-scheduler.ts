@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { 
+import {
   sendEmail,
   generatePhotoSharingAvailableEmail,
   generateBirthdayPartyReminderEmail
@@ -32,11 +32,14 @@ export async function schedulePhotoSharingNotifications(partyId: string) {
     notificationDate.setHours(10, 0, 0, 0) // 10 AM next day
 
     const today = new Date()
-    const childAge = Math.floor((today.getTime() - new Date(party.child.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    const birthDate = new Date(party.child.birthDate)
+    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+
+    const childAge = (party as any).targetAge ?? calculatedAge
 
     // Create notifications for all guests who RSVPed YES
     const attendingGuests = party.guests.filter(guest => guest.rsvp?.status === 'YES')
-    
+
     for (const guest of attendingGuests) {
       if (!guest.user) continue // Skip guests without user accounts
 
@@ -60,7 +63,7 @@ export async function schedulePhotoSharingNotifications(partyId: string) {
           childAge: childAge,
           eventDatetime: party.eventDatetime,
           location: party.location,
-          theme: party.theme,
+          theme: party.theme || undefined,
           publicRsvpToken: party.publicRsvpToken
         },
         {
@@ -77,9 +80,10 @@ export async function schedulePhotoSharingNotifications(partyId: string) {
           type: 'PHOTO_SHARING_AVAILABLE',
           subject: emailContent.subject,
           content: emailContent.text,
+          htmlContent: emailContent.html,
           relatedId: partyId,
           scheduledAt: notificationDate
-        }
+        } as any
       })
 
       console.log(`📷 Scheduled photo sharing notification for ${guest.email} on ${notificationDate.toISOString()}`)
@@ -107,7 +111,7 @@ export async function scheduleBirthdayReminders() {
     for (const child of children) {
       const childBirthday = new Date(child.birthDate)
       const thisYearBirthday = new Date(today.getFullYear(), childBirthday.getMonth(), childBirthday.getDate())
-      
+
       // If birthday has passed this year, check next year
       if (thisYearBirthday < today) {
         thisYearBirthday.setFullYear(today.getFullYear() + 1)
@@ -153,9 +157,10 @@ export async function scheduleBirthdayReminders() {
             type: 'BIRTHDAY_PARTY_REMINDER',
             subject: emailContent.subject,
             content: emailContent.text,
+            htmlContent: emailContent.html,
             relatedId: child.id,
             scheduledAt: new Date() // Send immediately
-          }
+          } as any
         })
 
         console.log(`🎂 Scheduled birthday reminder for ${child.name} (${child.user.email})`)
@@ -169,7 +174,7 @@ export async function scheduleBirthdayReminders() {
 export async function processPendingEmails() {
   try {
     const now = new Date()
-    
+
     // Get all pending notifications that are due to be sent
     const pendingEmails = await prisma.emailNotification.findMany({
       where: {
@@ -191,6 +196,25 @@ export async function processPendingEmails() {
 
     for (const notification of pendingEmails) {
       try {
+        // Check if user is verified before sending (double-check since it might have been scheduled while verified or vice versa)
+        const user = await prisma.user.findUnique({
+          where: { id: notification.userId },
+          select: { emailVerified: true }
+        })
+
+        if (!user?.emailVerified) {
+          console.log(`⚠️ Skipping email for unverified user ${notification.email}: ${notification.subject}`)
+          // We mark as failed with a specific error so we don't keep trying
+          await prisma.emailNotification.update({
+            where: { id: notification.id },
+            data: {
+              status: 'failed',
+              error: 'Email address not verified'
+            }
+          })
+          continue
+        }
+
         // Update attempts before sending
         await prisma.emailNotification.update({
           where: { id: notification.id },
@@ -203,7 +227,8 @@ export async function processPendingEmails() {
         await sendEmail({
           to: notification.email,
           subject: notification.subject,
-          text: notification.content
+          text: notification.content,
+          html: (notification as any).htmlContent || undefined
         })
 
         // Mark as sent
@@ -221,7 +246,7 @@ export async function processPendingEmails() {
 
         // Mark as failed if max attempts reached
         const newStatus = notification.attempts + 1 >= 3 ? 'failed' : 'pending'
-        
+
         await prisma.emailNotification.update({
           where: { id: notification.id },
           data: {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLocale } from '@/contexts/LanguageContext'
 import PaymentForm from '@/components/PaymentForm'
 
 interface PhotoSharingPaymentProps {
@@ -14,6 +15,7 @@ export default function PhotoSharingPayment({
   childName 
 }: PhotoSharingPaymentProps) {
   const router = useRouter()
+  const locale = useLocale()
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
 
@@ -32,7 +34,7 @@ export default function PhotoSharingPayment({
 
       if (response.ok) {
         // Redirect to party dashboard
-        router.push(`/party/${partyId}/dashboard?photoSharingEnabled=true`)
+        router.push(`/${locale}/party/${partyId}/dashboard?photoSharingEnabled=true`)
       } else {
         const error = await response.json()
         setError(error.message || 'Failed to enable photo sharing')
@@ -50,7 +52,7 @@ export default function PhotoSharingPayment({
   }
 
   const handleCancel = () => {
-    router.push(`/party/${partyId}/dashboard`)
+    router.push(`/${locale}/party/${partyId}/dashboard`)
   }
 
   if (isProcessing) {
