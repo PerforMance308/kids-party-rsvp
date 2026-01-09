@@ -1,9 +1,44 @@
 import { createTransporter } from './email'
+import { Resend } from 'resend'
 
 export interface EmailProvider {
   name: string
   test: () => Promise<boolean>
   send: (to: string, subject: string, text: string, html?: string) => Promise<void>
+}
+
+// Resend Provider (preferred)
+export const resendProvider: EmailProvider = {
+  name: 'Resend',
+  async test() {
+    if (!process.env.RESEND_API_KEY) {
+      return false
+    }
+    try {
+      // Simple validation - check if API key exists and has correct format
+      return process.env.RESEND_API_KEY.startsWith('re_')
+    } catch (error) {
+      console.error('❌ Resend test failed:', error)
+      return false
+    }
+  },
+
+  async send(to: string, subject: string, text: string, html?: string) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY not configured')
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@kidspartyrsvp.com'
+
+    await resend.emails.send({
+      from: `Kid Party RSVP <${fromEmail}>`,
+      to,
+      subject,
+      text,
+      html: html || text.replace(/\n/g, '<br>')
+    })
+  }
 }
 
 // Gmail Provider
@@ -67,7 +102,7 @@ export const consoleProvider: EmailProvider = {
 
 // Auto-select the best available provider
 export async function getEmailProvider(): Promise<EmailProvider> {
-  const providers = [gmailProvider, consoleProvider]
+  const providers = [resendProvider, gmailProvider, consoleProvider]
 
   for (const provider of providers) {
     if (await provider.test()) {
@@ -82,7 +117,7 @@ export async function getEmailProvider(): Promise<EmailProvider> {
 
 // Test all providers
 export async function testEmailProviders() {
-  const providers = [gmailProvider, consoleProvider]
+  const providers = [resendProvider, gmailProvider, consoleProvider]
   const results = []
 
   for (const provider of providers) {
