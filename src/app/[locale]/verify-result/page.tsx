@@ -8,12 +8,12 @@ import { useLocale } from '@/contexts/LanguageContext'
 function VerifyResultContent() {
     const searchParams = useSearchParams()
     const locale = useLocale()
-    
+
     const status = searchParams.get('status')
     const reason = searchParams.get('reason')
-    
+
     const isSuccess = status === 'success'
-    
+
     const getErrorMessage = () => {
         switch (reason) {
             case 'missing':
@@ -60,10 +60,10 @@ function VerifyResultContent() {
 
                 <div className="space-y-3">
                     <Link
-                        href={`/${locale}/dashboard`}
+                        href={`/${locale}/login`}
                         className="btn btn-primary w-full"
                     >
-                        Go to Dashboard
+                        Sign In
                     </Link>
 
                     {!isSuccess && (
