@@ -9,7 +9,7 @@ interface EmailData {
   html?: string
 }
 
-const PRIMARY_COLOR = '#0ea5e9'
+const PRIMARY_COLOR = '#f43f5e'
 const SECONDARY_COLOR = '#f43f5e'
 const NEUTRAL_COLOR = '#4b5563'
 
@@ -24,11 +24,11 @@ function wrapHtmlEmail(title: string, content: string, actionUrl?: string, actio
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f9fafb; }
           .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-          .header { background-color: ${PRIMARY_COLOR}; padding: 32px 20px; text-align: center; }
-          .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em; }
+          .header { background-color: #ffffff; padding: 32px 20px; text-align: center; border-bottom: 1px solid #f3f4f6; }
+          .header h1 { color: #111827; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em; }
           .content { padding: 32px 24px; }
           .footer { background-color: #f3f4f6; padding: 24px; text-align: center; font-size: 14px; color: #6b7280; }
-          .button { display: inline-block; padding: 12px 24px; background-color: ${PRIMARY_COLOR}; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 24px; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #f43f5e; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 24px; }
           .details-card { background-color: #f0f9ff; border-left: 4px solid ${PRIMARY_COLOR}; padding: 16px; margin: 20px 0; border-radius: 4px; }
           .details-item { margin: 8px 0; display: flex; align-items: center; }
           .emoji { margin-right: 10px; font-size: 18px; }
@@ -318,7 +318,7 @@ KidParty RSVP 系统`
   return {
     subject,
     text: plainText,
-    html: wrapHtmlEmail(subject, htmlContent, `${getBaseUrl()}/dashboard`, '查看仪表板')
+    html: wrapHtmlEmail(subject, htmlContent, `${getBaseUrl()}/zh/dashboard`, '查看仪表板')
   }
 }
 
