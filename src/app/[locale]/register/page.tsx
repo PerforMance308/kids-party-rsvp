@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 function RegisterForm() {
@@ -82,7 +83,17 @@ function RegisterForm() {
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="card">
-          <div className="text-center mb-6">
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+              <Image
+                src="/logo.png"
+                alt="Kid Party RSVP"
+                width={240}
+                height={60}
+                className="h-12 w-auto object-contain"
+                priority
+              />
+            </div>
             <h1 className="text-2xl font-bold text-neutral-900">
               {t('register.title')}
             </h1>
