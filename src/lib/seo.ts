@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
-// Base URL - update this when you have your own domain
-export const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://kids-party-rsvp.zeabur.app'
+// Base URL - production domain
+export const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://kidspartyrsvp.com'
 export const SITE_NAME = 'Kid Party RSVP'
 
 // SEO keywords by language

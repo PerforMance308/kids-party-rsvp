@@ -1,5 +1,5 @@
 env:
-  NEXT_PUBLIC_BASE_URL: https://kids-party-rsvp.zeabur.app
-  NEXTAUTH_URL: https://kids-party-rsvp.zeabur.app
+  NEXT_PUBLIC_BASE_URL: https://kidspartyrsvp.com
+  NEXTAUTH_URL: https://kidspartyrsvp.com
   SMTP_HOST: smtp.gmail.com
   SMTP_PORT: "587"
