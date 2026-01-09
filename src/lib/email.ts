@@ -39,7 +39,7 @@ function wrapHtmlEmail(title: string, content: string, actionUrl?: string, actio
       <body>
         <div class="container">
           <div class="header">
-            <h1>🎉 Kid Party RSVP</h1>
+            <img src="${getBaseUrl()}/logo.png" alt="Kid Party RSVP" style="height: 50px; width: auto; max-width: 240px; display: block; margin: 0 auto;">
           </div>
           <div class="content">
             ${content}

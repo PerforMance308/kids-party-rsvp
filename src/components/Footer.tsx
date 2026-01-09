@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useLocale } from '@/contexts/LanguageContext'
 
@@ -14,7 +15,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Brand */}
           <div className="md:col-span-2">
-            <h3 className="font-bold text-lg text-neutral-800 mb-2">Kid Party RSVP</h3>
+            <div className="mb-4">
+              <Image
+                src="/logo.png"
+                alt="Kid Party RSVP"
+                width={150}
+                height={38}
+                className="h-8 w-auto object-contain brightness-90 grayscale-[0.2]"
+              />
+            </div>
             <p className="text-sm text-neutral-600">
               Making party planning easier for parents everywhere. Create beautiful invitations, manage RSVPs, and celebrate together.
             </p>
