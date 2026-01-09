@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { PartyWithStats } from '@/types'
-import { formatDate, getDaysUntilEvent } from '@/lib/utils'
+import { formatDate, getDaysUntilEvent, getDaysUntilColor } from '@/lib/utils'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 export default function DashboardPage() {
@@ -154,12 +154,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                     {isUpcoming && (
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${daysUntil === 0
-                        ? 'bg-red-100 text-red-700'
-                        : daysUntil <= 3
-                          ? 'bg-yellow-100 text-yellow-700'
-                          : 'bg-green-100 text-green-700'
-                        }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDaysUntilColor(daysUntil)}`}>
                         {daysUntil === 0 ? t('dashboard.today') : t('dashboard.daysLeft', { days: daysUntil })}
                       </span>
                     )}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getRsvpStatusColor } from '@/lib/utils'
 import Link from 'next/link'
 import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageContext'
 
@@ -87,15 +87,6 @@ export default function InvitationsPage() {
     return null
   }
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'YES': return 'bg-green-100 text-green-800 border-green-200'
-      case 'NO': return 'bg-red-100 text-red-800 border-red-200'
-      case 'MAYBE': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      default: return 'bg-gray-100 text-gray-800 border-gray-200'
-    }
-  }
-
   const getStatusText = (status?: string) => {
     switch (status) {
       case 'YES': return tr('status.attending')
@@ -159,7 +150,7 @@ export default function InvitationsPage() {
                         <h3 className="text-lg font-semibold text-neutral-900">
                           {invitation.party.childName}'s {invitation.party.childAge}{t('children.years')}
                         </h3>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(invitation.rsvp?.status)}`}>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getRsvpStatusColor(invitation.rsvp?.status)}`}>
                           {getStatusText(invitation.rsvp?.status)}
                         </span>
                       </div>
@@ -218,7 +209,7 @@ export default function InvitationsPage() {
                         <h3 className="text-base font-medium text-neutral-700">
                           {invitation.party.childName}'s {invitation.party.childAge}{t('children.years')}
                         </h3>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(invitation.rsvp?.status)}`}>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getRsvpStatusColor(invitation.rsvp?.status)}`}>
                           {getStatusText(invitation.rsvp?.status)}
                         </span>
                       </div>

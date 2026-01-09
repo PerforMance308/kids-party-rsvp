@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { createReminderSchedule } from '@/lib/scheduler'
+import { calculateAge } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -147,12 +148,7 @@ export async function GET(request: NextRequest) {
         maybe: rsvpStats.find(s => s.status === 'MAYBE')?._count.status || 0,
       }
 
-      // Calculate child age
-      const today = new Date()
-      const birthDate = new Date(party.child.birthDate)
-      const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-
-      const childAge = party.targetAge ?? calculatedAge
+      const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
 
       return {
         id: party.id,

@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
-import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { sendPartyUpdateEmail } from '@/lib/email'
-import { getBaseUrl } from '@/lib/utils'
+import { getBaseUrl, calculateAge } from '@/lib/utils'
 
 export async function GET(
   request: NextRequest,
@@ -64,12 +63,7 @@ export async function GET(
       maybe: rsvpStats.find(s => s.status === 'MAYBE')?._count.status || 0,
     }
 
-    // Calculate child age
-    const today = new Date()
-    const birthDate = new Date(party.child.birthDate)
-    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-
-    const childAge = party.targetAge ?? calculatedAge
+    const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
 
     const partyWithStats = {
       ...party,
@@ -193,12 +187,7 @@ export async function PUT(
       maybe: rsvps.filter(r => r?.status === 'MAYBE').length,
     }
 
-    // Calculate child age
-    const today = new Date()
-    const birthDate = new Date(updatedParty.child.birthDate)
-    const calculatedAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-
-    const childAge = updatedParty.targetAge ?? calculatedAge
+    const childAge = updatedParty.targetAge ?? calculateAge(updatedParty.child.birthDate)
 
     const partyWithStats = {
       ...updatedParty,
@@ -272,8 +261,6 @@ export async function DELETE(
       await tx.guest.deleteMany({
         where: { partyId: id }
       })
-
-
 
       // Finally delete the party
       await tx.party.delete({

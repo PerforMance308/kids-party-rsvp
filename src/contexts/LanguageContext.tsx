@@ -574,10 +574,6 @@ export function LanguageProvider({
   const normalizedLocale = (locale as string).startsWith('zh') ? 'zh' : 'en' as Locale
 
   const t = (key: string, params?: Record<string, any>) => {
-    // 规范化 locale，处理 zh-CN 等情况
-    // const normalizedLocale = (locale as string).startsWith('zh') ? 'zh' : 'en' as Locale
-    // Use the outer normalizedLocale variable
-
     // Fallback to English if translation is missing for the key
     const localeTranslations = (translations as any)[normalizedLocale] || translations.en
     let translation = localeTranslations[key] || key

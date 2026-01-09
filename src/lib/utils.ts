@@ -64,3 +64,71 @@ export function formatDateForInput(date: Date): string {
 
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
+
+/**
+ * Calculate age from birth date
+ * Uses precise calculation accounting for leap years
+ */
+export function calculateAge(birthDate: Date, referenceDate: Date = new Date()): number {
+  const birth = new Date(birthDate)
+  const ref = new Date(referenceDate)
+
+  let age = ref.getFullYear() - birth.getFullYear()
+  const monthDiff = ref.getMonth() - birth.getMonth()
+
+  // Adjust if birthday hasn't occurred yet this year
+  if (monthDiff < 0 || (monthDiff === 0 && ref.getDate() < birth.getDate())) {
+    age--
+  }
+
+  return Math.max(0, age)
+}
+
+/**
+ * Get status color classes for RSVP status
+ */
+export function getRsvpStatusColor(status?: string): string {
+  switch (status) {
+    case 'YES':
+      return 'bg-green-100 text-green-700'
+    case 'NO':
+      return 'bg-red-100 text-red-700'
+    case 'MAYBE':
+      return 'bg-yellow-100 text-yellow-700'
+    default:
+      return 'bg-neutral-100 text-neutral-700'
+  }
+}
+
+/**
+ * Get display text for RSVP status
+ */
+export function getRsvpStatusText(status?: string, locale: string = 'en'): string {
+  const texts: Record<string, Record<string, string>> = {
+    en: {
+      YES: 'Attending',
+      NO: 'Not Attending',
+      MAYBE: 'Maybe',
+      default: 'Pending'
+    },
+    zh: {
+      YES: '参加',
+      NO: '不参加',
+      MAYBE: '可能参加',
+      default: '待定'
+    }
+  }
+
+  const t = texts[locale] || texts.en
+  return t[status || ''] || t.default
+}
+
+/**
+ * Get color classes for days until event
+ */
+export function getDaysUntilColor(days: number): string {
+  if (days < 0) return 'bg-neutral-100 text-neutral-500'
+  if (days === 0) return 'bg-red-100 text-red-700'
+  if (days <= 3) return 'bg-yellow-100 text-yellow-700'
+  return 'bg-green-100 text-green-700'
+}
