@@ -11,12 +11,10 @@ export default function VerificationBanner({ email }: VerificationBannerProps) {
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
     const { t } = useLanguage()
 
-    console.log('[DEBUG] VerificationBanner rendering for:', email, 'status:', status)
-
     const handleResend = async () => {
         setStatus('sending')
         try {
-            const response = await fetch('/api/auth/verify/send', {
+            const response = await fetch('/api/auth/verify', {
                 method: 'POST',
             })
             if (response.ok) {
