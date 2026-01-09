@@ -1,3 +1,18 @@
+import { Metadata } from 'next'
+import { SITE_URL } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: 'Learn how Kid Party RSVP protects your privacy and handles your data. We value your trust and keep your information secure.',
+  alternates: {
+    canonical: `${SITE_URL}/en/privacy`,
+    languages: {
+      'en': `${SITE_URL}/en/privacy`,
+      'zh': `${SITE_URL}/zh/privacy`,
+    },
+  },
+}
+
 export default function PrivacyPage() {
   return (
     <main className="flex-1 py-12">

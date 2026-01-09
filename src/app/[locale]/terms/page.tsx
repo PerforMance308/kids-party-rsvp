@@ -1,3 +1,18 @@
+import { Metadata } from 'next'
+import { SITE_URL } from '@/lib/seo'
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Read our terms of service for using Kid Party RSVP platform. Learn about user accounts, content policies, and service usage.',
+  alternates: {
+    canonical: `${SITE_URL}/en/terms`,
+    languages: {
+      'en': `${SITE_URL}/en/terms`,
+      'zh': `${SITE_URL}/zh/terms`,
+    },
+  },
+}
+
 export default function TermsPage() {
   return (
     <main className="flex-1 py-12">
