@@ -173,3 +173,5 @@ startup.log
 .vscode/launch.json
 Thumbs.db
 ehthumbs.db
+
+.claude

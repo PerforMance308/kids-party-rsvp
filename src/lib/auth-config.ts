@@ -65,12 +65,23 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     signIn: async ({ user, account, profile }) => {
-      // If the user is signing in with Google, we can assume the email is verified
-      if (account?.provider === 'google' && (profile as any)?.email_verified) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { emailVerified: new Date() }
-        })
+      // If the user is signing in with Google, mark email as verified
+      if (account?.provider === 'google' && (profile as any)?.email_verified && user.email) {
+        try {
+          // Use upsert to handle both new and existing users
+          await prisma.user.upsert({
+            where: { email: user.email },
+            update: { emailVerified: new Date() },
+            create: {
+              email: user.email,
+              name: user.name || profile?.name || null,
+              image: user.image || (profile as any)?.picture || null,
+              emailVerified: new Date(),
+            }
+          })
+        } catch (error) {
+          // Ignore errors - adapter will handle user creation
+        }
       }
       return true
     },
