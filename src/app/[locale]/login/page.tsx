@@ -22,7 +22,7 @@ function LoginForm() {
   // If fully authenticated, auto-redirect
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.id) {
-      const target = (redirectUrl || `/${locale}/dashboard`) as string
+      const target = (redirectUrl || `/${locale}`) as string
       window.location.href = target
     }
   }, [status, session, redirectUrl, locale])
@@ -61,14 +61,14 @@ function LoginForm() {
         email,
         password,
         redirect: false,
-        callbackUrl: redirectUrl || '/dashboard',
+        callbackUrl: redirectUrl || '/',
       })
 
       if (result?.error) {
         setError('Invalid email or password')
         setIsLoading(false)
       } else if (result?.ok) {
-        window.location.href = redirectUrl || `/${locale}/dashboard`
+        window.location.href = redirectUrl || `/${locale}`
       }
     } catch {
       setError('An error occurred. Please try again.')

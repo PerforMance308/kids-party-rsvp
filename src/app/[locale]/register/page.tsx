@@ -45,11 +45,11 @@ function RegisterForm() {
           email,
           password,
           redirect: false,
-          callbackUrl: redirectUrl || '/dashboard',
+          callbackUrl: redirectUrl || '/',
         })
 
         if (loginResult?.ok) {
-          window.location.href = redirectUrl || `/${locale}/dashboard`
+          window.location.href = redirectUrl || `/${locale}`
         }
         return
       } else {

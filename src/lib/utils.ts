@@ -6,20 +6,19 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getBaseUrl(): string {
-  // Check for proper environment variable
+  // Always prioritize environment variables if configured
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL
-  
-  // Filter out placeholder values and localhost
-  if (baseUrl && !baseUrl.includes('[your-domain]') && !baseUrl.includes('localhost')) {
+
+  if (baseUrl) {
     return baseUrl.replace(/\/$/, '') // Remove trailing slash
   }
-  
-  // Client-side: use current domain
+
+  // Client-side: use current domain as second choice
   if (typeof window !== 'undefined') {
     return window.location.origin
   }
-  
-  // Server-side fallback: use production Zeabur domain
+
+  // Production fallback
   return 'https://kids-party-rsvp.zeabur.app'
 }
 

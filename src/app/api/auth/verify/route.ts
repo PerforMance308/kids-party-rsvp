@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { v4 as uuidv4 } from 'uuid'
 import { sendEmail, generateVerificationEmail } from '@/lib/email'
+import { getBaseUrl } from '@/lib/utils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 
@@ -9,7 +10,7 @@ import { authOptions } from '@/lib/auth-config'
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('token')
-    const baseUrl = new URL(request.url).origin
+    const baseUrl = getBaseUrl()
 
     if (!token) {
         return NextResponse.redirect(`${baseUrl}/en/verify-result?status=error&reason=missing`)

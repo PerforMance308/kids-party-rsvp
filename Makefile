@@ -84,7 +84,7 @@ db-seed:
 
 db-clear:
 	@echo Clearing all tables...
-	npx prisma db execute --stdin < NUL || (echo. && npx tsx -e "const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function main() { await prisma.rsvp.deleteMany(); await prisma.reminder.deleteMany(); await prisma.photo.deleteMany(); await prisma.guest.deleteMany(); await prisma.emailNotification.deleteMany(); await prisma.party.deleteMany(); await prisma.child.deleteMany(); await prisma.contact.deleteMany(); await prisma.session.deleteMany(); await prisma.account.deleteMany(); await prisma.verificationToken.deleteMany(); await prisma.user.deleteMany(); console.log('All tables cleared.'); } main().catch(console.error).finally(() => prisma.$disconnect());")
+	npx tsx prisma/clear.ts
 
 db-rebuild: db-reset db-seed
 	@echo Database rebuilt and seeded.
