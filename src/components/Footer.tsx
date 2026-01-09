@@ -19,9 +19,9 @@ export default function Footer() {
               <Image
                 src="/logo.png"
                 alt="Kid Party RSVP"
-                width={200}
-                height={50}
-                className="h-10 w-auto object-contain brightness-95"
+                width={180}
+                height={45}
+                className="h-12 w-auto object-contain brightness-95"
               />
             </div>
             <p className="text-sm text-neutral-600">

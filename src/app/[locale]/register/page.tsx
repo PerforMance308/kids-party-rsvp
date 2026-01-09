@@ -88,9 +88,9 @@ function RegisterForm() {
               <Image
                 src="/logo.png"
                 alt="Kid Party RSVP"
-                width={240}
-                height={60}
-                className="h-12 w-auto object-contain"
+                width={280}
+                height={70}
+                className="h-16 w-auto object-contain"
                 priority
               />
             </div>
