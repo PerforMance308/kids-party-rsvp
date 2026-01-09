@@ -10,6 +10,7 @@ function RegisterForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -20,6 +21,12 @@ function RegisterForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy')
+      return
+    }
+
     setIsLoading(true)
     setError('')
 
@@ -58,12 +65,16 @@ function RegisterForm() {
   }
 
   const handleGoogleSignIn = async () => {
+    if (!agreedToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy')
+      return
+    }
+
     try {
       await signIn('google', {
         callbackUrl: redirectUrl || `/${locale}`,
       })
-    } catch (error) {
-      console.error('Google sign-up error:', error)
+    } catch {
       setError(t('register.googleSignUpFailed'))
     }
   }
@@ -162,6 +173,26 @@ function RegisterForm() {
                   <li>• One special character (!@#$%^&*)</li>
                 </ul>
               </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+              />
+              <label htmlFor="terms" className="text-sm text-neutral-600">
+                I agree to the{' '}
+                <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline" target="_blank">
+                  Terms of Service
+                </Link>{' '}
+                and{' '}
+                <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline" target="_blank">
+                  Privacy Policy
+                </Link>
+              </label>
             </div>
 
             {error && (

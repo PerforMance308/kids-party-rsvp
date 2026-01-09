@@ -1,15 +1,72 @@
 'use client'
 
+import Link from 'next/link'
 import LanguageSwitcher from './LanguageSwitcher'
+import { useLocale } from '@/contexts/LanguageContext'
 
 export default function Footer() {
+  const locale = useLocale()
+  const currentYear = new Date().getFullYear()
+
   return (
-    <footer className="mt-auto py-4 border-t border-neutral-200 bg-neutral-50">
-      <div className="container mx-auto px-4 flex justify-between items-center">
-        <p className="text-sm text-neutral-500">
-          Kid Party RSVP
-        </p>
-        <LanguageSwitcher />
+    <footer className="mt-auto border-t border-neutral-200 bg-neutral-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <h3 className="font-bold text-lg text-neutral-800 mb-2">Kid Party RSVP</h3>
+            <p className="text-sm text-neutral-600 mb-4">
+              Making party planning easier for parents everywhere. Create beautiful invitations, manage RSVPs, and celebrate together.
+            </p>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h4 className="font-semibold text-neutral-800 mb-3">Quick Links</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href={`/${locale}`} className="text-neutral-600 hover:text-primary-600">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/dashboard`} className="text-neutral-600 hover:text-primary-600">
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/contact`} className="text-neutral-600 hover:text-primary-600">
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4 className="font-semibold text-neutral-800 mb-3">Legal</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href={`/${locale}/terms`} className="text-neutral-600 hover:text-primary-600">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href={`/${locale}/privacy`} className="text-neutral-600 hover:text-primary-600">
+                  Privacy Policy
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="mt-8 pt-6 border-t border-neutral-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-neutral-500">
+            &copy; {currentYear} Kid Party RSVP. All rights reserved.
+          </p>
+          <LanguageSwitcher />
+        </div>
       </div>
     </footer>
   )
