@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { formatDate } from '@/lib/utils'
@@ -59,6 +59,10 @@ export default function RSVPPage() {
   const [allergies, setAllergies] = useState('')
   const [message, setMessage] = useState('')
 
+  // Refs for auto-scrolling
+  const authSectionRef = useRef<HTMLDivElement>(null)
+  const notAttendingFormRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     const loadParty = async () => {
       if (!token) return
@@ -114,6 +118,19 @@ export default function RSVPPage() {
       setParentName(session.user.name)
     }
   }, [isAuthenticated, session?.user?.name, parentName])
+
+  // Auto-scroll when RSVP intent is selected
+  useEffect(() => {
+    if (rsvpIntent === 'ATTENDING' && authSectionRef.current) {
+      setTimeout(() => {
+        authSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    } else if (rsvpIntent === 'NOT_ATTENDING' && notAttendingFormRef.current) {
+      setTimeout(() => {
+        notAttendingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [rsvpIntent])
 
   const handleAddChild = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -404,7 +421,7 @@ export default function RSVPPage() {
 
         {/* Registration/Login Step - Only show if attending */}
         {!isAuthenticated && rsvpIntent === 'ATTENDING' && (
-          <div className="card mb-6">
+          <div ref={authSectionRef} className="card mb-6">
             <div className="text-center mb-6">
               <h3 className="text-xl font-semibold text-neutral-900 mb-2">
                 {tr('createAccountTitle')}
@@ -552,13 +569,13 @@ export default function RSVPPage() {
 
         {/* Not Attending Form - Simple form without login */}
         {!isAuthenticated && rsvpIntent === 'NOT_ATTENDING' && (
-          <div className="card mb-6">
+          <div ref={notAttendingFormRef} className="card mb-6">
             <div className="text-center mb-6">
               <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                {tr('sorryToMissYou') || "Sorry you can't make it!"}
+                很遗憾你不能来！
               </h3>
               <p className="text-neutral-600 text-sm">
-                {tr('optionalInfo') || 'Optionally, you can leave your name and a message'}
+                可以选择留下您的姓名和留言（可选）
               </p>
             </div>
 
@@ -566,7 +583,7 @@ export default function RSVPPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {tr('parentNameLabel')} ({t('newParty.notesPlaceholder').split('...')[0] || 'Optional'})
+                    家长姓名 (可选)
                   </label>
                   <input
                     type="text"
@@ -574,13 +591,13 @@ export default function RSVPPage() {
                     value={parentName}
                     onChange={(e) => setParentName(e.target.value)}
                     className="input"
-                    placeholder={tr('yourName') || 'Your name'}
+                    placeholder="您的姓名"
                   />
                 </div>
 
                 <div>
                   <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {tr('childNameLabel')} ({t('newParty.notesPlaceholder').split('...')[0] || 'Optional'})
+                    孩子姓名 (可选)
                   </label>
                   <input
                     type="text"
@@ -588,14 +605,14 @@ export default function RSVPPage() {
                     value={childName}
                     onChange={(e) => setChildName(e.target.value)}
                     className="input"
-                    placeholder={tr('childName') || "Child's name"}
+                    placeholder="孩子的姓名"
                   />
                 </div>
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-neutral-700 mb-1">
-                  {t('children.notes')} ({t('newParty.notesPlaceholder').split('...')[0] || 'Optional'})
+                  留言 (可选)
                 </label>
                 <textarea
                   id="message"
@@ -603,7 +620,7 @@ export default function RSVPPage() {
                   onChange={(e) => setMessage(e.target.value)}
                   className="input"
                   rows={3}
-                  placeholder={tr('leaveMessage') || 'Leave a message for the host...'}
+                  placeholder="给主办方留言..."
                 />
               </div>
 
@@ -619,14 +636,14 @@ export default function RSVPPage() {
                   onClick={() => setRsvpIntent(null)}
                   className="btn btn-secondary flex-1"
                 >
-                  ← {tr('back') || 'Back'}
+                  ← 返回
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="btn btn-primary flex-1 disabled:opacity-50"
                 >
-                  {isSubmitting ? tr('submitting') : tr('submitResponse') || 'Submit Response'}
+                  {isSubmitting ? '提交中...' : '提交回复'}
                 </button>
               </div>
             </form>
