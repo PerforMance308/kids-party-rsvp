@@ -20,26 +20,91 @@ function wrapHtmlEmail(title: string, content: string, actionUrl?: string, actio
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light only">
+        <meta name="supported-color-schemes" content="light">
         <title>${title}</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1f2937; margin: 0; padding: 0; background-color: #f9fafb; }
-          .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-          .header { background-color: #ffffff; padding: 32px 20px; text-align: center; border-bottom: 1px solid #f3f4f6; }
-          .header h1 { color: #111827; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em; }
-          .content { padding: 32px 24px; }
-          .footer { background-color: #f3f4f6; padding: 24px; text-align: center; font-size: 14px; color: #6b7280; }
-          .button { display: inline-block; padding: 12px 24px; background-color: #f43f5e; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 600; margin-top: 24px; }
-          .details-card { background-color: #f0f9ff; border-left: 4px solid ${PRIMARY_COLOR}; padding: 16px; margin: 20px 0; border-radius: 4px; }
+          :root {
+            color-scheme: light only;
+            supported-color-schemes: light;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #1f2937 !important;
+            margin: 0;
+            padding: 0;
+            background-color: #f9fafb !important;
+          }
+          .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff !important;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          }
+          .header {
+            background-color: #ffffff !important;
+            padding: 32px 20px;
+            text-align: center;
+            border-bottom: 1px solid #f3f4f6;
+          }
+          .header h1 { color: #111827 !important; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em; }
+          .logo-wrapper {
+            background-color: #ffffff !important;
+            padding: 10px;
+            display: inline-block;
+            border-radius: 8px;
+          }
+          .content { padding: 32px 24px; background-color: #ffffff !important; }
+          .footer {
+            background-color: #f3f4f6 !important;
+            padding: 24px;
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280 !important;
+          }
+          .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #f43f5e !important;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 24px;
+          }
+          .details-card {
+            background-color: #f0f9ff !important;
+            border-left: 4px solid ${PRIMARY_COLOR};
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 4px;
+          }
           .details-item { margin: 8px 0; display: flex; align-items: center; }
           .emoji { margin-right: 10px; font-size: 18px; }
-          p { margin: 16px 0; }
-          .greeting { font-size: 18px; font-weight: 600; color: #111827; }
+          p { margin: 16px 0; color: #1f2937 !important; }
+          .greeting { font-size: 18px; font-weight: 600; color: #111827 !important; }
+
+          /* Dark mode prevention */
+          @media (prefers-color-scheme: dark) {
+            body, .container, .header, .content, .footer, p, .greeting {
+              background-color: #ffffff !important;
+              color: #1f2937 !important;
+            }
+            .footer {
+              background-color: #f3f4f6 !important;
+            }
+          }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <img src="${getBaseUrl()}/logo.png" alt="Kid Party RSVP" style="height: 50px; width: auto; max-width: 240px; display: block; margin: 0 auto;">
+            <div class="logo-wrapper">
+              <img src="${getBaseUrl()}/logo.png" alt="Kid Party RSVP" style="height: 50px; width: auto; max-width: 240px; display: block; margin: 0 auto;">
+            </div>
           </div>
           <div class="content">
             ${content}
