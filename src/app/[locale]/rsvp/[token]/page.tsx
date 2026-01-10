@@ -123,11 +123,11 @@ export default function RSVPPage() {
   useEffect(() => {
     if (rsvpIntent === 'ATTENDING' && authSectionRef.current) {
       setTimeout(() => {
-        authSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        authSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }, 100)
     } else if (rsvpIntent === 'NOT_ATTENDING' && notAttendingFormRef.current) {
       setTimeout(() => {
-        notAttendingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        notAttendingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }, 100)
     }
   }, [rsvpIntent])
