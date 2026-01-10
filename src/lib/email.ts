@@ -291,10 +291,11 @@ export function generateHostRSVPNotificationEmail(
     parentStaying: boolean
     allergies?: string
     message?: string
-  }
+  },
+  locale: 'en' | 'zh' = 'zh'
 ) {
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('zh-CN', {
+    return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -310,80 +311,130 @@ export function generateHostRSVPNotificationEmail(
     'MAYBE': '🤔'
   }
 
-  const statusText = {
-    'YES': '接受邀请',
-    'NO': '无法参加',
-    'MAYBE': '可能参加'
+  const content = {
+    zh: {
+      statusText: { 'YES': '接受邀请', 'NO': '无法参加', 'MAYBE': '可能参加' },
+      subject: `新的RSVP回复：${guestData.parentName} ${{'YES': '接受邀请', 'NO': '无法参加', 'MAYBE': '可能参加'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}的生日派对`,
+      greeting: '您好！',
+      received: '您收到了一个新的RSVP回复：',
+      guest: '客人：',
+      response: '回复：',
+      details: '参加详情',
+      numChildren: '参加人数：',
+      children: '名儿童',
+      parent: '家长：',
+      willStay: '会留下陪同',
+      dropOff: '只是接送，不留下',
+      allergies: '过敏/饮食限制：',
+      maybeText: '表示可能参加，请后续确认。',
+      sorryText: '很遗憾',
+      cannotAttend: '无法参加这次派对。',
+      guestMessage: '客人留言：',
+      partyInfo: '派对信息',
+      event: '活动：',
+      birthdayOf: '的',
+      birthday: '岁生日派对',
+      when: '时间：',
+      where: '地点：',
+      viewDashboard: '查看仪表板',
+      footer: 'KidParty RSVP 系统'
+    },
+    en: {
+      statusText: { 'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe' },
+      subject: `New RSVP: ${guestData.parentName} ${{'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}'s Birthday`,
+      greeting: 'Hello!',
+      received: 'You received a new RSVP response:',
+      guest: 'Guest:',
+      response: 'Response:',
+      details: 'Attendance Details',
+      numChildren: 'Number of children:',
+      children: 'children',
+      parent: 'Parent:',
+      willStay: 'will stay with children',
+      dropOff: 'drop-off only',
+      allergies: 'Allergies/Dietary Restrictions:',
+      maybeText: 'indicated they might attend. Please confirm later.',
+      sorryText: 'Unfortunately',
+      cannotAttend: 'cannot attend this party.',
+      guestMessage: 'Guest Message:',
+      partyInfo: 'Party Information',
+      event: 'Event:',
+      birthdayOf: '',
+      birthday: `'s ${partyData.childAge}th Birthday Party`,
+      when: 'When:',
+      where: 'Where:',
+      viewDashboard: 'View Dashboard',
+      footer: 'KidParty RSVP System'
+    }
   }
 
-  const subject = `新的RSVP回复：${guestData.parentName} ${statusText[guestData.status as keyof typeof statusText]} - ${partyData.childName}的生日派对`
+  const t = content[locale]
+  const subject = t.subject
 
-  const plainText = `您好！
+  const plainText = `${t.greeting}
 
-您收到了一个新的RSVP回复：
+${t.received}
 
-👥 客人：${guestData.parentName} 和 ${guestData.childName}
-📝 回复：${statusEmoji[guestData.status as keyof typeof statusEmoji]} ${statusText[guestData.status as keyof typeof statusText]}
+👥 ${t.guest} ${guestData.parentName} ${locale === 'zh' ? '和' : 'and'} ${guestData.childName}
+📝 ${t.response} ${statusEmoji[guestData.status as keyof typeof statusEmoji]} ${t.statusText[guestData.status as keyof typeof statusEmoji]}
 
 ${guestData.status === 'YES' ? `
-✅ 参加详情：
-• 参加人数：${guestData.numChildren} 名儿童
-• 家长：${guestData.parentStaying ? '会留下陪同' : '只是接送，不留下'}
-${guestData.allergies ? `• ⚠️ 过敏/饮食限制：${guestData.allergies}` : ''}
+✅ ${t.details}：
+• ${t.numChildren} ${guestData.numChildren} ${t.children}
+• ${t.parent} ${guestData.parentStaying ? t.willStay : t.dropOff}
+${guestData.allergies ? `• ⚠️ ${t.allergies} ${guestData.allergies}` : ''}
 ` : guestData.status === 'MAYBE' ? `
-🤔 ${guestData.parentName} 表示可能参加，请后续确认。
+🤔 ${guestData.parentName} ${t.maybeText}
 ` : `
-😢 很遗憾 ${guestData.childName} 无法参加这次派对。
+😢 ${t.sorryText} ${guestData.childName} ${t.cannotAttend}
 `}${guestData.message ? `
-💬 留言："${guestData.message}"
+💬 ${t.guestMessage} "${guestData.message}"
 ` : ''}
-🎂 派对信息：
-• 活动：${partyData.childName} 的 ${partyData.childAge} 岁生日派对
-• 时间：${formatDate(partyData.eventDatetime)}
-• 地点：${partyData.location}
+🎂 ${t.partyInfo}：
+• ${t.event} ${partyData.childName}${t.birthdayOf} ${partyData.childAge} ${t.birthday}
+• ${t.when} ${formatDate(partyData.eventDatetime)}
+• ${t.where} ${partyData.location}
 
-您可以在仪表板中查看所有RSVP回复。
-
-KidParty RSVP 系统`
+${t.footer}`
 
   const htmlContent = `
-    <p class="greeting">您好！</p>
-    <p>您收到了一个新的RSVP回复：</p>
-    
+    <p class="greeting">${t.greeting}</p>
+    <p>${t.received}</p>
+
     <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0; font-size: 1.1em;">
-        <strong>👥 客人：</strong> ${guestData.parentName} 和 ${guestData.childName}<br>
-        <strong>📝 回复：</strong> ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <span style="color: ${guestData.status === 'YES' ? '#059669' : guestData.status === 'NO' ? '#dc2626' : '#d97706'};">${statusText[guestData.status as keyof typeof statusText]}</span>
+        <strong>👥 ${t.guest}</strong> ${guestData.parentName} ${locale === 'zh' ? '和' : 'and'} ${guestData.childName}<br>
+        <strong>📝 ${t.response}</strong> ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <span style="color: ${guestData.status === 'YES' ? '#059669' : guestData.status === 'NO' ? '#dc2626' : '#d97706'};">${t.statusText[guestData.status as keyof typeof statusEmoji]}</span>
       </p>
     </div>
 
     ${guestData.status === 'YES' ? `
       <div style="border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h4 style="margin-top: 0; color: #059669;">✅ 参加详情</h4>
-        <p style="margin: 5px 0;">• 参加人数：<strong>${guestData.numChildren}</strong> 名儿童</p>
-        <p style="margin: 5px 0;">• 家长：${guestData.parentStaying ? '会留下陪同' : '只是接送，不留下'}</p>
-        ${guestData.allergies ? `<p style="margin: 5px 0; color: #dc2626;">• ⚠️ 过敏/饮食限制：${guestData.allergies}</p>` : ''}
+        <h4 style="margin-top: 0; color: #059669;">✅ ${t.details}</h4>
+        <p style="margin: 5px 0;">• ${t.numChildren} <strong>${guestData.numChildren}</strong> ${t.children}</p>
+        <p style="margin: 5px 0;">• ${t.parent} ${guestData.parentStaying ? t.willStay : t.dropOff}</p>
+        ${guestData.allergies ? `<p style="margin: 5px 0; color: #dc2626;">• ⚠️ ${t.allergies} ${guestData.allergies}</p>` : ''}
       </div>
     ` : ''}
 
     ${guestData.message ? `
       <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; font-style: italic;">
-        <strong>💬 客人留言：</strong> "${guestData.message}"
+        <strong>💬 ${t.guestMessage}</strong> "${guestData.message}"
       </div>
     ` : ''}
 
     <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
-      <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 派对信息</h4>
-      <div class="details-item">• 活动：${partyData.childName} 的 ${partyData.childAge} 岁生日派对</div>
-      <div class="details-item">• 时间：${formatDate(partyData.eventDatetime)}</div>
-      <div class="details-item">• 地点：${partyData.location}</div>
+      <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 ${t.partyInfo}</h4>
+      <div class="details-item">• ${t.event} ${partyData.childName}${t.birthdayOf} ${partyData.childAge} ${t.birthday}</div>
+      <div class="details-item">• ${t.when} ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item">• ${t.where} ${partyData.location}</div>
     </div>
   `
 
   return {
     subject,
     text: plainText,
-    html: wrapHtmlEmail(subject, htmlContent, `${getBaseUrl()}/zh/dashboard`, '查看仪表板')
+    html: wrapHtmlEmail(subject, htmlContent, `${getBaseUrl()}/${locale}/dashboard`, t.viewDashboard)
   }
 }
 

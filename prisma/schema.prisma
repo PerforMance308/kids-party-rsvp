@@ -14,6 +14,7 @@ model User {
   name               String?
   image              String?
   emailVerified      DateTime?           @map("email_verified")
+  language           String              @default("zh")
   createdAt          DateTime            @default(now()) @map("created_at")
   accounts           Account[]
   children           Child[]

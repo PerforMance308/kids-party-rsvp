@@ -87,7 +87,14 @@ export async function POST(
     const party = await prisma.party.findUnique({
       where: { publicRsvpToken: token },
       include: {
-        user: true, // Include party host details for email notifications
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            language: true
+          }
+        }, // Include party host details for email notifications
         child: true // Include child details
       }
     })
@@ -211,6 +218,9 @@ export async function POST(
       const birthDate = new Date(party.child.birthDate)
       const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
 
+      // Determine host language (default to zh if not set)
+      const hostLanguage = (party.user.language === 'en' || party.user.language?.startsWith('en')) ? 'en' : 'zh'
+
       const hostNotificationEmail = generateHostRSVPNotificationEmail(
         {
           childName: party.child.name,
@@ -226,7 +236,8 @@ export async function POST(
           parentStaying,
           allergies: allergies || undefined,
           message: message || undefined
-        }
+        },
+        hostLanguage as 'en' | 'zh'
       )
 
       await sendEmail({
