@@ -68,16 +68,21 @@ export async function POST(
       return NextResponse.json({ error: 'Invalid invitation link' }, { status: 400 })
     }
 
-    // Verify user authentication using NextAuth session
+    const body = await request.json()
+    const requestStatus = body.status
+
+    // Get session (might be null for "not attending" responses)
     const session = await getServerSession(authOptions)
-    if (!session || !session.user?.id) {
+
+    // For "attending" or "maybe" responses, require authentication
+    if ((requestStatus === 'YES' || requestStatus === 'MAYBE') && (!session || !session.user?.id)) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const user = {
+    const user = session?.user?.id ? {
       id: session.user.id,
       email: (session.user.email || '').toString()
-    }
+    } : null
 
     const party = await prisma.party.findUnique({
       where: { publicRsvpToken: token },
@@ -91,15 +96,13 @@ export async function POST(
       return NextResponse.json({ error: 'Party not found' }, { status: 404 })
     }
 
-    // Check if user is the host
-    if (party.userId === user.id) {
+    // Check if user is the host (only if authenticated)
+    if (user && party.userId === user.id) {
       return NextResponse.json(
         { error: '您不需要为您自己的派对提交接受邀请 (Host cannot RSVP to their own party)' },
         { status: 400 }
       )
     }
-
-    const body = await request.json()
 
     // Validate and sanitize input - no email needed since user is authenticated
     const validatedData = {
@@ -127,59 +130,65 @@ export async function POST(
     } = validatedData
 
     // Find or create guest by user and party
-    let existingGuest = await prisma.guest.findFirst({
-      where: {
-        partyId: party.id,
-        email: (user.email || '').toString()
-      },
-      include: {
-        rsvp: true
-      }
-    })
+    let existingGuest = null
 
-    if (existingGuest) {
-      // If user already has an RSVP, block second submission
-      if (existingGuest.rsvp) {
-        return NextResponse.json(
-          { error: '您已经提交过该派对的回复了 (You have already RSVP\'d to this party)' },
-          { status: 400 }
-        )
-      }
-
-      // Update existing guest info if no RSVP yet (unlikely given logic, but for safety)
-      await prisma.guest.update({
-        where: { id: existingGuest.id },
-        data: {
-          parentName,
-          childName,
-          childId: childId || null,
-          phone: phone || null,
-          userId: user.id,
+    if (user?.email) {
+      existingGuest = await prisma.guest.findFirst({
+        where: {
+          partyId: party.id,
+          email: user.email
+        },
+        include: {
+          rsvp: true
         }
       })
 
-      // Create RSVP
-      await prisma.rSVP.create({
-        data: {
-          guestId: existingGuest.id,
-          status,
-          numChildren,
-          parentStaying,
-          allergies: allergies || null,
-          message: message || null,
+      if (existingGuest) {
+        // If user already has an RSVP, block second submission
+        if (existingGuest.rsvp) {
+          return NextResponse.json(
+            { error: '您已经提交过该派对的回复了 (You have already RSVP\'d to this party)' },
+            { status: 400 }
+          )
         }
-      })
-    } else {
-      // Create new guest and RSVP linked to authenticated user
+
+        // Update existing guest info if no RSVP yet
+        await prisma.guest.update({
+          where: { id: existingGuest.id },
+          data: {
+            parentName,
+            childName,
+            childId: childId || null,
+            phone: phone || null,
+            userId: user.id,
+          }
+        })
+
+        // Create RSVP
+        await prisma.rSVP.create({
+          data: {
+            guestId: existingGuest.id,
+            status,
+            numChildren,
+            parentStaying,
+            allergies: allergies || null,
+            message: message || null,
+          }
+        })
+      }
+    }
+
+    if (!existingGuest) {
+      // Create new guest (with or without user link)
       const newGuest = await prisma.guest.create({
         data: {
           partyId: party.id,
-          parentName,
-          childName,
-          childId: childId || null, // Link to child if selected
-          email: (user.email || '').toString(),
+          parentName: parentName || 'Anonymous',
+          childName: childName || 'Anonymous',
+          childId: childId || null,
+          email: user?.email || `anonymous-${Date.now()}@no-email.com`, // Generate a unique email for anonymous guests
           phone: phone || null,
-          userId: user.id, // Link to authenticated user
+          userId: user?.id || null, // Null for anonymous "not attending" responses
         }
       })
 
@@ -233,31 +242,33 @@ export async function POST(
       // Don't fail the RSVP if email fails
     }
 
-    // Auto-save guest as a contact for the host
-    try {
-      const existingContact = await prisma.contact.findFirst({
-        where: {
-          userId: party.userId,
-          email: (user.email || '').toString()
-        }
-      })
-
-      if (!existingContact) {
-        await prisma.contact.create({
-          data: {
+    // Auto-save guest as a contact for the host (only if user is authenticated)
+    if (user?.email) {
+      try {
+        const existingContact = await prisma.contact.findFirst({
+          where: {
             userId: party.userId,
-            name: parentName,
-            childName: childName,
-            email: user.email,
-            phone: phone || null,
-            source: 'RSVP'
+            email: user.email
           }
         })
-        console.log(`✅ Auto-saved contact for host: ${user.email}`)
+
+        if (!existingContact) {
+          await prisma.contact.create({
+            data: {
+              userId: party.userId,
+              name: parentName,
+              childName: childName,
+              email: user.email,
+              phone: phone || null,
+              source: 'RSVP'
+            }
+          })
+          console.log(`✅ Auto-saved contact for host: ${user.email}`)
+        }
+      } catch (contactError) {
+        console.error('Failed to auto-save contact:', contactError)
+        // Don't fail the RSVP if contact save fails
       }
-    } catch (contactError) {
-      console.error('Failed to auto-save contact:', contactError)
-      // Don't fail the RSVP if contact save fails
     }
 
     return NextResponse.json({ message: 'RSVP submitted successfully' })
