@@ -29,6 +29,7 @@ export default function RSVPPage() {
   const { t } = useLanguage()
   const locale = useLocale()
   const tr = useTranslations('rsvp')
+  const [rsvpIntent, setRsvpIntent] = useState<'ATTENDING' | 'NOT_ATTENDING' | null>(null)
   const [showRegistration, setShowRegistration] = useState(false)
   const [userChildren, setUserChildren] = useState<any[]>([])
   const [selectedChildId, setSelectedChildId] = useState('')
@@ -378,8 +379,40 @@ export default function RSVPPage() {
           </div>
         </div>
 
-        {/* Registration/Login Step */}
-        {!isAuthenticated && (
+        {/* RSVP Intent Selection - Show first */}
+        {!isAuthenticated && !rsvpIntent && (
+          <div className="card mb-6">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                {tr('willYouAttend') || 'Will you attend?'}
+              </h3>
+              <p className="text-neutral-600 text-sm">
+                {tr('selectAttendance') || 'Please let us know if you can make it'}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => setRsvpIntent('ATTENDING')}
+                className="btn btn-primary flex-1 text-lg py-4"
+              >
+                ✅ {tr('yesAttending') || "Yes, I'll be there!"}
+              </button>
+              <button
+                onClick={() => {
+                  setRsvpIntent('NOT_ATTENDING')
+                  setRsvpStatus('NO')
+                }}
+                className="btn btn-secondary flex-1 text-lg py-4"
+              >
+                ❌ {tr('noNotAttending') || "Sorry, can't make it"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Registration/Login Step - Only show if attending */}
+        {!isAuthenticated && rsvpIntent === 'ATTENDING' && (
           <div className="card mb-6">
             <div className="text-center mb-6">
               <h3 className="text-xl font-semibold text-neutral-900 mb-2">
@@ -408,6 +441,14 @@ export default function RSVPPage() {
                   >
                     {tr('signInBtn')}
                   </a>
+                </div>
+                <div className="text-center">
+                  <button
+                    onClick={() => setRsvpIntent(null)}
+                    className="text-sm text-neutral-600 hover:text-neutral-800"
+                  >
+                    ← {tr('backToSelection') || 'Back'}
+                  </button>
                 </div>
               </div>
             ) : (
@@ -515,6 +556,89 @@ export default function RSVPPage() {
                 </div>
               </form>
             )}
+          </div>
+        )}
+
+        {/* Not Attending Form - Simple form without login */}
+        {!isAuthenticated && rsvpIntent === 'NOT_ATTENDING' && (
+          <div className="card mb-6">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                {tr('sorryToMissYou') || "Sorry you can't make it!"}
+              </h3>
+              <p className="text-neutral-600 text-sm">
+                {tr('optionalInfo') || 'Optionally, you can leave your name and a message'}
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
+                    {tr('parentNameLabel')} ({t('newParty.notesPlaceholder').split('...')[0] || 'Optional'})
+                  </label>
+                  <input
+                    type="text"
+                    id="parentName"
+                    value={parentName}
+                    onChange={(e) => setParentName(e.target.value)}
+                    className="input"
+                    placeholder={tr('yourName') || 'Your name'}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
+                    {tr('childNameLabel')} ({t('newParty.notesPlaceholder').split('...')[0] || 'Optional'})
+                  </label>
+                  <input
+                    type="text"
+                    id="childName"
+                    value={childName}
+                    onChange={(e) => setChildName(e.target.value)}
+                    className="input"
+                    placeholder={tr('childName') || "Child's name"}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-neutral-700 mb-1">
+                  {t('children.notes')} ({t('newParty.notesPlaceholder').split('...')[0] || 'Optional'})
+                </label>
+                <textarea
+                  id="message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="input"
+                  rows={3}
+                  placeholder={tr('leaveMessage') || 'Leave a message for the host...'}
+                />
+              </div>
+
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRsvpIntent(null)}
+                  className="btn btn-secondary flex-1"
+                >
+                  ← {tr('back') || 'Back'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn btn-primary flex-1 disabled:opacity-50"
+                >
+                  {isSubmitting ? tr('submitting') : tr('submitResponse') || 'Submit Response'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
