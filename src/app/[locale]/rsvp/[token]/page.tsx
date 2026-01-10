@@ -403,7 +403,7 @@ export default function RSVPPage() {
                   onClick={() => setRsvpIntent('ATTENDING')}
                   className="btn btn-primary px-6 py-2"
                 >
-                  我会去
+                  {tr('attendingButton')}
                 </button>
                 <button
                   onClick={() => {
@@ -412,7 +412,7 @@ export default function RSVPPage() {
                   }}
                   className="btn btn-secondary px-6 py-2"
                 >
-                  不能去
+                  {tr('notAttendingButton')}
                 </button>
               </div>
             </div>
@@ -572,10 +572,10 @@ export default function RSVPPage() {
           <div ref={notAttendingFormRef} className="card mb-6">
             <div className="text-center mb-6">
               <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                很遗憾你不能来！
+                {tr('sorryNotAttending')}
               </h3>
               <p className="text-neutral-600 text-sm">
-                可以选择留下您的姓名和留言（可选）
+                {tr('optionalInfo')}
               </p>
             </div>
 
@@ -583,7 +583,7 @@ export default function RSVPPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    家长姓名 (可选)
+                    {tr('parentNameLabel')} ({tr('optional')})
                   </label>
                   <input
                     type="text"
@@ -591,13 +591,13 @@ export default function RSVPPage() {
                     value={parentName}
                     onChange={(e) => setParentName(e.target.value)}
                     className="input"
-                    placeholder="您的姓名"
+                    placeholder={tr('parentNameLabel')}
                   />
                 </div>
 
                 <div>
                   <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    孩子姓名 (可选)
+                    {tr('childNameLabel')} ({tr('optional')})
                   </label>
                   <input
                     type="text"
@@ -605,14 +605,14 @@ export default function RSVPPage() {
                     value={childName}
                     onChange={(e) => setChildName(e.target.value)}
                     className="input"
-                    placeholder="孩子的姓名"
+                    placeholder={tr('childNameLabel')}
                   />
                 </div>
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-neutral-700 mb-1">
-                  留言 (可选)
+                  {tr('messageLabel')} ({tr('optional')})
                 </label>
                 <textarea
                   id="message"
@@ -620,7 +620,7 @@ export default function RSVPPage() {
                   onChange={(e) => setMessage(e.target.value)}
                   className="input"
                   rows={3}
-                  placeholder="给主办方留言..."
+                  placeholder={tr('messagePlaceholder')}
                 />
               </div>
 
@@ -636,14 +636,14 @@ export default function RSVPPage() {
                   onClick={() => setRsvpIntent(null)}
                   className="btn btn-secondary flex-1"
                 >
-                  ← 返回
+                  ← {tr('back')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
                   className="btn btn-primary flex-1 disabled:opacity-50"
                 >
-                  {isSubmitting ? '提交中...' : '提交回复'}
+                  {isSubmitting ? tr('submitting') : tr('submitResponse')}
                 </button>
               </div>
             </form>

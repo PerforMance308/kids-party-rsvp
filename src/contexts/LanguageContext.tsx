@@ -225,6 +225,15 @@ const translations = {
     'rsvp.autoFilled': '✓ 已根据 {name} 的资料自动填写',
     'rsvp.submitting': '正在提交...',
     'rsvp.submitBtn': '提交回复',
+    'rsvp.attendingButton': '我会去',
+    'rsvp.notAttendingButton': '不能去',
+    'rsvp.sorryNotAttending': '很遗憾你不能来！',
+    'rsvp.optionalInfo': '可以选择留下您的姓名和留言（可选）',
+    'rsvp.optional': '可选',
+    'rsvp.messageLabel': '留言',
+    'rsvp.messagePlaceholder': '给主办方留言...',
+    'rsvp.back': '返回',
+    'rsvp.submitResponse': '提交回复',
 
     // 我的邀请页面
     'invitations.title': '我的邀请函',
@@ -502,6 +511,15 @@ const translations = {
     'rsvp.autoFilled': "✓ Auto-filled from {name}'s profile",
     'rsvp.submitting': 'Submitting...',
     'rsvp.submitBtn': 'Submit RSVP',
+    'rsvp.attendingButton': "I'll attend",
+    'rsvp.notAttendingButton': "Can't attend",
+    'rsvp.sorryNotAttending': "Sorry you can't make it!",
+    'rsvp.optionalInfo': 'Optionally, you can leave your name and a message',
+    'rsvp.optional': 'Optional',
+    'rsvp.messageLabel': 'Message',
+    'rsvp.messagePlaceholder': 'Leave a message for the host...',
+    'rsvp.back': 'Back',
+    'rsvp.submitResponse': 'Submit Response',
 
     // My Invitations Page
     'invitations.title': 'My Invitations',
