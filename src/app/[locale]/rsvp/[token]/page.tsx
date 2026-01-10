@@ -377,39 +377,30 @@ export default function RSVPPage() {
               )}
             </div>
           </div>
+
+          {/* RSVP Intent Selection - Directly under party info */}
+          {!isAuthenticated && !rsvpIntent && (
+            <div className="border-t pt-4">
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setRsvpIntent('ATTENDING')}
+                  className="btn btn-primary px-6 py-2"
+                >
+                  我会去
+                </button>
+                <button
+                  onClick={() => {
+                    setRsvpIntent('NOT_ATTENDING')
+                    setRsvpStatus('NO')
+                  }}
+                  className="btn btn-secondary px-6 py-2"
+                >
+                  不能去
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* RSVP Intent Selection - Show first */}
-        {!isAuthenticated && !rsvpIntent && (
-          <div className="card mb-6">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                {tr('willYouAttend') || 'Will you attend?'}
-              </h3>
-              <p className="text-neutral-600 text-sm">
-                {tr('selectAttendance') || 'Please let us know if you can make it'}
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={() => setRsvpIntent('ATTENDING')}
-                className="btn btn-primary flex-1 text-lg py-4"
-              >
-                ✅ {tr('yesAttending') || "Yes, I'll be there!"}
-              </button>
-              <button
-                onClick={() => {
-                  setRsvpIntent('NOT_ATTENDING')
-                  setRsvpStatus('NO')
-                }}
-                className="btn btn-secondary flex-1 text-lg py-4"
-              >
-                ❌ {tr('noNotAttending') || "Sorry, can't make it"}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Registration/Login Step - Only show if attending */}
         {!isAuthenticated && rsvpIntent === 'ATTENDING' && (
