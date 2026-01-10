@@ -56,6 +56,14 @@ export async function GET(
       )
     }
 
+    // If user declined the invitation, they cannot access the party page
+    if (myGuest.rsvp.status === 'NO') {
+      return NextResponse.json(
+        { error: 'You have declined this invitation and cannot access the party page' },
+        { status: 403 }
+      )
+    }
+
     // Calculate child age
     const today = new Date()
     const birthDate = new Date(party.child.birthDate)

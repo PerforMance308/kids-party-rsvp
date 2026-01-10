@@ -330,17 +330,21 @@ export default function RSVPPage() {
   }
 
   if (submitted) {
+    const isDeclined = rsvpStatus === 'NO'
+
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
           <div className="card">
             <div className="text-center mb-6">
-              <div className="text-green-600 text-6xl mb-4">✓</div>
+              <div className={`${isDeclined ? 'text-neutral-600' : 'text-green-600'} text-6xl mb-4`}>
+                {isDeclined ? '✓' : '🎉'}
+              </div>
               <h1 className="text-2xl font-bold text-neutral-900 mb-2">
                 {tr('submittedTitle')}
               </h1>
               <p className="text-neutral-600">
-                {tr('submittedDesc')}
+                {isDeclined ? tr('submittedDescDeclined') : tr('submittedDesc')}
               </p>
             </div>
 
@@ -356,12 +360,14 @@ export default function RSVPPage() {
               </p>
             </div>
 
-            <Link
-              href={`/${locale}/party/guest/${token}`}
-              className="w-full btn btn-primary block text-center"
-            >
-              {tr('goGuestPage')}
-            </Link>
+            {!isDeclined && (
+              <Link
+                href={`/${locale}/party/guest/${token}`}
+                className="w-full btn btn-primary block text-center"
+              >
+                {tr('goGuestPage')}
+              </Link>
+            )}
           </div>
         </div>
       </div>
