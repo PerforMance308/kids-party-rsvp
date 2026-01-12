@@ -104,15 +104,68 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">5. Privacy</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">5. Age Requirements</h2>
             <p className="text-neutral-600 mb-4">
-              Your privacy is important to us. Please review our Privacy Policy, which explains how we collect, 
+              You must be at least 18 years old to create an account and use our service. Our service is designed
+              for parents and guardians to plan children's parties. By using our service, you confirm that you are
+              an adult with legal authority to provide information about the children in your care.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">6. Children's Privacy</h2>
+            <p className="text-neutral-600 mb-4">
+              We take children's privacy seriously. Our service collects limited information about children
+              (such as names, ages, and dietary restrictions) solely for the purpose of party planning and
+              guest management. This information is:
+            </p>
+            <ul className="list-disc list-inside text-neutral-600 mb-4 space-y-2">
+              <li>Only collected with parental/guardian consent</li>
+              <li>Used exclusively for party management purposes</li>
+              <li>Not shared with third parties for marketing</li>
+              <li>Deleted when the party event is removed or account is closed</li>
+            </ul>
+            <p className="text-neutral-600 mb-4">
+              Parents and guardians can request deletion of their children's information at any time by
+              contacting us or deleting the party event.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">7. Payments and Refunds</h2>
+            <p className="text-neutral-600 mb-4">
+              Kid Party RSVP offers both free and paid features:
+            </p>
+            <ul className="list-disc list-inside text-neutral-600 mb-4 space-y-2">
+              <li><strong>Free Features:</strong> Basic party creation, RSVP management, and standard invitation templates</li>
+              <li><strong>Premium Templates:</strong> One-time purchase for premium invitation designs</li>
+              <li><strong>Photo Sharing:</strong> One-time purchase to enable party photo sharing</li>
+            </ul>
+            <p className="text-neutral-600 mb-4 font-medium">
+              Refund Policy:
+            </p>
+            <p className="text-neutral-600 mb-4">
+              All purchases of premium templates and features are <strong>final and non-refundable</strong>.
+              Since digital products are delivered immediately upon purchase and can be used instantly,
+              we do not offer refunds or exchanges. Please review your selection carefully before completing
+              your purchase.
+            </p>
+            <p className="text-neutral-600 mb-4">
+              If you experience technical issues preventing you from accessing a purchased feature, please
+              contact us at support@kidspartyrsvp.com and we will work to resolve the issue.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">8. Privacy</h2>
+            <p className="text-neutral-600 mb-4">
+              Your privacy is important to us. Please review our Privacy Policy, which explains how we collect,
               use, and protect your personal information.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">6. Prohibited Activities</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">9. Prohibited Activities</h2>
             <p className="text-neutral-600 mb-4">You agree not to:</p>
             <ul className="list-disc list-inside text-neutral-600 mb-4 space-y-2">
               <li>Use the service for any unlawful purpose</li>
@@ -120,37 +173,68 @@ export default function TermsPage() {
               <li>Interfere with or disrupt the service</li>
               <li>Collect user information without consent</li>
               <li>Use the service to send spam or unsolicited communications</li>
+              <li>Upload inappropriate content or content that exploits minors</li>
+              <li>Create fake events or misleading invitations</li>
             </ul>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">7. Disclaimer of Warranties</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">10. Account Termination</h2>
             <p className="text-neutral-600 mb-4">
-              The service is provided "as is" without warranties of any kind. We do not guarantee that the 
+              We reserve the right to suspend or terminate your account at any time if you violate these
+              Terms of Service or engage in activities that harm our service or other users.
+            </p>
+            <p className="text-neutral-600 mb-4">
+              You may delete your account at any time. Upon account deletion:
+            </p>
+            <ul className="list-disc list-inside text-neutral-600 mb-4 space-y-2">
+              <li>All your party data and guest information will be permanently deleted</li>
+              <li>Any purchased templates or features are non-transferable and will be forfeited</li>
+              <li>This action cannot be undone</li>
+            </ul>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">11. Disclaimer of Warranties</h2>
+            <p className="text-neutral-600 mb-4">
+              The service is provided "as is" without warranties of any kind. We do not guarantee that the
               service will be uninterrupted, secure, or error-free.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">8. Limitation of Liability</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">12. Limitation of Liability</h2>
             <p className="text-neutral-600 mb-4">
-              To the maximum extent permitted by law, Kid Party RSVP shall not be liable for any indirect, 
+              To the maximum extent permitted by law, Kid Party RSVP shall not be liable for any indirect,
               incidental, special, or consequential damages arising from your use of the service.
+            </p>
+            <p className="text-neutral-600 mb-4">
+              Our total liability for any claims related to the service shall not exceed the amount you
+              paid to us in the twelve (12) months preceding the claim.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">9. Changes to Terms</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">13. Changes to Terms</h2>
             <p className="text-neutral-600 mb-4">
-              We reserve the right to modify these terms at any time. We will notify users of significant 
+              We reserve the right to modify these terms at any time. We will notify users of significant
               changes via email or through the service. Continued use after changes constitutes acceptance.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">10. Contact Us</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">14. Governing Law</h2>
             <p className="text-neutral-600 mb-4">
-              If you have questions about these Terms of Service, please contact us at support@kidpartyrsvp.com.
+              These Terms of Service shall be governed by and construed in accordance with the laws of
+              the United States. Any disputes arising from these terms or your use of the service shall
+              be resolved through binding arbitration or in courts of competent jurisdiction.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">15. Contact Us</h2>
+            <p className="text-neutral-600 mb-4">
+              If you have questions about these Terms of Service, please contact us at support@kidspartyrsvp.com.
             </p>
           </section>
         </div>

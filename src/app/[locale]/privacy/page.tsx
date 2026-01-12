@@ -123,16 +123,43 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">6. Children's Privacy</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">6. Children's Privacy (COPPA Compliance)</h2>
             <p className="text-neutral-600 mb-4">
-              Our service is designed for parents to plan children's parties. We do not knowingly collect 
-              personal information directly from children under 13. All information about children is provided 
-              by their parents or guardians.
+              Our service is designed for parents and guardians to plan children's parties. We take children's
+              privacy very seriously and comply with the Children's Online Privacy Protection Act (COPPA).
+            </p>
+            <p className="text-neutral-600 mb-4">
+              <strong>Key points about children's data:</strong>
+            </p>
+            <ul className="list-disc list-inside text-neutral-600 mb-4 space-y-2">
+              <li>We do not knowingly collect personal information directly from children under 13</li>
+              <li>All information about children (names, ages, dietary restrictions) is provided by their parents or guardians</li>
+              <li>Children's information is used solely for party planning and guest management</li>
+              <li>We do not share children's information with third parties for marketing purposes</li>
+              <li>Parents can request deletion of their children's information at any time</li>
+              <li>Children's data is automatically deleted when the associated party event is removed</li>
+            </ul>
+            <p className="text-neutral-600 mb-4">
+              If you believe we have inadvertently collected information from a child without proper parental
+              consent, please contact us immediately at privacy@kidspartyrsvp.com and we will delete it promptly.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">7. Your Rights</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">7. Payment Information</h2>
+            <p className="text-neutral-600 mb-4">
+              When you make a purchase on our platform:
+            </p>
+            <ul className="list-disc list-inside text-neutral-600 mb-4 space-y-2">
+              <li>Payment processing is handled securely by Stripe, a PCI-compliant payment processor</li>
+              <li>We do not store your full credit card number, CVV, or other sensitive payment details on our servers</li>
+              <li>We only retain transaction records (purchase date, amount, item purchased) for accounting purposes</li>
+              <li>Stripe's privacy policy governs how they handle your payment information</li>
+            </ul>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">8. Your Rights</h2>
             <p className="text-neutral-600 mb-4">You have the right to:</p>
             <ul className="list-disc list-inside text-neutral-600 mb-4 space-y-2">
               <li>Access your personal information</li>
@@ -144,35 +171,35 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">8. Cookies</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">9. Cookies</h2>
             <p className="text-neutral-600 mb-4">
-              We use essential cookies to maintain your session and preferences. We do not use tracking 
+              We use essential cookies to maintain your session and preferences. We do not use tracking
               cookies for advertising purposes.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">9. Data Retention</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">10. Data Retention</h2>
             <p className="text-neutral-600 mb-4">
-              We retain your personal information for as long as your account is active or as needed to 
-              provide services. Party data is retained for 1 year after the event date, after which it 
+              We retain your personal information for as long as your account is active or as needed to
+              provide services. Party data is retained for 1 year after the event date, after which it
               may be automatically deleted.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">10. Changes to This Policy</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">11. Changes to This Policy</h2>
             <p className="text-neutral-600 mb-4">
-              We may update this Privacy Policy from time to time. We will notify you of any changes by 
+              We may update this Privacy Policy from time to time. We will notify you of any changes by
               posting the new policy on this page and updating the "Last updated" date.
             </p>
           </section>
 
           <section className="mb-8">
-            <h2 className="text-xl font-semibold text-neutral-800 mb-4">11. Contact Us</h2>
+            <h2 className="text-xl font-semibold text-neutral-800 mb-4">12. Contact Us</h2>
             <p className="text-neutral-600 mb-4">
-              If you have questions about this Privacy Policy or our data practices, please contact us at 
-              privacy@kidpartyrsvp.com.
+              If you have questions about this Privacy Policy or our data practices, please contact us at
+              privacy@kidspartyrsvp.com.
             </p>
           </section>
         </div>

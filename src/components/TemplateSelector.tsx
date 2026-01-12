@@ -2,8 +2,9 @@
 
 import { useState, useRef } from 'react'
 import InvitationTemplate from './InvitationTemplates'
-import { useTranslations } from '@/contexts/LanguageContext'
+import { useTranslations, useLocale } from '@/contexts/LanguageContext'
 import PaymentForm from './PaymentForm'
+import { toast } from '@/lib/toast'
 
 interface Party {
   childName: string
@@ -22,13 +23,15 @@ interface TemplateSelectorProps {
   partyId: string
   currentTemplate: string
   paidTemplates: string[]
+  onPaymentSuccess?: () => void  // 支付成功后的回调，用于刷新数据
 }
 
 type TemplateType = 'free' | 'premium1' | 'premium2' | 'premium3' | 'premium4'
 
 
-export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplateSelect, partyId, currentTemplate, paidTemplates }: TemplateSelectorProps) {
+export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplateSelect, partyId, currentTemplate, paidTemplates, onPaymentSuccess }: TemplateSelectorProps) {
   const t = useTranslations('templates')
+  const locale = useLocale()
   
   // 添加CSS样式来隐藏滚动条
   const hideScrollbarStyle = `
@@ -37,6 +40,25 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
     }
   `
   
+  const featureTranslations = {
+    en: {
+      free: ['Basic style', 'QR code', 'Basic info display'],
+      premium1: ['Premium gradient', 'Decorations', 'Glassmorphism', 'Pro layout'],
+      premium2: ['Emojis', 'Colorful cards', '3D effects', 'Cute decor'],
+      premium3: ['Geometric', 'Minimal style', 'Pro fonts', 'Premium feel'],
+      premium4: ['Animations', 'Festive', 'Rich colors', 'Interactive']
+    },
+    zh: {
+      free: ['基础样式', '二维码', '基本信息显示'],
+      premium1: ['高级渐变', '装饰元素', '毛玻璃效果', '专业排版'],
+      premium2: ['动态表情', '彩色卡片', '3D效果', '可爱装饰'],
+      premium3: ['几何元素', '极简风格', '专业字体', '高端质感'],
+      premium4: ['动画效果', '节日元素', '丰富色彩', '互动设计']
+    }
+  }
+
+  const features = featureTranslations[locale as keyof typeof featureTranslations] || featureTranslations.en
+
   const templates = [
     {
       id: 'free',
@@ -44,7 +66,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
       description: t('freeDesc'),
       price: t('price'),
       isPremium: false,
-      features: ['基础样式', '二维码', '基本信息显示']
+      features: features.free
     },
     {
       id: 'premium1',
@@ -52,7 +74,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
       description: t('premium1Desc'),
       price: t('premiumPrice'),
       isPremium: true,
-      features: ['高级渐变', '装饰元素', '毛玻璃效果', '专业排版']
+      features: features.premium1
     },
     {
       id: 'premium2',
@@ -60,7 +82,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
       description: t('premium2Desc'),
       price: t('premiumPrice'),
       isPremium: true,
-      features: ['动态表情', '彩色卡片', '3D效果', '可爱装饰']
+      features: features.premium2
     },
     {
       id: 'premium3',
@@ -68,7 +90,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
       description: t('premium3Desc'),
       price: t('premiumPrice'),
       isPremium: true,
-      features: ['几何元素', '极简风格', '专业字体', '高端质感']
+      features: features.premium3
     },
     {
       id: 'premium4',
@@ -76,7 +98,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
       description: t('premium4Desc'),
       price: t('premiumPrice'),
       isPremium: true,
-      features: ['动画效果', '节日元素', '丰富色彩', '互动设计']
+      features: features.premium4
     }
   ]
   
@@ -137,17 +159,33 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
 
       if (response.ok) {
         setShowPayment(false)
+
+        // 显示成功提示
+        toast.success(
+          locale === 'zh' ? '付款成功！' : 'Payment Successful!',
+          locale === 'zh' ? '模板已解锁，正在应用...' : 'Template unlocked, applying...'
+        )
+
         // 选择模板
         onTemplateSelect(selectedTemplate)
-        // 刷新页面以更新party状态
-        window.location.reload()
+
+        // 调用父组件的刷新回调，而不是刷新整个页面
+        if (onPaymentSuccess) {
+          onPaymentSuccess()
+        }
       } else {
         const error = await response.json()
-        alert(`支付验证失败: ${error.message || '请重试'}`)
+        toast.error(
+          locale === 'zh' ? '支付验证失败' : 'Payment verification failed',
+          error.message || (locale === 'zh' ? '请重试' : 'Please try again')
+        )
       }
     } catch (error) {
       console.error('Template upgrade error:', error)
-      alert('支付验证过程中出现错误，请重试')
+      toast.error(
+        locale === 'zh' ? '出现错误' : 'Error occurred',
+        locale === 'zh' ? '支付验证过程中出现错误，请重试' : 'An error occurred during payment verification. Please try again.'
+      )
     }
   }
 
@@ -173,22 +211,22 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
         </div>
         
         <div className="relative">
-          {/* 左侧滚动按钮 */}
+          {/* Left scroll button */}
           <button
             onClick={scrollLeft}
             className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg border border-neutral-200 rounded-full p-2 transition-all hover:scale-110"
-            aria-label="向左滚动"
+            aria-label={locale === 'zh' ? '向左滚动' : 'Scroll left'}
           >
             <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
-          {/* 右侧滚动按钮 */}
+          {/* Right scroll button */}
           <button
             onClick={scrollRight}
             className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg border border-neutral-200 rounded-full p-2 transition-all hover:scale-110"
-            aria-label="向右滚动"
+            aria-label={locale === 'zh' ? '向右滚动' : 'Scroll right'}
           >
             <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -222,16 +260,16 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                 </div>
               )}
               
-              {/* 模板预览 */}
+              {/* Template preview */}
               <div className="aspect-[3/2] overflow-hidden bg-neutral-100 border-b relative">
                 <div className="scale-[0.6] origin-top-left w-[167%] h-[167%]">
                   <InvitationTemplate
                     party={{
-                      childName: "小明",
+                      childName: locale === 'zh' ? "小明" : "Emma",
                       childAge: 6,
                       eventDatetime: party.eventDatetime,
-                      location: "示例地址",
-                      theme: "示例主题"
+                      location: locale === 'zh' ? "示例地址" : "Sample Location",
+                      theme: locale === 'zh' ? "示例主题" : "Sample Theme"
                     }}
                     qrCodeUrl="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='white'/%3E%3Crect x='10' y='10' width='15' height='15' fill='black'/%3E%3Crect x='75' y='10' width='15' height='15' fill='black'/%3E%3Crect x='10' y='75' width='15' height='15' fill='black'/%3E%3Crect x='30' y='20' width='5' height='5' fill='black'/%3E%3Crect x='40' y='30' width='5' height='5' fill='black'/%3E%3Crect x='50' y='40' width='5' height='5' fill='black'/%3E%3Crect x='60' y='50' width='5' height='5' fill='black'/%3E%3Crect x='70' y='60' width='5' height='5' fill='black'/%3E%3Crect x='20' y='60' width='5' height='5' fill='black'/%3E%3Crect x='60' y='20' width='5' height='5' fill='black'/%3E%3C/svg%3E"
                     rsvpUrl="/rsvp/demo"

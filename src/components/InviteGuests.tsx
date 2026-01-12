@@ -13,9 +13,10 @@ interface Contact {
 interface InviteGuestsProps {
     partyId: string
     onInvitesSent?: () => void
+    onContactsLoaded?: (count: number) => void
 }
 
-export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsProps) {
+export default function InviteGuests({ partyId, onInvitesSent, onContactsLoaded }: InviteGuestsProps) {
     const tr = useTranslations('invite')
     const [contacts, setContacts] = useState<Contact[]>([])
     const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set())
@@ -30,16 +31,20 @@ export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsPro
                 if (response.ok) {
                     const data = await response.json()
                     setContacts(data)
+                    onContactsLoaded?.(data.length)
+                } else {
+                    onContactsLoaded?.(0)
                 }
             } catch (error) {
                 console.error('Failed to fetch contacts:', error)
+                onContactsLoaded?.(0)
             } finally {
                 setIsLoading(false)
             }
         }
 
         fetchContacts()
-    }, [])
+    }, [onContactsLoaded])
 
     const toggleContact = (email: string) => {
         const newSelected = new Set(selectedContacts)
@@ -88,12 +93,7 @@ export default function InviteGuests({ partyId, onInvitesSent }: InviteGuestsPro
     }
 
     if (contacts.length === 0) {
-        return (
-            <div className="text-center py-8 text-neutral-600">
-                <p>{tr('noContacts')}</p>
-                <p className="text-sm mt-2">{tr('noContactsDesc')}</p>
-            </div>
-        )
+        return null
     }
 
     return (

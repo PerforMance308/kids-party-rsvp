@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from '@/contexts/LanguageContext'
 import PaymentForm from '@/components/PaymentForm'
+import { toast } from '@/lib/toast'
 
 interface PhotoSharingPaymentProps {
   partyId: string
@@ -22,7 +23,7 @@ export default function PhotoSharingPayment({
   const handlePaymentSuccess = async (paymentId: string) => {
     try {
       setIsProcessing(true)
-      
+
       // Update party to enable photo sharing
       const response = await fetch(`/api/parties/${partyId}/enable-photo-sharing`, {
         method: 'POST',
@@ -33,14 +34,28 @@ export default function PhotoSharingPayment({
       })
 
       if (response.ok) {
+        // 显示成功提示
+        toast.success(
+          locale === 'zh' ? '付款成功！' : 'Payment Successful!',
+          locale === 'zh' ? '照片分享功能已开启' : 'Photo sharing has been enabled'
+        )
+
         // Redirect to party dashboard
-        router.push(`/${locale}/party/${partyId}/dashboard?photoSharingEnabled=true`)
+        router.push(`/${locale}/party/${partyId}/dashboard`)
       } else {
-        const error = await response.json()
-        setError(error.message || 'Failed to enable photo sharing')
+        const errorData = await response.json()
+        toast.error(
+          locale === 'zh' ? '开启失败' : 'Failed to enable',
+          errorData.message || (locale === 'zh' ? '请重试' : 'Please try again')
+        )
+        setError(errorData.message || 'Failed to enable photo sharing')
       }
     } catch (error) {
       console.error('Photo sharing enablement error:', error)
+      toast.error(
+        locale === 'zh' ? '出现错误' : 'Error occurred',
+        locale === 'zh' ? '请重试' : 'Please try again'
+      )
       setError('Failed to enable photo sharing')
     } finally {
       setIsProcessing(false)
