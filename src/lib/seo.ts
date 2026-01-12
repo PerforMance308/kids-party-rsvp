@@ -4,35 +4,54 @@ import { Metadata } from 'next'
 export const SITE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://kidspartyrsvp.com'
 export const SITE_NAME = 'Kid Party RSVP'
 
-// SEO keywords by language
+// SEO keywords by language - optimized for search ranking
 export const SEO_KEYWORDS = {
   en: [
-    'kids birthday party',
+    // Primary keywords
+    'kids party RSVP',
+    'kids birthday party RSVP',
     'children party invitation',
-    'party RSVP',
-    'birthday party planner',
-    'kids party invitation maker',
-    'digital party invitation',
-    'QR code invitation',
+    'birthday party RSVP online',
+    // Feature keywords
+    'QR code party invitation',
+    'digital birthday invitation',
     'party guest management',
-    'children birthday invitation',
-    'free party planner',
-    'online party invitation',
-    'kids party organizer',
+    'RSVP tracking app',
+    'birthday party planner free',
+    // Long-tail keywords
+    'free kids birthday party invitation maker',
+    'online RSVP for birthday party',
+    'children birthday party organizer',
+    'party invitation with QR code',
+    'track party RSVPs online',
+    'send birthday party invitations',
+    'manage party guest list',
+    'automatic party reminders',
+    'kids party planning app',
+    'birthday invitation creator',
   ],
   zh: [
+    // 主要关键词
+    '儿童派对RSVP',
     '儿童生日派对',
     '孩子生日邀请函',
-    '派对邀请',
-    '生日派对策划',
-    '儿童派对邀请制作',
-    '电子邀请函',
-    '二维码邀请',
+    '派对邀请回复',
+    // 功能关键词
+    '二维码派对邀请',
+    '电子生日邀请函',
     '派对宾客管理',
-    '儿童生日邀请',
-    '免费派对策划',
-    '在线派对邀请',
-    '儿童派对管理',
+    '生日派对策划',
+    // 长尾关键词
+    '免费儿童派对邀请制作',
+    '在线派对回复管理',
+    '儿童生日派对策划工具',
+    '派对邀请函制作',
+    '宾客回复追踪',
+    '发送生日派对邀请',
+    '派对宾客名单管理',
+    '自动派对提醒',
+    '儿童派对策划应用',
+    '生日邀请函生成器',
   ],
 }
 
@@ -40,12 +59,12 @@ export const SEO_KEYWORDS = {
 export const PAGE_METADATA = {
   home: {
     en: {
-      title: 'Kid Party RSVP - Easy Kids Birthday Party Invitations & RSVP Management',
-      description: 'Create beautiful digital invitations for your child\'s birthday party. QR code RSVPs, automatic reminders, guest tracking, and photo sharing. Start planning for free!',
+      title: 'Kids Party RSVP - Free Birthday Party Invitations & Online RSVP Tracking',
+      description: 'Create beautiful digital birthday invitations for kids parties. Free QR code RSVPs, automatic reminders, real-time guest tracking, and photo sharing. The easiest way to manage your child\'s birthday party guest list online.',
     },
     zh: {
-      title: 'Kid Party RSVP - 轻松管理儿童生日派对邀请与回复',
-      description: '为孩子的生日派对创建精美的电子邀请函。支持二维码回复、自动提醒、宾客追踪和照片分享。免费开始策划！',
+      title: 'Kids Party RSVP - 免费儿童生日派对邀请函与在线回复追踪',
+      description: '为孩子的生日派对创建精美的电子邀请函。免费二维码回复、自动提醒、实时宾客追踪和照片分享。最简单的儿童派对宾客管理工具。',
     },
   },
   login: {
