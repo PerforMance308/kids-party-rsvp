@@ -3,10 +3,6 @@ import { headers } from 'next/headers'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
-})
-
 async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
   try {
     console.log('🎉 Payment succeeded:', paymentIntent.id)
@@ -85,6 +81,9 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
 }
 
 export async function POST(request: NextRequest) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+    apiVersion: '2025-02-24.acacia',
+  })
   try {
     // Get request body and signature
     const body = await request.text()
