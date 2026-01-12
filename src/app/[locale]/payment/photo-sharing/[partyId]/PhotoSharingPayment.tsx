@@ -107,13 +107,12 @@ export default function PhotoSharingPayment({
 
       <div className="mt-6 p-4 bg-neutral-50 rounded-lg text-center">
         <p className="text-xs text-neutral-600 mb-2">
-          <span className="font-medium">Secure Payment:</span> We use Hyperswitch for secure payment processing
+          <span className="font-medium">Secure Payment:</span> We use Stripe for secure payment processing
         </p>
         <div className="flex items-center justify-center space-x-4 text-xs text-neutral-500">
           <span>💳 Credit Cards</span>
           <span>🍎 Apple Pay</span>
           <span>📱 Google Pay</span>
-          <span>💙 PayPal</span>
         </div>
       </div>
     </div>

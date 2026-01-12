@@ -301,3 +301,118 @@ export function generateBreadcrumbSchema(items: { name: string; url: string }[])
     })),
   }
 }
+
+// Generate Event schema for party pages
+export function generateEventSchema(party: {
+  name: string
+  description: string
+  startDate: string
+  location?: string
+  organizer: string
+  image?: string
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: party.name,
+    description: party.description,
+    startDate: party.startDate,
+    ...(party.location && {
+      location: {
+        '@type': 'Place',
+        name: party.location,
+      },
+    }),
+    organizer: {
+      '@type': 'Person',
+      name: party.organizer,
+    },
+    ...(party.image && {
+      image: party.image,
+    }),
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    eventStatus: 'https://schema.org/EventScheduled',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      url: SITE_URL,
+    },
+  }
+}
+
+// Generate Article schema for blog-style content
+export function generateArticleSchema(article: {
+  title: string
+  description: string
+  datePublished: string
+  dateModified?: string
+  author: string
+  image?: string
+  url: string
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.description,
+    datePublished: article.datePublished,
+    dateModified: article.dateModified || article.datePublished,
+    author: {
+      '@type': 'Organization',
+      name: article.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+    ...(article.image && {
+      image: article.image,
+    }),
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': article.url,
+    },
+  }
+}
+
+// Generate LocalBusiness schema (useful for contact page)
+export function generateLocalBusinessSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: SITE_NAME,
+    image: `${SITE_URL}/logo.png`,
+    '@id': SITE_URL,
+    url: SITE_URL,
+    telephone: '',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '',
+      addressLocality: '',
+      addressRegion: '',
+      postalCode: '',
+      addressCountry: 'US',
+    },
+    priceRange: 'Free',
+    openingHoursSpecification: {
+      '@type': 'OpeningHoursSpecification',
+      dayOfWeek: [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday',
+      ],
+      opens: '00:00',
+      closes: '23:59',
+    },
+  }
+}

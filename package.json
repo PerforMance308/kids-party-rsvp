@@ -15,7 +15,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@heroicons/react": "^2.2.0",
-    "@juspay-tech/hyper-js": "^2.0.4",
+    "@stripe/stripe-js": "^4.8.0",
     "@prisma/client": "^5.22.0",
     "@types/pg": "^8.16.0",
     "archiver": "^7.0.1",
@@ -34,6 +34,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^6.7.0",
+    "stripe": "^17.3.1",
     "tailwind-merge": "^3.4.0",
     "uuid": "^11.0.3",
     "zod": "^3.24.1",

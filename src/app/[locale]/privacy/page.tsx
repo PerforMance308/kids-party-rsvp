@@ -1,9 +1,20 @@
 import { Metadata } from 'next'
-import { SITE_URL } from '@/lib/seo'
+import { SITE_URL, generateBreadcrumbSchema, generateArticleSchema } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'Learn how Kid Party RSVP protects your privacy and handles your data. We value your trust and keep your information secure.',
+  description: 'Learn how Kid Party RSVP protects your privacy and handles your data. We value your trust and keep your information secure. GDPR and CCPA compliant.',
+  keywords: 'privacy policy, data protection, GDPR, CCPA, data security, user privacy, kid party rsvp privacy',
+  openGraph: {
+    title: 'Privacy Policy - Kid Party RSVP',
+    description: 'Learn how we protect your privacy and handle your data securely.',
+    url: `${SITE_URL}/en/privacy`,
+    type: 'article',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Privacy Policy - Kid Party RSVP',
+  },
   alternates: {
     canonical: `${SITE_URL}/en/privacy`,
     languages: {
@@ -14,10 +25,33 @@ export const metadata: Metadata = {
 }
 
 export default function PrivacyPage() {
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: `${SITE_URL}/en` },
+    { name: 'Privacy Policy', url: `${SITE_URL}/en/privacy` },
+  ])
+
+  const articleSchema = generateArticleSchema({
+    title: 'Privacy Policy',
+    description: 'Learn how Kid Party RSVP protects your privacy and handles your data.',
+    datePublished: '2025-01-01',
+    dateModified: '2025-01-10',
+    author: 'Kid Party RSVP',
+    url: `${SITE_URL}/en/privacy`,
+  })
+
   return (
-    <main className="flex-1 py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-8">Privacy Policy</h1>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <main className="flex-1 py-12">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h1 className="text-3xl font-bold text-neutral-900 mb-8">Privacy Policy</h1>
         
         <div className="prose prose-neutral max-w-none">
           <p className="text-neutral-600 mb-6">Last updated: January 2025</p>
@@ -144,5 +178,6 @@ export default function PrivacyPage() {
         </div>
       </div>
     </main>
+    </>
   )
 }

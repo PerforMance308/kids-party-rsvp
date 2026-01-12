@@ -3,6 +3,11 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
 import { schedulePhotoSharingNotifications } from '@/lib/notification-scheduler'
+import Stripe from 'stripe'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-12-18.acacia',
+})
 
 export async function POST(
   request: NextRequest,
@@ -39,8 +44,60 @@ export async function POST(
       return NextResponse.json({ error: 'Payment ID is required' }, { status: 400 })
     }
 
-    // Verify payment with Hyperswitch (optional - for extra security)
-    // You could add payment verification here if needed
+    // Verify payment with Stripe API
+    console.log('🔍 Verifying payment:', paymentId)
+
+    try {
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentId)
+
+      console.log('📄 Payment data:', {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        amount: paymentIntent.amount,
+      })
+
+      // Check if payment actually succeeded
+      if (paymentIntent.status !== 'succeeded') {
+        console.error('❌ Payment not succeeded:', paymentIntent.status)
+        return NextResponse.json(
+          {
+            error: 'Payment has not been completed',
+            status: paymentIntent.status
+          },
+          { status: 400 }
+        )
+      }
+
+      // Verify amount is correct ($2.99 = 299 cents)
+      const expectedAmount = 299 // $2.99 in cents
+      if (paymentIntent.amount !== expectedAmount) {
+        console.error('❌ Payment amount mismatch:', {
+          expected: expectedAmount,
+          received: paymentIntent.amount,
+        })
+        return NextResponse.json(
+          { error: 'Payment amount verification failed' },
+          { status: 400 }
+        )
+      }
+
+      console.log('✅ Payment verified successfully')
+
+    } catch (verificationError) {
+      console.error('💥 Payment verification error:', verificationError)
+      
+      if (verificationError instanceof Stripe.errors.StripeError) {
+        return NextResponse.json(
+          { error: 'Payment verification failed', details: verificationError.message },
+          { status: 400 }
+        )
+      }
+      
+      return NextResponse.json(
+        { error: 'Failed to verify payment' },
+        { status: 500 }
+      )
+    }
 
     // Update party to enable photo sharing
     const updatedParty = await prisma.party.update({

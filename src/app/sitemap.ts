@@ -31,19 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }))
   )
 
-  // Add root URL
-  const rootEntry: MetadataRoute.Sitemap[number] = {
-    url: SITE_URL,
-    lastModified,
-    changeFrequency: 'daily',
-    priority: 1.0,
-    alternates: {
-      languages: {
-        en: `${SITE_URL}/en`,
-        zh: `${SITE_URL}/zh`,
-      },
-    },
-  }
-
-  return [rootEntry, ...staticEntries]
+  // Note: Root URL (/) is a redirect to /en, so it's excluded from sitemap
+  // Only include actual indexable pages (locale versions)
+  return staticEntries
 }

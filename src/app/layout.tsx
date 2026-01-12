@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     // Add other verification codes as needed
   },
   alternates: {
-    canonical: SITE_URL,
+    canonical: `${SITE_URL}/en`,
     languages: {
       'en': `${SITE_URL}/en`,
       'zh': `${SITE_URL}/zh`,

@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import InvitationTemplate from './InvitationTemplates'
 import { useTranslations } from '@/contexts/LanguageContext'
+import PaymentForm from './PaymentForm'
 
 interface Party {
   childName: string
@@ -120,32 +121,39 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
     }
   }
 
-  const handlePayment = async () => {
+  const handlePaymentSuccess = async (paymentId: string) => {
     try {
+      // 支付成功后，调用 API 启用模板
       const response = await fetch(`/api/parties/${partyId}/upgrade-template`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          template: selectedTemplate
+          template: selectedTemplate,
+          paymentId: paymentId
         })
       })
 
       if (response.ok) {
-        const result = await response.json()
-        alert(`🎉 支付成功！\n\n您已成功购买"${templates.find(t => t.id === selectedTemplate)?.name}"模板，现在可以使用了！`)
         setShowPayment(false)
         // 选择模板
         onTemplateSelect(selectedTemplate)
         // 刷新页面以更新party状态
         window.location.reload()
       } else {
-        alert('支付失败，请重试')
+        const error = await response.json()
+        alert(`支付验证失败: ${error.message || '请重试'}`)
       }
     } catch (error) {
-      alert('支付过程中出现错误，请重试')
+      console.error('Template upgrade error:', error)
+      alert('支付验证过程中出现错误，请重试')
     }
+  }
+
+  const handlePaymentError = (error: string) => {
+    console.error('Payment error:', error)
+    // 错误信息已经在 PaymentForm 中显示，这里不需要额外处理
   }
 
   return (
@@ -308,12 +316,12 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
 
       {/* 支付弹窗 */}
       {showPayment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-2xl">
-            <h3 className="text-xl font-bold text-center text-neutral-900 mb-4">🎉 {t('purchaseTitle')}</h3>
-            
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl my-8">
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-center text-neutral-900 mb-4">🎉 {t('purchaseTitle')}</h3>
+              
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg mb-4">
                 <h4 className="font-medium text-orange-800 mb-2">
                   {templates.find(t => t.id === selectedTemplate)?.name}
                 </h4>
@@ -326,27 +334,22 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                   ))}
                 </ul>
               </div>
-              
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600 mb-2">¥9.9</div>
-                <p className="text-sm text-neutral-600">为此聚会购买这个模板</p>
-              </div>
-              
-              <div className="space-y-2">
-                <button
-                  onClick={handlePayment}
-                  className="w-full btn btn-primary"
-                >
-                  {t('payNow')}
-                </button>
-                <button
-                  onClick={() => setShowPayment(false)}
-                  className="w-full btn btn-secondary"
-                >
-                  {t('payLater')}
-                </button>
-              </div>
             </div>
+            
+            <PaymentForm
+              amount={1.39} // $1.39 ≈ ¥9.9 (根据当前汇率)
+              currency="USD"
+              description={`Premium template: ${templates.find(t => t.id === selectedTemplate)?.name}`}
+              metadata={{
+                partyId,
+                feature: 'template',
+                templateId: selectedTemplate,
+                templateName: templates.find(t => t.id === selectedTemplate)?.name || '',
+              }}
+              onSuccess={handlePaymentSuccess}
+              onError={handlePaymentError}
+              onCancel={() => setShowPayment(false)}
+            />
           </div>
         </div>
       )}

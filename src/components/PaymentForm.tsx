@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { 
-  initializeHyperswitch, 
+  initializeStripe, 
   createPaymentIntent, 
   defaultPaymentConfig,
   type PaymentIntentRequest,
-  type PaymentStatus
-} from '@/lib/hyperswitch'
+} from '@/lib/stripe'
+import { Stripe, StripeElements } from '@stripe/stripe-js'
+import type { StripeElementsOptions } from '@stripe/stripe-js'
 
 interface PaymentFormProps {
   amount: number
@@ -30,28 +31,29 @@ export default function PaymentForm({
 }: PaymentFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [hyperswitch, setHyperswitch] = useState<any>(null)
-  const [elements, setElements] = useState<any>(null)
+  const [stripe, setStripe] = useState<Stripe | null>(null)
+  const [elements, setElements] = useState<StripeElements | null>(null)
   const [clientSecret, setClientSecret] = useState('')
 
-  // Initialize Hyperswitch
+  // Initialize Stripe
   useEffect(() => {
     const initPayment = async () => {
       try {
-        const hyper = await initializeHyperswitch(defaultPaymentConfig)
-        setHyperswitch(hyper)
+        const stripeInstance = await initializeStripe(defaultPaymentConfig)
+        setStripe(stripeInstance)
       } catch (error) {
-        console.error('Failed to initialize Hyperswitch:', error)
+        console.error('Failed to initialize Stripe:', error)
         setError('Failed to initialize payment system')
+        onError?.(error instanceof Error ? error.message : 'Failed to initialize payment system')
       }
     }
 
     initPayment()
-  }, [])
+  }, [onError])
 
   // Create payment intent and setup elements
   useEffect(() => {
-    if (!hyperswitch) return
+    if (!stripe) return
 
     const setupPayment = async () => {
       try {
@@ -68,26 +70,25 @@ export default function PaymentForm({
         setClientSecret(paymentIntent.client_secret)
 
         // Create elements instance
-        const elementsInstance = hyperswitch.elements({
+        const elementsOptions: StripeElementsOptions = {
           clientSecret: paymentIntent.client_secret,
           appearance: defaultPaymentConfig.appearance,
-        })
+        }
 
+        const elementsInstance = stripe.elements(elementsOptions)
         setElements(elementsInstance)
 
-        // Mount payment element
-        const paymentElement = elementsInstance.create('payment')
-        paymentElement.mount('#payment-element')
-
-        // Setup express checkout buttons
-        const expressCheckoutElement = elementsInstance.create('expressCheckout', {
+        // Mount payment element with wallet options
+        const paymentElement = elementsInstance.create('payment', {
+          layout: 'tabs',
+          paymentMethodOrder: ['card', 'apple_pay', 'google_pay'],
           wallets: {
-            applePay: 'always',
-            googlePay: 'always',
-            payPal: 'always',
+            applePay: 'auto',
+            googlePay: 'auto',
           },
         })
-        expressCheckoutElement.mount('#express-checkout-element')
+        
+        paymentElement.mount('#payment-element')
 
       } catch (error) {
         console.error('Payment setup error:', error)
@@ -99,21 +100,29 @@ export default function PaymentForm({
     }
 
     setupPayment()
-  }, [hyperswitch, amount, currency, description, metadata, onError])
+  }, [stripe, amount, currency, description, metadata, onError])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    if (!hyperswitch || !elements || !clientSecret) {
+    console.log('🔵 支付提交开始')
+
+    if (!stripe || !elements || !clientSecret) {
+      console.error('❌ 支付系统未准备好', { stripe: !!stripe, elements: !!elements, clientSecret: !!clientSecret })
       setError('Payment system not ready')
       return
     }
+
+    console.log('✅ 支付系统已准备好')
+    console.log('📋 Client Secret:', clientSecret.substring(0, 30) + '...')
 
     setIsLoading(true)
     setError('')
 
     try {
-      const { error, paymentIntent } = await hyperswitch.confirmPayment({
+      console.log('🔄 正在调用 confirmPayment...')
+
+      const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/payment/success`,
@@ -121,18 +130,30 @@ export default function PaymentForm({
         redirect: 'if_required',
       })
 
-      if (error) {
-        setError(error.message || 'Payment failed')
-        onError?.(error.message || 'Payment failed')
+      console.log('📊 confirmPayment 结果:', {
+        hasError: !!confirmError,
+        hasPaymentIntent: !!paymentIntent,
+        status: paymentIntent?.status
+      })
+
+      if (confirmError) {
+        console.error('❌ 支付错误:', confirmError)
+        setError(confirmError.message || 'Payment failed')
+        onError?.(confirmError.message || 'Payment failed')
       } else if (paymentIntent?.status === 'succeeded') {
+        console.log('✅ 支付成功!', paymentIntent.id)
         onSuccess?.(paymentIntent.id)
+      } else {
+        console.warn('⚠️ 支付状态未知:', paymentIntent?.status)
+        setError(`Unexpected payment status: ${paymentIntent?.status}`)
       }
     } catch (error) {
-      console.error('Payment confirmation error:', error)
+      console.error('💥 支付确认异常:', error)
       setError('Payment failed')
       onError?.(error instanceof Error ? error.message : 'Payment failed')
     } finally {
       setIsLoading(false)
+      console.log('🔵 支付提交结束')
     }
   }
 
@@ -165,14 +186,6 @@ export default function PaymentForm({
       )}
 
       <form onSubmit={handleSubmit}>
-        {/* Express Checkout Buttons */}
-        <div className="mb-4">
-          <div id="express-checkout-element" className="mb-4"></div>
-          <div className="text-center text-sm text-neutral-500 mb-4">
-            or pay with card
-          </div>
-        </div>
-
         {/* Payment Element */}
         <div id="payment-element" className="mb-6"></div>
 

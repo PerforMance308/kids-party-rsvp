@@ -7,6 +7,22 @@ import { rateLimit, getClientIP } from '@/lib/security'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Handle locale redirects at server level (SEO-friendly)
+  // Redirect root to default locale
+  if (pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/en'
+    return NextResponse.redirect(url, { status: 308 }) // 308 = Permanent Redirect
+  }
+
+  // Redirect /rsvp/[token] to /en/rsvp/[token]
+  const rsvpMatch = pathname.match(/^\/rsvp\/([^\/]+)$/)
+  if (rsvpMatch) {
+    const url = request.nextUrl.clone()
+    url.pathname = `/en/rsvp/${rsvpMatch[1]}`
+    return NextResponse.redirect(url, { status: 308 })
+  }
+
   // Security headers
   const response = NextResponse.next()
 
@@ -15,9 +31,23 @@ export async function middleware(request: NextRequest) {
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-XSS-Protection', '1; mode=block')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+  // CSP with Stripe domains and payment provider domains allowed
   response.headers.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self';"
+    "default-src 'self'; " +
+    // Scripts: Stripe + payment providers (Google Pay, Apple Pay)
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://pay.google.com https://applepay.cdn-apple.com; " +
+    // Styles: Stripe + Google Fonts
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+    // Images: Stripe + payment providers
+    "img-src 'self' data: blob: https://*.stripe.com; " +
+    // Fonts: Google Fonts
+    "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; " +
+    // Connections: Stripe + payment providers
+    "connect-src 'self' https://api.stripe.com https://pay.google.com; " +
+    // Frames: Stripe
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com;"
   )
 
   // Rate limiting for API routes

@@ -1,9 +1,20 @@
 import { Metadata } from 'next'
-import { SITE_URL } from '@/lib/seo'
+import { SITE_URL, generateBreadcrumbSchema, generateArticleSchema } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Read our terms of service for using Kid Party RSVP platform. Learn about user accounts, content policies, and service usage.',
+  description: 'Read our terms of service for using Kid Party RSVP platform. Learn about user accounts, content policies, service usage, and your rights and responsibilities.',
+  keywords: 'terms of service, terms and conditions, user agreement, service terms, kid party rsvp terms, legal terms',
+  openGraph: {
+    title: 'Terms of Service - Kid Party RSVP',
+    description: 'Read our terms of service for using the platform.',
+    url: `${SITE_URL}/en/terms`,
+    type: 'article',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Terms of Service - Kid Party RSVP',
+  },
   alternates: {
     canonical: `${SITE_URL}/en/terms`,
     languages: {
@@ -14,10 +25,33 @@ export const metadata: Metadata = {
 }
 
 export default function TermsPage() {
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: 'Home', url: `${SITE_URL}/en` },
+    { name: 'Terms of Service', url: `${SITE_URL}/en/terms` },
+  ])
+
+  const articleSchema = generateArticleSchema({
+    title: 'Terms of Service',
+    description: 'Read our terms of service for using Kid Party RSVP platform.',
+    datePublished: '2025-01-01',
+    dateModified: '2025-01-10',
+    author: 'Kid Party RSVP',
+    url: `${SITE_URL}/en/terms`,
+  })
+
   return (
-    <main className="flex-1 py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-8">Terms of Service</h1>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <main className="flex-1 py-12">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h1 className="text-3xl font-bold text-neutral-900 mb-8">Terms of Service</h1>
         
         <div className="prose prose-neutral max-w-none">
           <p className="text-neutral-600 mb-6">Last updated: January 2025</p>
@@ -122,5 +156,6 @@ export default function TermsPage() {
         </div>
       </div>
     </main>
+    </>
   )
 }

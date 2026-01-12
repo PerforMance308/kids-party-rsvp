@@ -93,8 +93,7 @@ const nextConfig = {
   // Environment variable validation
   env: {
     NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-    NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_HYPERSWITCH_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_HYPERSWITCH_CLIENT_URL: process.env.NEXT_PUBLIC_HYPERSWITCH_CLIENT_URL,
+    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
   },
 
   // Webpack configuration for production optimization

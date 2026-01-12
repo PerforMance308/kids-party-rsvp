@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/en/', '/zh/'],
         disallow: [
           '/api/',
           '/dashboard/',
@@ -16,11 +16,12 @@ export default function robots(): MetadataRoute.Robots {
           '/payment/',
           '/*.json$',
           '/verify-result/',
+          '/rsvp/', // Redirect-only path, use /en/rsvp/ or /zh/rsvp/ instead
         ],
       },
       {
         userAgent: 'Googlebot',
-        allow: '/',
+        allow: ['/en/', '/zh/'],
         disallow: [
           '/api/',
           '/dashboard/',
@@ -28,6 +29,7 @@ export default function robots(): MetadataRoute.Robots {
           '/children/',
           '/invitations/',
           '/payment/',
+          '/rsvp/', // Redirect-only path
         ],
       },
     ],
