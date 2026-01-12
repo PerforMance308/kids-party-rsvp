@@ -233,7 +233,7 @@ export default function PartyDashboard() {
 
 
   return (
-    <main className="flex-1 container mx-auto px-4 py-4 lg:py-8 pb-24 lg:pb-8">
+    <main className="flex-1 px-4 py-4 lg:py-8 pb-24 lg:pb-8">
       <div className="max-w-7xl mx-auto">
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
@@ -380,7 +380,7 @@ export default function PartyDashboard() {
           </div>
 
           {/* Right Column: Stats + Guest List + Templates */}
-          <div className="flex-1 space-y-4 lg:space-y-6">
+          <div className="flex-1 min-w-0 space-y-4 lg:space-y-6">
             {/* Stats Cards - Desktop only (mobile shows gradient version above) */}
             <div className="hidden lg:grid grid-cols-3 gap-4">
               <div className="card text-center py-4">

@@ -111,6 +111,19 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
     return paidTemplates.includes(templateId)
   }
 
+  // Sort templates: free first, then purchased, then unpurchased
+  const sortedTemplates = [...templates].sort((a, b) => {
+    // Free template always first
+    if (!a.isPremium) return -1
+    if (!b.isPremium) return 1
+    // Purchased templates before unpurchased
+    const aPurchased = isTemplatePurchased(a.id)
+    const bPurchased = isTemplatePurchased(b.id)
+    if (aPurchased && !bPurchased) return -1
+    if (!aPurchased && bPurchased) return 1
+    return 0
+  })
+
   const handleTemplateClick = (templateId: string) => {
     const template = templates.find(t => t.id === templateId)
 
@@ -210,7 +223,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
           </div>
         </div>
         
-        <div className="relative">
+        <div className="relative overflow-hidden">
           {/* Left scroll button */}
           <button
             onClick={scrollLeft}
@@ -241,10 +254,10 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
               msOverflowStyle: 'none'
             }}
           >
-          {templates.map((template) => (
+          {sortedTemplates.map((template) => (
             <div
               key={template.id}
-              className={`relative group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center w-[280px] sm:w-[calc((100%-48px)/2)] lg:w-[calc((100%-96px)/3)] ${
+              className={`relative flex flex-col group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center w-[280px] sm:w-[calc((100%-48px)/2)] lg:w-[calc((100%-72px)/2)] ${
                 currentTemplate === template.id
                   ? 'border-primary-500 bg-primary-50 shadow-lg'
                   : template.isPremium && !isTemplatePurchased(template.id)
@@ -253,12 +266,6 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
               }`}
               onClick={() => handleTemplateClick(template.id)}
             >
-              {/* Premium 标签 */}
-              {template.isPremium && (
-                <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold rounded-full shadow-md z-10">
-                  PREMIUM
-                </div>
-              )}
               
               {/* Template preview */}
               <div className="aspect-[3/2] overflow-hidden bg-neutral-100 border-b relative">
@@ -279,20 +286,28 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
               </div>
 
               {/* 模板信息 */}
-              <div className="p-4">
-                <div className="text-center mb-3">
+              <div className="p-4 flex-grow flex flex-col">
+                <div className="text-center mb-3 flex-grow">
                   <h4 className="font-bold text-lg text-neutral-900 mb-1">{template.name}</h4>
                   <p className="text-sm text-neutral-600 mb-2">{template.description}</p>
                   
                   <div className="flex justify-center items-center mb-3">
-                    <span className={`text-xl font-bold ${
-                      template.isPremium ? 'text-orange-600' : 'text-green-600'
-                    }`}>
-                      {template.price}
-                    </span>
+                    {/* Only show price if not purchased (for premium) or always for free */}
+                    {(!template.isPremium || !isTemplatePurchased(template.id)) && (
+                      <span className={`text-xl font-bold ${
+                        template.isPremium ? 'text-orange-600' : 'text-green-600'
+                      }`}>
+                        {template.price}
+                      </span>
+                    )}
                     {template.isPremium && !isTemplatePurchased(template.id) && (
                       <span className="ml-2 text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
                         {t('needsPurchase')}
+                      </span>
+                    )}
+                    {template.isPremium && isTemplatePurchased(template.id) && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                        {locale === 'zh' ? '已购买' : 'Purchased'}
                       </span>
                     )}
                     {currentTemplate === template.id && (
@@ -335,7 +350,7 @@ export default function TemplateSelector({ party, qrCodeUrl, rsvpUrl, onTemplate
                 </button>
               </div>
 
-              {/* 锁定遮罩 */}
+              {/* Lock overlay for unpurchased premium templates */}
               {template.isPremium && !isTemplatePurchased(template.id) && (
                 <div className="absolute top-0 left-0 right-0 bottom-0 bg-black/10 pointer-events-none">
                   <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/90 rounded-full p-3 shadow-lg">
