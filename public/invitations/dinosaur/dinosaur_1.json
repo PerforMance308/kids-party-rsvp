@@ -1,0 +1,59 @@
+{
+  "template": "dinosaur_1.png",
+  "canvas_size": [1000, 1400],
+  "pricing": {
+    "price": 0,
+    "currency": "CAD",
+    "isFree": true,
+    "discount": null,
+    "freeUntil": null
+  },
+  "qr_code": {
+    "position": {"x": 780, "y": 1178},
+    "size": 127
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {"x": 500, "y": 465},
+      "font": "Arial-Bold",
+      "font_size": 62,
+      "color": "#FFFFFF",
+      "align": "center",
+      "remark": "紫色横幅中心"
+    },
+    {
+      "name": "child_age",
+      "content": "",
+      "position": {"x": 500, "y": 630},
+      "font": "LuckiestGuy-Regular",
+      "font_size": 100,
+      "color": "#0378a3",
+      "align": "center",
+      "stroke_color": "#0378a3",
+      "stroke_width": 5,
+      "remark": "年龄显示在横幅下方"
+    },
+    {
+      "name": "date_time",
+      "content": "",
+      "position": {"x": 570, "y": 1005},
+      "font": "Arial-Bold",
+      "font_size": 28,
+      "color": "#3D5A80",
+      "align": "left",
+      "remark": "Date & Time: 后面的位置"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {"x": 580, "y": 1055},
+      "font": "Arial-Bold",
+      "font_size": 28,
+      "color": "#3D5A80",
+      "align": "left",
+      "remark": "Location: 后面的位置"
+    }
+  ]
+}
