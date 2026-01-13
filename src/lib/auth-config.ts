@@ -91,24 +91,26 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.id
       }
 
-      // Always fetch latest emailVerified status for the token if we have a userId
+      // Always fetch latest user data for the token if we have a userId
       if (token.userId) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.userId as string },
-          select: { emailVerified: true }
+          select: { emailVerified: true, role: true }
         })
         token.emailVerified = dbUser?.emailVerified
+        token.role = dbUser?.role || 'USER'
       }
 
       return token
     },
     session: async ({ session, token }) => {
-      // Add user ID and verification status to session from token
+      // Add user ID, verification status, and role to session from token
       if (session?.user) {
         if (token?.userId) {
           session.user.id = token.userId as string
         }
         session.user.emailVerified = token.emailVerified as any
+        session.user.role = token.role as any
       }
       return session
     }

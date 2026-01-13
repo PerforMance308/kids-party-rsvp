@@ -22,6 +22,7 @@ const translations = {
     'nav.logout': '退出登录',
     'nav.login': '登录',
     'nav.signUp': '注册',
+    'nav.admin': '管理后台',
 
     // 主页
     'home.title': 'Kid Party RSVP',
@@ -304,6 +305,7 @@ const translations = {
     'nav.logout': 'Logout',
     'nav.login': 'Login',
     'nav.signUp': 'Sign Up',
+    'nav.admin': 'Admin',
 
     // 主页
     'home.title': 'Kid Party RSVP',

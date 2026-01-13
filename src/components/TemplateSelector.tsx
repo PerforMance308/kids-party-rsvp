@@ -198,11 +198,10 @@ export default function TemplateSelector({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setSelectedTheme(null)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  selectedTheme === null
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTheme === null
                     ? 'bg-primary-600 text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                }`}
+                  }`}
               >
                 {locale === 'zh' ? '全部' : 'All'}
               </button>
@@ -210,11 +209,10 @@ export default function TemplateSelector({
                 <button
                   key={theme.id}
                   onClick={() => setSelectedTheme(theme.id)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    selectedTheme === theme.id
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTheme === theme.id
                       ? 'bg-primary-600 text-white'
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                  }`}
+                    }`}
                 >
                   {theme.icon} {theme.name[locale as 'zh' | 'en'] || theme.name.en}
                 </button>
@@ -258,20 +256,19 @@ export default function TemplateSelector({
                 return (
                   <div
                     key={template.id}
-                    className={`relative flex flex-col group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center w-[280px] ${
-                      isCurrent
+                    className={`relative flex flex-col group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center w-[280px] ${isCurrent
                         ? 'border-primary-500 bg-primary-50 shadow-lg'
                         : !isFree && !isPurchased
-                        ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:border-orange-300 hover:shadow-lg'
-                        : 'border-neutral-200 bg-white hover:border-primary-300 hover:shadow-lg'
-                    }`}
+                          ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:border-orange-300 hover:shadow-lg'
+                          : 'border-neutral-200 bg-white hover:border-primary-300 hover:shadow-lg'
+                      }`}
                     onClick={() => handleTemplateClick(template)}
                   >
                     <div className="aspect-[5/7] overflow-hidden bg-neutral-100 border-b relative">
                       <img
                         src={template.imageUrl}
                         alt={template.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-fill"
                         loading="lazy"
                       />
 
@@ -325,13 +322,12 @@ export default function TemplateSelector({
                       </div>
 
                       <button
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${
-                          isCurrent
+                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${isCurrent
                             ? 'bg-green-600 text-white'
                             : !isFree && !isPurchased
-                            ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600'
-                            : 'bg-primary-600 text-white hover:bg-primary-700'
-                        }`}
+                              ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600'
+                              : 'bg-primary-600 text-white hover:bg-primary-700'
+                          }`}
                         onClick={(e) => {
                           e.stopPropagation()
                           handleTemplateClick(template)
@@ -341,8 +337,8 @@ export default function TemplateSelector({
                         {isCurrent
                           ? t('currentlyUsing')
                           : !isFree && !isPurchased
-                          ? t('purchaseUse')
-                          : t('selectTemplate')}
+                            ? t('purchaseUse')
+                            : t('selectTemplate')}
                       </button>
                     </div>
 

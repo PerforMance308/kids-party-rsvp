@@ -35,6 +35,14 @@ export default function UserNav() {
             <div className="relative">
                 <nav className="flex items-center space-x-2 md:space-x-4">
                     {/* Desktop Navigation */}
+                    {session.user.role === 'ADMIN' && (
+                        <Link
+                            href={`/${locale}/admin`}
+                            className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
+                        >
+                            {t('nav.admin')}
+                        </Link>
+                    )}
                     <Link
                         href={`/${locale}/dashboard`}
                         className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
@@ -90,6 +98,15 @@ export default function UserNav() {
 
                         {/* Mobile Menu */}
                         <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-50 sm:hidden">
+                            {session.user.role === 'ADMIN' && (
+                                <Link
+                                    href={`/${locale}/admin`}
+                                    onClick={closeMobileMenu}
+                                    className="block px-4 py-2 text-neutral-700 hover:bg-neutral-100 transition-colors"
+                                >
+                                    {t('nav.admin')}
+                                </Link>
+                            )}
                             <Link
                                 href={`/${locale}/dashboard`}
                                 onClick={closeMobileMenu}

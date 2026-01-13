@@ -1,6 +1,9 @@
 {
   "template": "dinosaur_2.png",
-  "canvas_size": [1000, 1400],
+  "canvas_size": [
+    1000,
+    1400
+  ],
   "pricing": {
     "price": 0,
     "currency": "CAD",
@@ -9,14 +12,20 @@
     "freeUntil": null
   },
   "qr_code": {
-    "position": {"x": 760, "y": 1150},
+    "position": {
+      "x": 760,
+      "y": 1150
+    },
     "size": 150
   },
   "elements": [
     {
       "name": "child_name",
       "content": "",
-      "position": {"x": 500, "y": 510},
+      "position": {
+        "x": 500,
+        "y": 510
+      },
       "font": "Arial-Bold",
       "font_size": 62,
       "color": "#FFFFFF",
@@ -26,7 +35,10 @@
     {
       "name": "child_age",
       "content": "",
-      "position": {"x": 500, "y": 710},
+      "position": {
+        "x": 500,
+        "y": 710
+      },
       "font": "LuckiestGuy-Regular",
       "font_size": 100,
       "color": "#E65100",
@@ -38,7 +50,10 @@
     {
       "name": "date_time",
       "content": "",
-      "position": {"x": 470, "y": 1105},
+      "position": {
+        "x": 470,
+        "y": 1105
+      },
       "font": "Arial-Bold",
       "font_size": 28,
       "color": "#5D4037",
@@ -48,7 +63,10 @@
     {
       "name": "location",
       "content": "",
-      "position": {"x": 490, "y": 1160},
+      "position": {
+        "x": 380,
+        "y": 1160
+      },
       "font": "Arial-Bold",
       "font_size": 28,
       "color": "#5D4037",
