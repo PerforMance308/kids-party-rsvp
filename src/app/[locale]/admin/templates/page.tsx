@@ -237,9 +237,8 @@ export default function AdminTemplatesPage() {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => setSelectedTheme(null)}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            !selectedTheme ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${!selectedTheme ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
         >
           All ({templates.length})
         </button>
@@ -247,9 +246,8 @@ export default function AdminTemplatesPage() {
           <button
             key={theme}
             onClick={() => setSelectedTheme(theme)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              selectedTheme === theme ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTheme === theme ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
           >
             {theme} ({templates.filter(t => t.theme === theme).length})
           </button>
@@ -268,7 +266,7 @@ export default function AdminTemplatesPage() {
                 <img
                   src={template.imageUrl}
                   alt={template.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-fill aspect-[5/7]"
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400">
@@ -276,11 +274,10 @@ export default function AdminTemplatesPage() {
                 </div>
               )}
               <div className="absolute top-2 left-2">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  template.effectivePrice.isFree
-                    ? 'bg-green-500 text-white'
-                    : 'bg-orange-500 text-white'
-                }`}>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${template.effectivePrice.isFree
+                  ? 'bg-green-500 text-white'
+                  : 'bg-orange-500 text-white'
+                  }`}>
                   {template.effectivePrice.isFree ? 'FREE' : `$${template.effectivePrice.price}`}
                 </span>
               </div>

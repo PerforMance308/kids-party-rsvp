@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
       // 使用sharp处理图片，调整尺寸
       const processedBuffer = await sharp(buffer)
-        .resize(TARGET_SIZE.width, TARGET_SIZE.height, { fit: 'cover' })
+        .resize(TARGET_SIZE.width, TARGET_SIZE.height, { fit: 'fill' })
         .png()
         .toBuffer()
 
