@@ -1,0 +1,11 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /en/
+Allow: /zh/
+Disallow: /api/
+Disallow: /party/
+Disallow: /dashboard/
+Disallow: /admin/
+
+# Sitemap
+Sitemap: https://kidspartyrsvp.com/sitemap.xml

@@ -11,6 +11,22 @@ const pageConfig = {
   '/login': { priority: 0.3, changeFrequency: 'monthly' as const },   // login - low priority for SEO
 }
 
+// Template pages - SEO important
+const templates = [
+  'dinosaur-birthday-party',
+  'princess-birthday-party',
+  'unicorn-birthday-party',
+  'superhero-birthday-party'
+]
+
+// Feature pages - SEO important
+const features = [
+  'qr-code-rsvp',
+  'guest-tracking',
+  'automatic-reminders',
+  'no-app-required'
+]
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const locales = ['en', 'zh']
   const lastModified = new Date()
@@ -31,5 +47,37 @@ export default function sitemap(): MetadataRoute.Sitemap {
     }))
   )
 
-  return staticEntries
+  // Generate sitemap entries for template pages
+  const templateEntries: MetadataRoute.Sitemap = locales.flatMap((locale) =>
+    templates.map((template) => ({
+      url: `${SITE_URL}/${locale}/templates/${template}`,
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/en/templates/${template}`,
+          zh: `${SITE_URL}/zh/templates/${template}`,
+        },
+      },
+    }))
+  )
+
+  // Generate sitemap entries for feature pages
+  const featureEntries: MetadataRoute.Sitemap = locales.flatMap((locale) =>
+    features.map((feature) => ({
+      url: `${SITE_URL}/${locale}/features/${feature}`,
+      lastModified,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+      alternates: {
+        languages: {
+          en: `${SITE_URL}/en/features/${feature}`,
+          zh: `${SITE_URL}/zh/features/${feature}`,
+        },
+      },
+    }))
+  )
+
+  return [...staticEntries, ...templateEntries, ...featureEntries]
 }

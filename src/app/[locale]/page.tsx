@@ -60,12 +60,12 @@ export default function HomePage() {
         <div className="relative container mx-auto px-4 h-full">
           <div className="flex items-center justify-center md:justify-start h-full">
             <div className="max-w-lg py-8 md:ml-[5%] lg:ml-[8%]">
-              {/* Main Heading */}
+              {/* Main Heading - SEO optimized */}
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-neutral-900 mb-2 leading-tight">
                 {locale === 'zh' ? (
-                  <>轻松管理儿童派对邀请</>
+                  <>创建儿童生日派对邀请函<br />轻松在线RSVP</>
                 ) : (
-                  <>Kids Party Planning Made Easy</>
+                  <>Create Kids Birthday Party<br />Invitations with Easy Online RSVP</>
                 )}
               </h1>
 
@@ -119,48 +119,160 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="section-spacing">
+      {/* What is KidsPartyRSVP - SEO Critical Section */}
+      <section id="what-is-kidspartyrsvp" className="section-spacing bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6 text-center">
+              {locale === 'zh' ? '什么是 KidsPartyRSVP？' : 'What is KidsPartyRSVP?'}
+            </h2>
+            <div className="prose prose-lg max-w-none text-neutral-700">
+              {locale === 'zh' ? (
+                <>
+                  <p>
+                    KidsPartyRSVP 是一款专为家长设计的在线工具，帮助您轻松创建儿童生日派对邀请函并管理宾客回复（RSVP）。
+                    无论是恐龙主题、公主主题还是独角兽主题的生日派对，我们都提供精美的邀请函模板，让您的派对邀请脱颖而出。
+                  </p>
+                  <p>
+                    通过二维码RSVP功能，宾客只需扫一扫即可回复邀请，无需下载任何APP。系统会自动追踪宾客回复状态，
+                    包括参加人数、过敏信息和联系方式。自动提醒功能会在派对前发送通知给尚未回复的宾客，确保您准确掌握参与人数。
+                  </p>
+                  <p>
+                    告别繁琐的微信群统计和纸质邀请函。KidsPartyRSVP 让派对策划变得简单、高效、有趣。
+                    基础功能完全免费，几分钟内即可创建专业的派对邀请。
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    KidsPartyRSVP is an online tool designed to help parents create beautiful kids birthday party
+                    invitations and manage RSVPs effortlessly. Whether you're planning a dinosaur birthday party,
+                    princess party, unicorn celebration, or superhero bash, our platform provides stunning invitation
+                    templates that make your party stand out.
+                  </p>
+                  <p>
+                    With our QR code RSVP feature, guests can respond to invitations instantly by scanning a code -
+                    no app download required. The system automatically tracks guest responses in real-time, including
+                    headcount, allergy information, and contact details. Automatic reminder notifications are sent to
+                    guests who haven't responded, ensuring you have an accurate guest count before the big day.
+                  </p>
+                  <p>
+                    Say goodbye to messy group chats and paper invitations. KidsPartyRSVP makes party planning simple,
+                    efficient, and fun. Core features are completely free, and you can create a professional party
+                    invitation in just minutes.
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Popular Themes - SEO Internal Links */}
+      <section id="popular-themes" className="section-spacing bg-neutral-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-              {t('home.featuresTitle')}
+              {locale === 'zh' ? '热门儿童生日派对主题' : 'Popular Kids Birthday Party Themes'}
             </h2>
             <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              {t('home.featuresSubtitle')}
+              {locale === 'zh'
+                ? '选择您孩子喜爱的主题，创建独特的派对邀请函'
+                : 'Choose your child\'s favorite theme and create a unique party invitation'}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <Link href={`/${locale}/templates/dinosaur-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-5xl mb-3">🦖</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '恐龙生日派对' : 'Dinosaur Birthday Party'}
+              </h3>
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '适合喜欢恐龙的小朋友' : 'Perfect for dino-loving kids'}
+              </p>
+            </Link>
+            <Link href={`/${locale}/templates/princess-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-5xl mb-3">👸</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '公主生日派对' : 'Princess Birthday Party'}
+              </h3>
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '梦幻公主主题派对' : 'Magical princess celebrations'}
+              </p>
+            </Link>
+            <Link href={`/${locale}/templates/unicorn-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-5xl mb-3">🦄</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '独角兽生日派对' : 'Unicorn Birthday Party'}
+              </h3>
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '彩虹独角兽梦幻派对' : 'Rainbow unicorn magic'}
+              </p>
+            </Link>
+            <Link href={`/${locale}/templates/superhero-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-5xl mb-3">🦸</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '超级英雄生日派对' : 'Superhero Birthday Party'}
+              </h3>
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '英雄主题冒险派对' : 'Action-packed hero parties'}
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Key Features - SEO Internal Links */}
+      <section id="features" className="section-spacing">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
+              {locale === 'zh' ? '儿童派对RSVP核心功能' : 'Key RSVP Features for Kids Parties'}
+            </h2>
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+              {locale === 'zh'
+                ? '专为儿童派对设计的智能功能'
+                : 'Smart features designed specifically for kids\' birthday parties'}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div className="card text-center">
-              <div className="text-4xl mb-4">📱</div>
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3">
-                {t('features.qrCode.title')}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <Link href={`/${locale}/features/qr-code-rsvp`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-4xl mb-3">📱</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '二维码RSVP' : 'QR Code RSVP'}
               </h3>
-              <p className="text-neutral-600">
-                {t('features.qrCode.desc')}
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '扫码即可回复邀请' : 'Scan to respond instantly'}
               </p>
-            </div>
-
-            <div className="card text-center">
-              <div className="text-4xl mb-4">🔔</div>
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3">
-                {t('features.reminders.title')}
+            </Link>
+            <Link href={`/${locale}/features/guest-tracking`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-4xl mb-3">👥</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '宾客追踪' : 'Guest Tracking'}
               </h3>
-              <p className="text-neutral-600">
-                {t('features.reminders.desc')}
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '实时查看回复状态' : 'Real-time response tracking'}
               </p>
-            </div>
-
-            <div className="card text-center">
-              <div className="text-4xl mb-4">🔒</div>
-              <h3 className="text-xl font-semibold text-neutral-900 mb-3">
-                {t('features.privacy.title')}
+            </Link>
+            <Link href={`/${locale}/features/automatic-reminders`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-4xl mb-3">🔔</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '自动提醒' : 'Automatic Reminders'}
               </h3>
-              <p className="text-neutral-600">
-                {t('features.privacy.desc')}
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '自动发送回复提醒' : 'Auto-remind pending guests'}
               </p>
-            </div>
+            </Link>
+            <Link href={`/${locale}/features/no-app-required`} className="card hover:shadow-lg transition-shadow text-center group">
+              <div className="text-4xl mb-3">✨</div>
+              <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
+                {locale === 'zh' ? '无需下载APP' : 'No App Required'}
+              </h3>
+              <p className="text-sm text-neutral-600 mt-2">
+                {locale === 'zh' ? '浏览器直接使用' : 'Works in any browser'}
+              </p>
+            </Link>
           </div>
         </div>
       </section>
