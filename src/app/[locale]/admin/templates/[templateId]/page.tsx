@@ -7,6 +7,7 @@ import { useLocale } from '@/contexts/LanguageContext'
 import { toast } from '@/lib/toast'
 import CanvasInvitation from '@/components/CanvasInvitation'
 import type { InvitationTemplate, TemplateConfig } from '@/types/invitation-template'
+import QRCode from 'qrcode'
 
 export default function EditTemplatePage() {
   const params = useParams()
@@ -25,12 +26,16 @@ export default function EditTemplatePage() {
   const [jsonError, setJsonError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [previewQrCode, setPreviewQrCode] = useState<string>('')
 
-  // Preview data
+  // Preview data - 默认结束时间为开始时间+2小时
+  const defaultStartTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  const defaultEndTime = new Date(defaultStartTime.getTime() + 2 * 60 * 60 * 1000)
   const [previewData, setPreviewData] = useState({
     childName: 'Emma',
     childAge: 5,
-    eventDatetime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    eventDatetime: defaultStartTime.toISOString(),
+    eventEndDatetime: defaultEndTime.toISOString(),
     location: '123 Party Street, City',
     theme: 'Birthday',
     notes: '',
@@ -39,6 +44,31 @@ export default function EditTemplatePage() {
   useEffect(() => {
     fetchTemplate()
   }, [templateId])
+
+  // 生成预览 QR 码
+  useEffect(() => {
+    const generatePreviewQR = async () => {
+      if (!template?.config?.qr_code) {
+        setPreviewQrCode('')
+        return
+      }
+      try {
+        const qrCodeDataUrl = await QRCode.toDataURL('https://example.com/rsvp/preview', {
+          errorCorrectionLevel: 'M',
+          margin: 1,
+          color: {
+            dark: template.config.qr_code.darkColor || '#000000',
+            light: template.config.qr_code.lightColor || '#FFFFFF',
+          },
+          width: 512,
+        })
+        setPreviewQrCode(qrCodeDataUrl)
+      } catch (err) {
+        console.error('Failed to generate preview QR code:', err)
+      }
+    }
+    generatePreviewQR()
+  }, [template?.config?.qr_code])
 
   const fetchTemplate = async () => {
     try {
@@ -210,11 +240,28 @@ export default function EditTemplatePage() {
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Date/Time</label>
+                <label className="block text-xs text-gray-500 mb-1">Start Time</label>
                 <input
                   type="datetime-local"
                   value={previewData.eventDatetime.slice(0, 16)}
-                  onChange={(e) => setPreviewData(prev => ({ ...prev, eventDatetime: new Date(e.target.value).toISOString() }))}
+                  onChange={(e) => {
+                    const startTime = new Date(e.target.value)
+                    const endTime = new Date(startTime.getTime() + 2 * 60 * 60 * 1000)
+                    setPreviewData(prev => ({
+                      ...prev,
+                      eventDatetime: startTime.toISOString(),
+                      eventEndDatetime: endTime.toISOString()
+                    }))
+                  }}
+                  className="w-full px-2 py-1 border rounded text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">End Time</label>
+                <input
+                  type="datetime-local"
+                  value={previewData.eventEndDatetime?.slice(0, 16) || ''}
+                  onChange={(e) => setPreviewData(prev => ({ ...prev, eventEndDatetime: new Date(e.target.value).toISOString() }))}
                   className="w-full px-2 py-1 border rounded text-sm"
                 />
               </div>
@@ -230,6 +277,150 @@ export default function EditTemplatePage() {
             </div>
           </div>
 
+          {/* QR Code Configuration */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h2 className="font-semibold mb-3">QR Code Configuration</h2>
+            {template.config.qr_code ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Position X</label>
+                  <input
+                    type="number"
+                    value={template.config.qr_code.position.x}
+                    onChange={(e) => {
+                      const newConfig = {
+                        ...template.config,
+                        qr_code: {
+                          ...template.config.qr_code!,
+                          position: { ...template.config.qr_code!.position, x: parseInt(e.target.value) || 0 }
+                        }
+                      }
+                      setTemplate(prev => prev ? { ...prev, config: newConfig } : null)
+                      setJsonText(JSON.stringify(newConfig, null, 2))
+                    }}
+                    className="w-full px-2 py-1 border rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Position Y</label>
+                  <input
+                    type="number"
+                    value={template.config.qr_code.position.y}
+                    onChange={(e) => {
+                      const newConfig = {
+                        ...template.config,
+                        qr_code: {
+                          ...template.config.qr_code!,
+                          position: { ...template.config.qr_code!.position, y: parseInt(e.target.value) || 0 }
+                        }
+                      }
+                      setTemplate(prev => prev ? { ...prev, config: newConfig } : null)
+                      setJsonText(JSON.stringify(newConfig, null, 2))
+                    }}
+                    className="w-full px-2 py-1 border rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Size</label>
+                  <input
+                    type="number"
+                    value={template.config.qr_code.size}
+                    onChange={(e) => {
+                      const newConfig = {
+                        ...template.config,
+                        qr_code: {
+                          ...template.config.qr_code!,
+                          size: parseInt(e.target.value) || 100
+                        }
+                      }
+                      setTemplate(prev => prev ? { ...prev, config: newConfig } : null)
+                      setJsonText(JSON.stringify(newConfig, null, 2))
+                    }}
+                    className="w-full px-2 py-1 border rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Dark Color (QR)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={template.config.qr_code.darkColor || '#000000'}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...template.config,
+                          qr_code: {
+                            ...template.config.qr_code!,
+                            darkColor: e.target.value
+                          }
+                        }
+                        setTemplate(prev => prev ? { ...prev, config: newConfig } : null)
+                        setJsonText(JSON.stringify(newConfig, null, 2))
+                      }}
+                      className="w-8 h-8 border rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={template.config.qr_code.darkColor || '#000000'}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...template.config,
+                          qr_code: {
+                            ...template.config.qr_code!,
+                            darkColor: e.target.value
+                          }
+                        }
+                        setTemplate(prev => prev ? { ...prev, config: newConfig } : null)
+                        setJsonText(JSON.stringify(newConfig, null, 2))
+                      }}
+                      className="flex-1 px-2 py-1 border rounded text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Light Color (BG)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={template.config.qr_code.lightColor || '#FFFFFF'}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...template.config,
+                          qr_code: {
+                            ...template.config.qr_code!,
+                            lightColor: e.target.value
+                          }
+                        }
+                        setTemplate(prev => prev ? { ...prev, config: newConfig } : null)
+                        setJsonText(JSON.stringify(newConfig, null, 2))
+                      }}
+                      className="w-8 h-8 border rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={template.config.qr_code.lightColor || '#FFFFFF'}
+                      onChange={(e) => {
+                        const newConfig = {
+                          ...template.config,
+                          qr_code: {
+                            ...template.config.qr_code!,
+                            lightColor: e.target.value
+                          }
+                        }
+                        setTemplate(prev => prev ? { ...prev, config: newConfig } : null)
+                        setJsonText(JSON.stringify(newConfig, null, 2))
+                      }}
+                      className="flex-1 px-2 py-1 border rounded text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-gray-500 text-sm">
+                No QR code configuration. Add "qr_code" to JSON to configure.
+              </div>
+            )}
+          </div>
+
           {/* Canvas Preview */}
           <div className="bg-white rounded-lg shadow p-4">
             <h2 className="font-semibold mb-3">Live Preview</h2>
@@ -237,6 +428,7 @@ export default function EditTemplatePage() {
               <CanvasInvitation
                 template={previewTemplate}
                 party={previewData}
+                qrCodeUrl={previewQrCode}
                 showControls={false}
               />
             ) : (

@@ -69,6 +69,7 @@ export async function GET(
       ...party,
       childName: party.child.name,
       childAge,
+      eventEndDatetime: party.eventEndDatetime,
       stats,
       rsvpUrl: `${getBaseUrl()}/rsvp/${party.publicRsvpToken}`
     }
@@ -119,8 +120,15 @@ export async function PUT(
 
     // For party updates, we only allow updating basic party details, not child info
     // Child info should be updated through the child management system
+    const eventDatetime = new Date(body.eventDatetime)
+    // 如果没有提供结束时间，使用默认的开始时间+2小时
+    const eventEndDatetime = body.eventEndDatetime
+      ? new Date(body.eventEndDatetime)
+      : new Date(eventDatetime.getTime() + 2 * 60 * 60 * 1000)
+
     const validatedData = {
-      eventDatetime: new Date(body.eventDatetime),
+      eventDatetime,
+      eventEndDatetime,
       location: body.location,
       theme: body.theme || null,
       notes: body.notes || null,
@@ -141,6 +149,7 @@ export async function PUT(
       where: { id: id },
       data: {
         eventDatetime: validatedData.eventDatetime,
+        eventEndDatetime: validatedData.eventEndDatetime,
         location: validatedData.location,
         theme: validatedData.theme,
         notes: validatedData.notes,
@@ -193,6 +202,7 @@ export async function PUT(
       ...updatedParty,
       childName: updatedParty.child.name,
       childAge,
+      eventEndDatetime: updatedParty.eventEndDatetime,
       stats,
       rsvpUrl: `${getBaseUrl()}/rsvp/${updatedParty.publicRsvpToken}`
     }

@@ -15,6 +15,7 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventEndDatetime?: string
   location: string
   theme?: string
   notes?: string

@@ -45,44 +45,76 @@ export default function HomePage() {
 
   return (
     <main className="flex-1">
-      {/* Hero Section */}
-      <section className="section-spacing bg-gradient-to-br from-primary-50 via-white to-primary-50">
-        <div className="container mx-auto px-4">
-          <div className="mobile-container text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-neutral-900 mb-6 text-balance">
-              {t('home.title')}
-            </h1>
-            <p className="text-lg md:text-xl text-neutral-600 mb-8 text-balance max-w-2xl mx-auto">
-              {t('home.subtitle')}
-            </p>
+      {/* Hero Section with Banner */}
+      <section className="relative h-[350px] md:h-[420px] lg:h-[460px] overflow-hidden">
+        {/* Banner Background Image - full height, crop from left only */}
+        <div
+          className="absolute inset-0 bg-[length:auto_100%] bg-right bg-no-repeat"
+          style={{ backgroundImage: 'url(/banner/banner.jpg)' }}
+        />
 
-            {isAuthenticated === null ? (
-              <div className="flex flex-col items-center">
-                <LoadingSpinner size="lg" className="mb-4" />
-                <p className="text-neutral-600">{t('home.loading')}</p>
-                {sessionError && (
-                  <p className="text-red-600 text-sm mt-2">{sessionError}</p>
+        {/* Gradient Overlay - stronger on left for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/75 to-transparent md:from-white/90 md:via-white/60 md:to-transparent" />
+
+        {/* Content */}
+        <div className="relative container mx-auto px-4 h-full">
+          <div className="flex items-center justify-center md:justify-start h-full">
+            <div className="max-w-lg py-8 md:ml-[5%] lg:ml-[8%]">
+              {/* Main Heading */}
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-neutral-900 mb-2 leading-tight">
+                {locale === 'zh' ? (
+                  <>轻松管理儿童派对邀请</>
+                ) : (
+                  <>Kids Party Planning Made Easy</>
                 )}
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-base md:text-lg text-neutral-600 mb-4 max-w-md">
+                {locale === 'zh'
+                  ? '创建精美邀请函，二维码扫码回复，实时追踪宾客'
+                  : 'Beautiful invitations, QR code RSVPs, real-time guest tracking'}
+              </p>
+
+              {/* Feature highlights */}
+              <div className="flex flex-wrap gap-2 mb-5">
+                <span className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                  📱 {locale === 'zh' ? '扫码回复' : 'QR RSVP'}
+                </span>
+                <span className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                  🎨 {locale === 'zh' ? '精美模板' : 'Templates'}
+                </span>
+                <span className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                  ✨ {locale === 'zh' ? '免费使用' : 'Free'}
+                </span>
               </div>
-            ) : isAuthenticated ? (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-sm mx-auto sm:max-w-none">
-                <Link href={`/${locale}/dashboard`} className="btn btn-primary text-lg px-8">
-                  {t('home.goToDashboard')}
-                </Link>
-                <Link href={`/${locale}/party/new`} className="btn btn-secondary text-lg px-8">
-                  {t('home.createNewParty')}
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-sm mx-auto sm:max-w-none">
-                <Link href={`/${locale}/register`} className="btn btn-primary text-lg px-8">
-                  {t('home.startPlanning')}
-                </Link>
-                <Link href={`/${locale}/login`} className="btn btn-secondary text-lg px-8">
-                  {t('home.haveAccount')}
-                </Link>
-              </div>
-            )}
+
+              {/* Action Buttons */}
+              {isAuthenticated === null ? (
+                <div className="flex flex-col items-start">
+                  <LoadingSpinner size="md" className="mb-2" />
+                  <p className="text-neutral-600 text-sm">{t('home.loading')}</p>
+                  {sessionError && (
+                    <p className="text-red-600 text-xs mt-1">{sessionError}</p>
+                  )}
+                </div>
+              ) : isAuthenticated ? (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href={`/${locale}/party/new`} className="btn btn-primary px-6 shadow-md hover:shadow-lg transition-shadow">
+                    {t('home.createNewParty')}
+                  </Link>
+                  <Link href={`/${locale}/dashboard`} className="btn btn-secondary px-6 bg-white/80 hover:bg-white">
+                    {t('home.goToDashboard')}
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link href={`/${locale}/register`} className="btn btn-primary px-6 shadow-md hover:shadow-lg transition-shadow">
+                    {locale === 'zh' ? '免费开始' : 'Get Started Free'}
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

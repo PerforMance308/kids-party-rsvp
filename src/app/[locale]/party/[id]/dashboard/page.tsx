@@ -33,6 +33,7 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventEndDatetime?: string
   location: string
   theme?: string
   notes?: string
@@ -66,7 +67,8 @@ export default function PartyDashboard() {
   const loadQRCode = async () => {
     if (!id) return
     try {
-      const response = await fetch(`/api/parties/${id}/qr`)
+      // 添加时间戳防止缓存
+      const response = await fetch(`/api/parties/${id}/qr?t=${Date.now()}`)
       if (response.ok) {
         const data = await response.json()
         setQrCode(data.qrCode)
@@ -334,6 +336,7 @@ export default function PartyDashboard() {
                       childName: party.childName,
                       childAge: party.childAge,
                       eventDatetime: party.eventDatetime,
+                      eventEndDatetime: party.eventEndDatetime,
                       location: party.location,
                       theme: party.theme,
                       notes: party.notes
@@ -405,6 +408,7 @@ export default function PartyDashboard() {
                 childName: party.childName,
                 childAge: party.childAge,
                 eventDatetime: party.eventDatetime,
+                eventEndDatetime: party.eventEndDatetime,
                 location: party.location,
                 theme: party.theme,
                 notes: party.notes

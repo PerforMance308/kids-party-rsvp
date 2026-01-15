@@ -35,6 +35,7 @@ export default function NewPartyPage() {
   const [showLegacyForm, setShowLegacyForm] = useState(false)
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
+  const [eventEndTime, setEventEndTime] = useState('')
   const [location, setLocation] = useState('')
   const [theme, setTheme] = useState('')
   const [notes, setNotes] = useState('')
@@ -47,6 +48,16 @@ export default function NewPartyPage() {
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState('')
   const [targetAge, setTargetAge] = useState('')
+
+  // 当开始时间变化时，自动调整结束时间（保持2小时间隔）
+  const handleEventTimeChange = (time: string) => {
+    setEventTime(time)
+    if (time) {
+      const [hours, minutes] = time.split(':').map(Number)
+      const endHours = (hours + 2) % 24
+      setEventEndTime(`${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
+    }
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -87,6 +98,15 @@ export default function NewPartyPage() {
 
     try {
       const eventDatetime = new Date(`${eventDate}T${eventTime}`)
+      // 计算结束时间
+      let eventEndDatetime: Date | null = null
+      if (eventEndTime) {
+        eventEndDatetime = new Date(`${eventDate}T${eventEndTime}`)
+        // 如果结束时间小于开始时间，说明跨天了
+        if (eventEndDatetime < eventDatetime) {
+          eventEndDatetime.setDate(eventEndDatetime.getDate() + 1)
+        }
+      }
 
       let requestBody
       if (showLegacyForm) {
@@ -95,6 +115,7 @@ export default function NewPartyPage() {
           childName,
           childAge: parseInt(childAge),
           eventDatetime: eventDatetime.toISOString(),
+          eventEndDatetime: eventEndDatetime?.toISOString(),
           location,
           theme: theme || undefined,
           notes: notes || undefined,
@@ -110,6 +131,7 @@ export default function NewPartyPage() {
         requestBody = {
           childId: selectedChildId,
           eventDatetime: eventDatetime.toISOString(),
+          eventEndDatetime: eventEndDatetime?.toISOString(),
           location,
           theme: theme || undefined,
           notes: notes || undefined,
@@ -296,34 +318,50 @@ export default function NewPartyPage() {
               </>
             )}
 
+            <div>
+              <label htmlFor="eventDate" className="block text-sm font-medium text-neutral-700 mb-1">
+                {t('newParty.date')} *
+              </label>
+              <input
+                type="date"
+                id="eventDate"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className="input"
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="eventDate" className="block text-sm font-medium text-neutral-700 mb-1">
-                  {t('newParty.date')} *
-                </label>
-                <input
-                  type="date"
-                  id="eventDate"
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  className="input"
-                  min={new Date().toISOString().split('T')[0]}
-                  required
-                />
-              </div>
-
-              <div>
                 <label htmlFor="eventTime" className="block text-sm font-medium text-neutral-700 mb-1">
-                  {t('newParty.time')} *
+                  {t('newParty.startTime')} *
                 </label>
                 <input
                   type="time"
                   id="eventTime"
                   value={eventTime}
-                  onChange={(e) => setEventTime(e.target.value)}
+                  onChange={(e) => handleEventTimeChange(e.target.value)}
                   className="input"
                   required
                 />
+              </div>
+
+              <div>
+                <label htmlFor="eventEndTime" className="block text-sm font-medium text-neutral-700 mb-1">
+                  {t('newParty.endTime')}
+                </label>
+                <input
+                  type="time"
+                  id="eventEndTime"
+                  value={eventEndTime}
+                  onChange={(e) => setEventEndTime(e.target.value)}
+                  className="input"
+                />
+                <p className="mt-1 text-xs text-neutral-500">
+                  {t('newParty.endTimeHelp')}
+                </p>
               </div>
             </div>
 

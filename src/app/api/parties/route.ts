@@ -36,11 +36,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Child not found' }, { status: 404 })
       }
 
+      // 计算默认结束时间（开始时间+2小时）
+      const eventEndDatetime = body.eventEndDatetime
+        ? new Date(body.eventEndDatetime)
+        : new Date(validatedData.eventDatetime.getTime() + 2 * 60 * 60 * 1000)
+
       party = await prisma.party.create({
         data: {
           userId: session.user.id,
           childId: validatedData.childId,
           eventDatetime: validatedData.eventDatetime,
+          eventEndDatetime,
           location: validatedData.location,
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
@@ -67,11 +73,17 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // 计算默认结束时间（开始时间+2小时）
+      const legacyEventEndDatetime = body.eventEndDatetime
+        ? new Date(body.eventEndDatetime)
+        : new Date(validatedData.eventDatetime.getTime() + 2 * 60 * 60 * 1000)
+
       party = await prisma.party.create({
         data: {
           userId: session.user.id,
           childId: child.id,
           eventDatetime: validatedData.eventDatetime,
+          eventEndDatetime: legacyEventEndDatetime,
           location: validatedData.location,
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
@@ -155,6 +167,7 @@ export async function GET(request: NextRequest) {
         childName: party.child.name,
         childAge,
         eventDatetime: party.eventDatetime,
+        eventEndDatetime: party.eventEndDatetime,
         location: party.location,
         theme: party.theme,
         notes: party.notes,

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { formatDateForInput } from '@/lib/utils'
 import { useLocale } from '@/contexts/LanguageContext'
 import Link from 'next/link'
 
@@ -12,6 +11,7 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventEndDatetime?: string
   location: string
   theme?: string
   notes?: string
@@ -30,11 +30,23 @@ export default function EditPartyPage() {
   const [success, setSuccess] = useState('')
 
   // Form state - removed childName and childAge as they are managed through child management
-  const [eventDatetime, setEventDatetime] = useState('')
+  const [eventDate, setEventDate] = useState('')
+  const [eventTime, setEventTime] = useState('')
+  const [eventEndTime, setEventEndTime] = useState('')
   const [location, setLocation] = useState('')
   const [theme, setTheme] = useState('')
   const [notes, setNotes] = useState('')
   const [targetAge, setTargetAge] = useState('')
+
+  // 当开始时间变化时，自动调整结束时间（保持2小时间隔）
+  const handleEventTimeChange = (time: string) => {
+    setEventTime(time)
+    if (time) {
+      const [hours, minutes] = time.split(':').map(Number)
+      const endHours = (hours + 2) % 24
+      setEventEndTime(`${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`)
+    }
+  }
 
   // Check authentication
   useEffect(() => {
@@ -60,8 +72,20 @@ export default function EditPartyPage() {
           const partyData = await response.json()
           setParty(partyData)
 
-          // Populate form
-          setEventDatetime(formatDateForInput(new Date(partyData.eventDatetime)))
+          // Populate form - 分别设置日期和时间
+          const startDateTime = new Date(partyData.eventDatetime)
+          setEventDate(startDateTime.toISOString().split('T')[0])
+          setEventTime(`${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`)
+
+          if (partyData.eventEndDatetime) {
+            const endDateTime = new Date(partyData.eventEndDatetime)
+            setEventEndTime(`${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime.getMinutes().toString().padStart(2, '0')}`)
+          } else {
+            // 默认设置结束时间为开始时间+2小时
+            const endHours = (startDateTime.getHours() + 2) % 24
+            setEventEndTime(`${endHours.toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`)
+          }
+
           setLocation(partyData.location)
           setTheme(partyData.theme || '')
           setNotes(partyData.notes || '')
@@ -89,6 +113,17 @@ export default function EditPartyPage() {
     setSuccess('')
 
     try {
+      // 组合日期和时间
+      const eventDatetime = new Date(`${eventDate}T${eventTime}`)
+      let eventEndDatetime: Date | null = null
+      if (eventEndTime) {
+        eventEndDatetime = new Date(`${eventDate}T${eventEndTime}`)
+        // 如果结束时间小于开始时间，说明跨天了
+        if (eventEndDatetime < eventDatetime) {
+          eventEndDatetime.setDate(eventEndDatetime.getDate() + 1)
+        }
+      }
+
       const response = await fetch(`/api/parties/${id}`, {
         method: 'PUT',
         headers: {
@@ -96,7 +131,8 @@ export default function EditPartyPage() {
         },
         credentials: 'include',
         body: JSON.stringify({
-          eventDatetime,
+          eventDatetime: eventDatetime.toISOString(),
+          eventEndDatetime: eventEndDatetime?.toISOString(),
           location,
           theme: theme || undefined,
           notes: notes || undefined,
@@ -189,17 +225,49 @@ export default function EditPartyPage() {
         <form onSubmit={handleSubmit} className="card space-y-6">
 
           <div>
-            <label htmlFor="eventDatetime" className="block text-sm font-medium text-neutral-700 mb-1">
-              Event Date & Time *
+            <label htmlFor="eventDate" className="block text-sm font-medium text-neutral-700 mb-1">
+              Event Date *
             </label>
             <input
-              type="datetime-local"
-              id="eventDatetime"
-              value={eventDatetime}
-              onChange={(e) => setEventDatetime(e.target.value)}
+              type="date"
+              id="eventDate"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
               className="input"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="eventTime" className="block text-sm font-medium text-neutral-700 mb-1">
+                Start Time *
+              </label>
+              <input
+                type="time"
+                id="eventTime"
+                value={eventTime}
+                onChange={(e) => handleEventTimeChange(e.target.value)}
+                className="input"
+                required
+              />
+            </div>
+
+            <div>
+              <label htmlFor="eventEndTime" className="block text-sm font-medium text-neutral-700 mb-1">
+                End Time
+              </label>
+              <input
+                type="time"
+                id="eventEndTime"
+                value={eventEndTime}
+                onChange={(e) => setEventEndTime(e.target.value)}
+                className="input"
+              />
+              <p className="mt-1 text-xs text-neutral-500">
+                Default is 2 hours after start time
+              </p>
+            </div>
           </div>
 
           <div>

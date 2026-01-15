@@ -16,7 +16,9 @@
       "x": 760,
       "y": 1150
     },
-    "size": 150
+    "size": 150,
+    "darkColor": "#5D4037",
+    "lightColor": "#FFFFFF"
   },
   "elements": [
     {
@@ -48,7 +50,7 @@
       "remark": "年龄在木牌下方"
     },
     {
-      "name": "date_time",
+      "name": "date",
       "content": "",
       "position": {
         "x": 470,
@@ -58,14 +60,27 @@
       "font_size": 28,
       "color": "#5D4037",
       "align": "left",
-      "remark": "Date & Time: 后面"
+      "remark": "Date: 日期显示位置"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 470,
+        "y": 1140
+      },
+      "font": "Arial-Bold",
+      "font_size": 28,
+      "color": "#5D4037",
+      "align": "left",
+      "remark": "Time: 时间显示位置"
     },
     {
       "name": "location",
       "content": "",
       "position": {
         "x": 380,
-        "y": 1160
+        "y": 1185
       },
       "font": "Arial-Bold",
       "font_size": 28,

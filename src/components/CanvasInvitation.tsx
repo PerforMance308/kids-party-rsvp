@@ -25,6 +25,42 @@ function formatSimpleDateTime(date: Date, locale: string): string {
   }
 }
 
+// 只格式化日期：1月15日 或 Jan 15, 2026
+function formatSimpleDate(date: Date, locale: string): string {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const year = date.getFullYear();
+
+  if (locale === 'zh') {
+    return `${month}月${day}日`;
+  } else {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${monthNames[date.getMonth()]} ${day}, ${year}`;
+  }
+}
+
+// 格式化时间范围：14:30-16:30 或 2:30pm - 4:30pm
+function formatTimeRange(startDate: Date, endDate: Date | null, locale: string): string {
+  const formatTime = (d: Date) => {
+    const hours = d.getHours();
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    if (locale === 'zh') {
+      return `${hours}:${minutes}`;
+    } else {
+      const hour12 = hours % 12 || 12;
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      return `${hour12}:${minutes}${ampm}`;
+    }
+  };
+
+  const startTime = formatTime(startDate);
+  if (!endDate) {
+    return startTime;
+  }
+  const endTime = formatTime(endDate);
+  return `${startTime} - ${endTime}`;
+}
+
 interface CanvasInvitationProps {
   template: InvitationTemplate;
   party: PartyData;
@@ -72,6 +108,9 @@ export default function CanvasInvitation({
   // 获取元素的实际内容（只返回动态值，不加前缀，因为图片上已有标签）
   const getElementContent = useCallback(
     (element: TemplateElement): string => {
+      const startDate = new Date(party.eventDatetime);
+      const endDate = party.eventEndDatetime ? new Date(party.eventEndDatetime) : null;
+
       switch (element.name) {
         case 'child_name':
           // 只返回名字+'s 或 的
@@ -82,10 +121,16 @@ export default function CanvasInvitation({
           // 只返回年龄
           return locale === 'zh'
             ? `${party.childAge}岁`
-            : `${party.childAge}${getOrdinalSuffix(party.childAge)}`;
+            : `${party.childAge}`;
         case 'date_time':
-          // 简洁格式：1月15日 14:30 或 Jan 15, 2:30pm
-          return formatSimpleDateTime(new Date(party.eventDatetime), locale);
+          // 向后兼容：简洁格式：1月15日 14:30 或 Jan 15, 2:30pm
+          return formatSimpleDateTime(startDate, locale);
+        case 'date':
+          // 只显示日期：1月15日 或 Jan 15, 2026
+          return formatSimpleDate(startDate, locale);
+        case 'time':
+          // 显示时间范围：14:30-16:30 或 2:30pm - 4:30pm
+          return formatTimeRange(startDate, endDate, locale);
         case 'location':
           // 只返回地点，不加前缀（图片上已有 Location:）
           return party.location;
@@ -99,13 +144,6 @@ export default function CanvasInvitation({
     },
     [party, locale]
   );
-
-  // 获取序数后缀
-  function getOrdinalSuffix(n: number): string {
-    const s = ['th', 'st', 'nd', 'rd'];
-    const v = n % 100;
-    return s[(v - 20) % 10] || s[v] || s[0];
-  }
 
   // 渲染Canvas
   const renderCanvas = useCallback(async () => {

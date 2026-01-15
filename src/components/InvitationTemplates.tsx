@@ -9,6 +9,7 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventEndDatetime?: string
   location: string
   theme?: string
   notes?: string
@@ -60,19 +61,10 @@ export default function InvitationTemplate({
   // 加载动态模板配置
   useEffect(() => {
     const fetchTemplate = async () => {
-      if (!template) {
-        setIsLoadingTemplate(false)
-        setError(t.templateNotFound)
-        return
-      }
-
       setIsLoadingTemplate(true)
       setError(null)
 
       try {
-        // 从模板ID解析主题名（格式为 theme_number，如 dinosaur_1）
-        const themeName = template.split('_').slice(0, -1).join('_') || template.split('_')[0]
-
         const response = await fetch('/api/templates')
         if (!response.ok) {
           throw new Error('Failed to fetch templates')
@@ -80,13 +72,26 @@ export default function InvitationTemplate({
 
         const data: TemplatesApiResponse = await response.json()
 
-        // 在所有主题中查找模板
         let found: InvitationTemplate | null = null
-        for (const themeData of data.themes) {
-          const templateData = themeData.templates.find((t) => t.id === template)
-          if (templateData) {
-            found = templateData
-            break
+
+        // 如果是 'free' 或没有指定模板，使用第一个免费模板
+        if (!template || template === 'free') {
+          // 查找第一个免费模板
+          for (const themeData of data.themes) {
+            const freeTemplate = themeData.templates.find((t) => t.effectivePrice.isFree)
+            if (freeTemplate) {
+              found = freeTemplate
+              break
+            }
+          }
+        } else {
+          // 在所有主题中查找指定模板
+          for (const themeData of data.themes) {
+            const templateData = themeData.templates.find((t) => t.id === template)
+            if (templateData) {
+              found = templateData
+              break
+            }
           }
         }
 

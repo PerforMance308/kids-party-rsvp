@@ -55,6 +55,8 @@ export interface TemplateElement {
 export interface QRCodeConfig {
   position: Position;
   size: number;
+  darkColor?: string;   // 二维码前景色（默认黑色）
+  lightColor?: string;  // 二维码背景色（默认白色）
 }
 
 // 单个模板的JSON配置
@@ -117,6 +119,7 @@ export interface PartyData {
   childName: string;
   childAge: number;
   eventDatetime: string;
+  eventEndDatetime?: string;
   location: string;
   theme?: string;
   notes?: string;

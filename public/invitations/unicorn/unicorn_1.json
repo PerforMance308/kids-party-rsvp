@@ -16,7 +16,9 @@
       "x": 780,
       "y": 1178
     },
-    "size": 127
+    "size": 127,
+    "darkColor": "#3D5A80",
+    "lightColor": "#FFFFFF"
   },
   "elements": [
     {
@@ -48,7 +50,7 @@
       "remark": "年龄显示在横幅下方"
     },
     {
-      "name": "date_time",
+      "name": "date",
       "content": "",
       "position": {
         "x": 570,
@@ -58,14 +60,27 @@
       "font_size": 28,
       "color": "#3D5A80",
       "align": "left",
-      "remark": "Date & Time: 后面的位置"
+      "remark": "Date: 日期显示位置"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 570,
+        "y": 1040
+      },
+      "font": "Arial-Bold",
+      "font_size": 28,
+      "color": "#3D5A80",
+      "align": "left",
+      "remark": "Time: 时间显示位置"
     },
     {
       "name": "location",
       "content": "",
       "position": {
         "x": 490,
-        "y": 1055
+        "y": 1085
       },
       "font": "Arial-Bold",
       "font_size": 28,

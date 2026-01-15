@@ -94,6 +94,7 @@ model Party {
   userId                String     @map("user_id")
   childId               String     @map("child_id")
   eventDatetime         DateTime   @map("event_datetime")
+  eventEndDatetime      DateTime?  @map("event_end_datetime")
   location              String
   theme                 String?
   notes                 String?
