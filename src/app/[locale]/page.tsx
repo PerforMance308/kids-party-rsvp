@@ -122,11 +122,11 @@ export default function HomePage() {
       {/* What is KidsPartyRSVP - SEO Critical Section */}
       <section id="what-is-kidspartyrsvp" className="section-spacing bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6 text-center">
               {locale === 'zh' ? '什么是 KidsPartyRSVP？' : 'What is KidsPartyRSVP?'}
             </h2>
-            <div className="prose prose-lg max-w-none text-neutral-700">
+            <div className="prose prose-lg max-w-none text-neutral-700 text-justify">
               {locale === 'zh' ? (
                 <>
                   <p>
@@ -181,7 +181,7 @@ export default function HomePage() {
                 : 'Choose your child\'s favorite theme and create a unique party invitation'}
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mx-auto max-w-7xl">
             <Link href={`/${locale}/templates/dinosaur-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
               <div className="text-5xl mb-3">🦖</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
@@ -236,7 +236,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mx-auto max-w-7xl">
             <Link href={`/${locale}/features/qr-code-rsvp`} className="card hover:shadow-lg transition-shadow text-center group">
               <div className="text-4xl mb-3">📱</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
@@ -291,7 +291,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mx-auto max-w-7xl">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-primary-600">1</span>
@@ -346,7 +346,7 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mx-auto max-w-7xl">
             <div className="flex gap-4">
               <div className="text-3xl">✨</div>
               <div>
@@ -409,7 +409,7 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="section-spacing bg-primary-600">
         <div className="container mx-auto px-4">
-          <div className="mobile-container text-center">
+          <div className="mobile-container text-center max-w-7xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
               {t('cta.title')}
             </h2>

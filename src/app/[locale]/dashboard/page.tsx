@@ -143,7 +143,7 @@ export default function DashboardPage() {
               const isUpcoming = daysUntil >= 0
 
               return (
-                <div key={party.id} className="card hover:shadow-md transition-shadow">
+                <div key={party.id} className="card hover:shadow-md transition-shadow flex flex-col h-full">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="font-semibold text-neutral-900">
@@ -192,7 +192,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 mt-auto">
                     <Link
                       href={`/${locale}/party/${party.id}/dashboard`}
                       className="w-full btn btn-primary text-center block"

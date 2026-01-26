@@ -5,20 +5,9 @@
     1400
   ],
   "pricing": {
-    "price": 0,
-    "currency": "CAD",
-    "isFree": true,
-    "discount": null,
-    "freeUntil": null
-  },
-  "qr_code": {
-    "position": {
-      "x": 760,
-      "y": 1150
-    },
-    "size": 150,
-    "darkColor": "#5D4037",
-    "lightColor": "#FFFFFF"
+    "price": 1.39,
+    "currency": "USD",
+    "isFree": false
   },
   "elements": [
     {
@@ -26,67 +15,68 @@
       "content": "",
       "position": {
         "x": 500,
-        "y": 510
+        "y": 500
       },
       "font": "Arial-Bold",
-      "font_size": 62,
+      "font_size": 56,
       "color": "#FFFFFF",
-      "align": "center",
-      "remark": "木牌中心位置"
+      "align": "center"
     },
     {
       "name": "child_age",
       "content": "",
       "position": {
         "x": 500,
-        "y": 710
+        "y": 700
       },
-      "font": "LuckiestGuy-Regular",
-      "font_size": 100,
-      "color": "#E65100",
-      "align": "center",
-      "stroke_color": "#E65100",
-      "stroke_width": 5,
-      "remark": "年龄在木牌下方"
+      "font": "Arial-Bold",
+      "font_size": 102,
+      "color": "#FF6B35",
+      "align": "center"
     },
     {
       "name": "date",
       "content": "",
       "position": {
-        "x": 470,
-        "y": 1105
+        "x": 450,
+        "y": 1110
       },
-      "font": "Arial-Bold",
+      "font": "ComicSansMS",
       "font_size": 28,
-      "color": "#5D4037",
-      "align": "left",
-      "remark": "Date: 日期显示位置"
+      "color": "#333333",
+      "align": "center"
     },
     {
       "name": "time",
       "content": "",
       "position": {
-        "x": 470,
-        "y": 1140
+        "x": 450,
+        "y": 1170
       },
-      "font": "Arial-Bold",
+      "font": "ComicSansMS",
       "font_size": 28,
-      "color": "#5D4037",
-      "align": "left",
-      "remark": "Time: 时间显示位置"
+      "color": "#333333",
+      "align": "center"
     },
     {
       "name": "location",
       "content": "",
       "position": {
-        "x": 380,
-        "y": 1185
+        "x": 350,
+        "y": 1230
       },
-      "font": "Arial-Bold",
+      "font": "ComicSansMS",
       "font_size": 28,
-      "color": "#5D4037",
-      "align": "left",
-      "remark": "Location: 后面"
+      "color": "#333333",
+      "align": "left"
     }
-  ]
+  ],
+  "qr_code": {
+    "position": {
+      "x": 745,
+      "y": 1138
+    },
+    "size": 180,
+    "darkColor": "#7e4607"
+  }
 }
