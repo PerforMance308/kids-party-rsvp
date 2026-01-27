@@ -287,12 +287,29 @@ export default function TemplateSelector({
                     onClick={() => handleTemplateClick(template)}
                   >
                     <div className="aspect-[5/7] overflow-hidden bg-neutral-100 border-b relative">
-                      <img
-                        src={template.imageUrl}
-                        alt={template.name}
-                        className="w-full h-full object-fill"
-                        loading="lazy"
-                      />
+                      {template.imageUrl ? (
+                        <img
+                          src={template.imageUrl}
+                          alt={template.name}
+                          className="w-full h-full object-fill"
+                          loading="lazy"
+                        />
+                      ) : (
+                        // Pure color template preview
+                        <div
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ backgroundColor: template.config.backgroundColor || '#f5f5f5' }}
+                        >
+                          <div
+                            className="w-[85%] h-[90%] rounded-lg border-4 flex items-center justify-center"
+                            style={{ borderColor: template.config.borderColor || '#ccc' }}
+                          >
+                            <span className="text-2xl sm:text-3xl font-bold" style={{ color: template.config.borderColor || '#666' }}>
+                              {template.id.includes('boy') ? '♂' : template.id.includes('girl') ? '♀' : '🎈'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {(isFree || hasDiscount) && (
                         <div className="absolute top-2 left-2">
