@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
+import { calculateAge } from '@/lib/utils'
 
 // Update child
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || !session.user?.id) {
@@ -13,7 +17,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params
     const body = await request.json()
-    const { name, birthDate, allergies, notes } = body
+    const { name, birthDate, gender, allergies, notes } = body
 
     if (!name || !birthDate) {
       return NextResponse.json(
@@ -39,18 +43,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       data: {
         name,
         birthDate: new Date(birthDate),
+        gender: gender || null,
         allergies: allergies || null,
         notes: notes || null
       }
     })
 
-    // Calculate age for response
-    const today = new Date()
-    const age = Math.floor((today.getTime() - child.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-
     return NextResponse.json({
       ...child,
-      age,
+      age: calculateAge(child.birthDate),
       birthDate: child.birthDate.toISOString().split('T')[0]
     })
   } catch (error) {
@@ -63,7 +64,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 // Delete child
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || !session.user?.id) {
@@ -77,22 +81,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       where: {
         id,
         userId: session.user.id
-      },
-      include: {
-        parties: true
       }
     })
 
     if (!existingChild) {
       return NextResponse.json({ error: 'Child not found' }, { status: 404 })
-    }
-
-    // Check if child has any parties
-    if (existingChild.parties.length > 0) {
-      return NextResponse.json(
-        { error: 'Cannot delete child with existing parties. Please delete the parties first.' },
-        { status: 400 }
-      )
     }
 
     await prisma.child.delete({

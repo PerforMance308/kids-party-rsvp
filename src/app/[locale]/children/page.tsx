@@ -26,6 +26,7 @@ export default function ChildrenPage() {
   const [showForm, setShowForm] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [editingChild, setEditingChild] = useState<Child | null>(null)
 
   // Form state
   const [name, setName] = useState('')
@@ -61,14 +62,38 @@ export default function ChildrenPage() {
     }
   }
 
+  const startEditing = (child: Child) => {
+    setEditingChild(child)
+    setName(child.name)
+    setBirthDate(child.birthDate)
+    setGender(child.gender || '')
+    setAllergies(child.allergies || '')
+    setNotes(child.notes || '')
+    setShowForm(true)
+  }
+
+  const resetForm = () => {
+    setShowForm(false)
+    setEditingChild(null)
+    setError('')
+    setName('')
+    setBirthDate('')
+    setGender('')
+    setAllergies('')
+    setNotes('')
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setError('')
 
     try {
-      const response = await fetch('/api/children', {
-        method: 'POST',
+      const url = editingChild ? `/api/children/${editingChild.id}` : '/api/children'
+      const method = editingChild ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -82,17 +107,16 @@ export default function ChildrenPage() {
       })
 
       if (response.ok) {
-        const newChild = await response.json()
-        setChildren([newChild, ...children])
-        setShowForm(false)
-        setName('')
-        setBirthDate('')
-        setGender('')
-        setAllergies('')
-        setNotes('')
+        const updatedChild = await response.json()
+        if (editingChild) {
+          setChildren(children.map(c => c.id === updatedChild.id ? updatedChild : c))
+        } else {
+          setChildren([updatedChild, ...children])
+        }
+        resetForm()
       } else {
         const data = await response.json()
-        setError(data.error || 'Failed to add child')
+        setError(data.error || (editingChild ? 'Failed to update child' : 'Failed to add child'))
       }
     } catch (error) {
       setError('An error occurred. Please try again.')
@@ -131,11 +155,11 @@ export default function ChildrenPage() {
           </button>
         </div>
 
-        {/* Add Child Form */}
+        {/* Add/Edit Child Form */}
         {showForm && (
           <div className="card mb-6">
             <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-              {t('children.addChild')}
+              {editingChild ? (locale === 'zh' ? '编辑孩子信息' : 'Edit Child') : t('children.addChild')}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -238,15 +262,7 @@ export default function ChildrenPage() {
               <div className="flex gap-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowForm(false)
-                    setError('')
-                    setName('')
-                    setBirthDate('')
-                    setGender('')
-                    setAllergies('')
-                    setNotes('')
-                  }}
+                  onClick={resetForm}
                   className="btn btn-secondary"
                 >
                   {t('children.cancel')}
@@ -256,7 +272,7 @@ export default function ChildrenPage() {
                   disabled={isSubmitting}
                   className="btn btn-primary disabled:opacity-50"
                 >
-                  {isSubmitting ? t('children.saving') : t('children.addChild')}
+                  {isSubmitting ? t('children.saving') : (editingChild ? (locale === 'zh' ? '保存' : 'Save') : t('children.addChild'))}
                 </button>
               </div>
             </form>
@@ -325,7 +341,10 @@ export default function ChildrenPage() {
                   >
                     {t('children.createParty')}
                   </button>
-                  <button className="btn btn-secondary text-sm">
+                  <button
+                    onClick={() => startEditing(child)}
+                    className="btn btn-secondary text-sm"
+                  >
                     {t('children.edit')}
                   </button>
                 </div>
