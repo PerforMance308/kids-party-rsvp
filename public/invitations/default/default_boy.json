@@ -1,0 +1,118 @@
+{
+  "template": "",
+  "canvas_size": [1000, 1400],
+  "backgroundColor": "#E3F2FD",
+  "borderColor": "#1976D2",
+  "accentColor": "#42A5F5",
+  "pricing": {
+    "price": 0,
+    "currency": "USD",
+    "isFree": true
+  },
+  "elements": [
+    {
+      "name": "title",
+      "content": "Birthday Party!",
+      "position": { "x": 500, "y": 150 },
+      "font": "Arial-Bold",
+      "font_size": 72,
+      "color": "#1565C0",
+      "align": "center"
+    },
+    {
+      "name": "child_name",
+      "content": "",
+      "position": { "x": 500, "y": 320 },
+      "font": "Arial-Bold",
+      "font_size": 56,
+      "color": "#1976D2",
+      "align": "center"
+    },
+    {
+      "name": "child_age",
+      "content": "",
+      "position": { "x": 500, "y": 480 },
+      "font": "Arial-Black",
+      "font_size": 120,
+      "color": "#0D47A1",
+      "align": "center"
+    },
+    {
+      "name": "years_old",
+      "content": "Years Old",
+      "position": { "x": 500, "y": 620 },
+      "font": "Arial-Bold",
+      "font_size": 36,
+      "color": "#1976D2",
+      "align": "center"
+    },
+    {
+      "name": "date_label",
+      "content": "Date:",
+      "position": { "x": 200, "y": 780 },
+      "font": "Arial-Bold",
+      "font_size": 28,
+      "color": "#424242",
+      "align": "left"
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": { "x": 320, "y": 780 },
+      "font": "ComicSansMS",
+      "font_size": 28,
+      "color": "#1565C0",
+      "align": "left"
+    },
+    {
+      "name": "time_label",
+      "content": "Time:",
+      "position": { "x": 200, "y": 850 },
+      "font": "Arial-Bold",
+      "font_size": 28,
+      "color": "#424242",
+      "align": "left"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": { "x": 320, "y": 850 },
+      "font": "ComicSansMS",
+      "font_size": 28,
+      "color": "#1565C0",
+      "align": "left"
+    },
+    {
+      "name": "location_label",
+      "content": "Location:",
+      "position": { "x": 200, "y": 920 },
+      "font": "Arial-Bold",
+      "font_size": 28,
+      "color": "#424242",
+      "align": "left"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": { "x": 200, "y": 970 },
+      "font": "ComicSansMS",
+      "font_size": 26,
+      "color": "#1565C0",
+      "align": "left"
+    },
+    {
+      "name": "rsvp_label",
+      "content": "Scan to RSVP",
+      "position": { "x": 500, "y": 1280 },
+      "font": "Arial-Bold",
+      "font_size": 24,
+      "color": "#757575",
+      "align": "center"
+    }
+  ],
+  "qr_code": {
+    "position": { "x": 400, "y": 1080 },
+    "size": 180,
+    "darkColor": "#1565C0"
+  }
+}

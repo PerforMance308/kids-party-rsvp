@@ -330,6 +330,25 @@ export default function PartyDashboard() {
 
               {/* Invitation content - always visible on desktop, collapsible on mobile */}
               <div className={`mt-4 ${showInvitation ? 'block' : 'hidden'} lg:block`}>
+                {/* Change Template Button */}
+                <button
+                  onClick={() => {
+                    const templateSection = document.getElementById('template-selector')
+                    if (templateSection) {
+                      templateSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  }}
+                  className="w-full mb-4 py-2.5 px-4 bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 border border-primary-200 rounded-lg text-primary-700 font-medium text-sm flex items-center justify-center gap-2 transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {locale === 'zh' ? '更换邀请卡样式' : 'Change Invitation Style'}
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
                 {qrCode && party ? (
                   <InvitationTemplate
                     party={{
@@ -403,24 +422,26 @@ export default function PartyDashboard() {
             </div>
 
             {/* Template Gallery */}
-            <TemplateSelector
-              party={{
-                childName: party.childName,
-                childAge: party.childAge,
-                eventDatetime: party.eventDatetime,
-                eventEndDatetime: party.eventEndDatetime,
-                location: party.location,
-                theme: party.theme,
-                notes: party.notes
-              }}
-              qrCodeUrl={qrCode}
-              rsvpUrl={party.rsvpUrl}
-              onTemplateSelect={handleTemplateSelect}
-              partyId={party.id}
-              currentTemplate={party.template || 'free'}
-              paidTemplates={party.paidTemplates || []}
-              onPaymentSuccess={refreshParty}
-            />
+            <div id="template-selector">
+              <TemplateSelector
+                party={{
+                  childName: party.childName,
+                  childAge: party.childAge,
+                  eventDatetime: party.eventDatetime,
+                  eventEndDatetime: party.eventEndDatetime,
+                  location: party.location,
+                  theme: party.theme,
+                  notes: party.notes
+                }}
+                qrCodeUrl={qrCode}
+                rsvpUrl={party.rsvpUrl}
+                onTemplateSelect={handleTemplateSelect}
+                partyId={party.id}
+                currentTemplate={party.template || 'free'}
+                paidTemplates={party.paidTemplates || []}
+                onPaymentSuccess={refreshParty}
+              />
+            </div>
 
             {/* Add Guest Section - Only show when contacts exist */}
             {hasContacts && (

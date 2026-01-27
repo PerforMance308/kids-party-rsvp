@@ -12,6 +12,7 @@ import { getEffectivePrice } from '@/types/invitation-template';
 
 // 默认主题名称映射
 const DEFAULT_THEME_NAMES: Record<string, { zh: string; en: string; icon: string }> = {
+  default: { zh: '默认', en: 'Default', icon: '🎈' },
   dinosaur: { zh: '恐龙', en: 'Dinosaur', icon: '🦖' },
   princess: { zh: '公主', en: 'Princess', icon: '👸' },
   superhero: { zh: '超级英雄', en: 'Superhero', icon: '🦸' },
@@ -66,7 +67,18 @@ export async function GET() {
       for (const jsonFile of jsonFiles) {
         const baseName = jsonFile.replace('.json', '');
 
+        // 读取模板配置
+        const configPath = path.join(themePath, jsonFile);
+        let config: TemplateConfig;
+        try {
+          config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        } catch (e) {
+          console.warn(`Failed to parse ${jsonFile}:`, e);
+          continue;
+        }
+
         // 查找对应的图片文件（支持png和jpg）
+        // 如果配置了纯色背景，则不需要图片文件
         const pngFile = `${baseName}.png`;
         const jpgFile = `${baseName}.jpg`;
         let imageFile: string | null = null;
@@ -77,19 +89,9 @@ export async function GET() {
           imageFile = jpgFile;
         }
 
-        // 确保对应的图片文件存在
-        if (!imageFile) {
+        // 如果没有图片文件且没有纯色背景配置，则跳过
+        if (!imageFile && !config.backgroundColor) {
           console.warn(`Missing image for template: ${jsonFile} in ${themeFolder}`);
-          continue;
-        }
-
-        // 读取模板配置
-        const configPath = path.join(themePath, jsonFile);
-        let config: TemplateConfig;
-        try {
-          config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-        } catch (e) {
-          console.warn(`Failed to parse ${jsonFile}:`, e);
           continue;
         }
 
@@ -115,7 +117,7 @@ export async function GET() {
           id: baseName,
           theme: themeFolder,
           name: displayName,
-          imageUrl: `/invitations/${themeFolder}/${imageFile}`,
+          imageUrl: imageFile ? `/invitations/${themeFolder}/${imageFile}` : '',
           config,
           effectivePrice,
         });

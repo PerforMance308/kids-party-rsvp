@@ -164,18 +164,51 @@ export default function CanvasInvitation({
       // 应用缩放 (UI Scale)
       ctx.scale(scale, scale);
 
-      // 加载背景图片
-      const bgImage = new Image();
-      bgImage.crossOrigin = 'anonymous';
+      // 检查是否使用纯色背景
+      if (config.backgroundColor) {
+        // 绘制纯色背景
+        ctx.fillStyle = config.backgroundColor;
+        ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
 
-      await new Promise<void>((resolve, reject) => {
-        bgImage.onload = () => resolve();
-        bgImage.onerror = () => reject(new Error('Failed to load background image'));
-        bgImage.src = template.imageUrl;
-      });
+        // 绘制装饰性边框
+        if (config.borderColor) {
+          ctx.strokeStyle = config.borderColor;
+          ctx.lineWidth = 20;
+          ctx.strokeRect(40, 40, TARGET_WIDTH - 80, TARGET_HEIGHT - 80);
 
-      // 绘制背景 - Stretch to fill target size
-      ctx.drawImage(bgImage, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+          // 内层边框
+          ctx.lineWidth = 4;
+          ctx.strokeRect(60, 60, TARGET_WIDTH - 120, TARGET_HEIGHT - 120);
+        }
+
+        // 绘制装饰圆点
+        if (config.accentColor) {
+          ctx.fillStyle = config.accentColor;
+          const dotPositions = [
+            [100, 100], [TARGET_WIDTH - 100, 100],
+            [100, TARGET_HEIGHT - 100], [TARGET_WIDTH - 100, TARGET_HEIGHT - 100],
+            [TARGET_WIDTH / 2, 80], [TARGET_WIDTH / 2, TARGET_HEIGHT - 80]
+          ];
+          dotPositions.forEach(([x, y]) => {
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+      } else {
+        // 加载背景图片
+        const bgImage = new Image();
+        bgImage.crossOrigin = 'anonymous';
+
+        await new Promise<void>((resolve, reject) => {
+          bgImage.onload = () => resolve();
+          bgImage.onerror = () => reject(new Error('Failed to load background image'));
+          bgImage.src = template.imageUrl;
+        });
+
+        // 绘制背景 - Stretch to fill target size
+        ctx.drawImage(bgImage, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+      }
 
       // 绘制文字元素
       for (const element of config.elements) {

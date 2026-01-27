@@ -66,6 +66,9 @@ export interface TemplateConfig {
   pricing: Pricing;                    // 价格配置
   elements: TemplateElement[];
   qr_code?: QRCodeConfig;              // QR码配置
+  backgroundColor?: string;            // 纯色背景颜色（如果设置，则不使用图片）
+  borderColor?: string;                // 边框颜色
+  accentColor?: string;                // 装饰性颜色（圆点等）
 }
 
 // 主题元数据

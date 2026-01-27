@@ -9,11 +9,11 @@ import { calculateAge } from '@/lib/utils'
 // Get default template based on child gender
 function getDefaultTemplate(childGender?: string | null): string {
   if (childGender === 'boy') {
-    return 'dinosaur/dinosaur_1'
+    return 'default_boy'
   } else if (childGender === 'girl') {
-    return 'unicorn/unicorn_1'
+    return 'default_girl'
   }
-  return 'dinosaur/dinosaur_1' // Default fallback
+  return 'default_boy' // Default fallback
 }
 
 export async function POST(request: NextRequest) {
