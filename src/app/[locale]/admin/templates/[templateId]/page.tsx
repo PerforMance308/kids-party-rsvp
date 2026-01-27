@@ -8,7 +8,7 @@ import { toast } from '@/lib/toast'
 import CanvasInvitation from '@/components/CanvasInvitation'
 import type { InvitationTemplate, TemplateConfig, TemplateElement, QRCodeConfig } from '@/types/invitation-template'
 import QRCode from 'qrcode'
-import { TrashIcon, PlusIcon, ArrowPathIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline'
+import { TrashIcon, PlusIcon, ArrowPathIcon, ArrowDownTrayIcon, CodeBracketSquareIcon } from '@heroicons/react/24/outline'
 
 // Available element types
 const ELEMENT_TYPES = [
@@ -183,6 +183,20 @@ export default function EditTemplatePage() {
     }
   }
 
+  const handleExportJSON = () => {
+    if (!template) return
+    const dataStr = JSON.stringify(template.config, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+
+    const exportFileDefaultName = `${template.name.replace(/\s+/g, '_')}_config.json`
+
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
+
+
   const updateElement = (index: number, updates: Partial<TemplateElement>) => {
     if (!template) return
     const newElements = [...template.config.elements]
@@ -342,6 +356,13 @@ export default function EditTemplatePage() {
             className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
           >
             <ArrowDownTrayIcon className="w-5 h-5" />
+          </button>
+          <button
+            onClick={handleExportJSON}
+            title="Export JSON Config"
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+          >
+            <CodeBracketSquareIcon className="w-5 h-5" />
           </button>
           <button
             onClick={handleSave}
