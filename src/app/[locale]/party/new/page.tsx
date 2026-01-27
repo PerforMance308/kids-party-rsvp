@@ -19,6 +19,7 @@ interface Child {
   name: string
   birthDate: string
   age: number
+  gender?: 'boy' | 'girl'
   notes?: string
 }
 
@@ -60,6 +61,15 @@ export default function NewPartyPage() {
     }
   }
 
+  // 当选择孩子时，自动设置性别
+  const handleChildSelect = (childId: string) => {
+    setSelectedChildId(childId)
+    const selectedChild = children.find(c => c.id === childId)
+    if (selectedChild?.gender) {
+      setChildGender(selectedChild.gender)
+    }
+  }
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push(`/${locale}/login?redirect=/${locale}/party/new`)
@@ -81,6 +91,14 @@ export default function NewPartyPage() {
         // If no children exist, show legacy form
         if (data.length === 0) {
           setShowLegacyForm(true)
+        }
+
+        // If there's a pre-selected child, auto-set gender
+        if (preSelectedChildId) {
+          const preSelectedChild = data.find((c: Child) => c.id === preSelectedChildId)
+          if (preSelectedChild?.gender) {
+            setChildGender(preSelectedChild.gender)
+          }
         }
       } else {
         setError('Failed to load children')
@@ -226,7 +244,7 @@ export default function NewPartyPage() {
                 <select
                   id="childSelect"
                   value={selectedChildId}
-                  onChange={(e) => setSelectedChildId(e.target.value)}
+                  onChange={(e) => handleChildSelect(e.target.value)}
                   className="input"
                   required
                   autoFocus
@@ -234,7 +252,7 @@ export default function NewPartyPage() {
                   <option value="">{t('newParty.chooseChild')}</option>
                   {children.map((child) => (
                     <option key={child.id} value={child.id}>
-                      {child.name} ({child.age} {t('children.years')})
+                      {child.gender === 'boy' ? '♂ ' : child.gender === 'girl' ? '♀ ' : ''}{child.name} ({child.age} {t('children.years')})
                     </option>
                   ))}
                 </select>

@@ -10,6 +10,7 @@ interface Child {
   name: string
   birthDate: string
   age: number
+  gender?: 'boy' | 'girl'
   allergies?: string
   notes?: string
   createdAt: string
@@ -29,6 +30,7 @@ export default function ChildrenPage() {
   // Form state
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
+  const [gender, setGender] = useState<'boy' | 'girl' | ''>('')
   const [allergies, setAllergies] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -73,6 +75,7 @@ export default function ChildrenPage() {
         body: JSON.stringify({
           name,
           birthDate,
+          gender: gender || undefined,
           allergies: allergies || undefined,
           notes: notes || undefined,
         }),
@@ -84,6 +87,7 @@ export default function ChildrenPage() {
         setShowForm(false)
         setName('')
         setBirthDate('')
+        setGender('')
         setAllergies('')
         setNotes('')
       } else {
@@ -166,6 +170,37 @@ export default function ChildrenPage() {
                 </div>
               </div>
 
+              {/* Gender Selection */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  {locale === 'zh' ? '性别' : 'Gender'}
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setGender('boy')}
+                    className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
+                      gender === 'boy'
+                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        : 'border-neutral-200 hover:border-blue-300 hover:bg-blue-50/50'
+                    }`}
+                  >
+                    <span className={`text-2xl ${gender === 'boy' ? 'text-blue-500' : 'text-blue-400'}`}>♂</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGender('girl')}
+                    className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
+                      gender === 'girl'
+                        ? 'border-pink-500 bg-pink-50 shadow-md'
+                        : 'border-neutral-200 hover:border-pink-300 hover:bg-pink-50/50'
+                    }`}
+                  >
+                    <span className={`text-2xl ${gender === 'girl' ? 'text-pink-500' : 'text-pink-400'}`}>♀</span>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label htmlFor="allergies" className="block text-sm font-medium text-neutral-700 mb-1">
                   {t('children.allergies')} & Dietary Restrictions
@@ -208,6 +243,8 @@ export default function ChildrenPage() {
                     setError('')
                     setName('')
                     setBirthDate('')
+                    setGender('')
+                    setAllergies('')
                     setNotes('')
                   }}
                   className="btn btn-secondary"
@@ -250,9 +287,16 @@ export default function ChildrenPage() {
             {children.map((child) => (
               <div key={child.id} className="card">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold text-neutral-900">
-                    {child.name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    {child.gender && (
+                      <span className={`text-xl ${child.gender === 'boy' ? 'text-blue-500' : 'text-pink-500'}`}>
+                        {child.gender === 'boy' ? '♂' : '♀'}
+                      </span>
+                    )}
+                    <h3 className="text-xl font-semibold text-neutral-900">
+                      {child.name}
+                    </h3>
+                  </div>
                   <span className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium">
                     {child.age} {t('children.years')}
                   </span>
