@@ -186,14 +186,34 @@ export default function TemplateSelector({
       <div className="space-y-6">
         <div className="card">
           <div className="flex flex-col gap-4 mb-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-neutral-900">{t('title')}</h3>
-              <div className="text-sm text-neutral-500 flex items-center gap-1">
+            {/* Header with clear title and action hint */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
+                  <span className="text-xl">🎨</span>
+                  {locale === 'zh' ? '更换邀请卡样式' : 'Change Invitation Style'}
+                </h3>
+                <p className="text-sm text-neutral-500 mt-1">
+                  {locale === 'zh'
+                    ? `共 ${sortedTemplates.length} 款模板可选，点击即可切换`
+                    : `${sortedTemplates.length} templates available, tap to switch`}
+                </p>
+              </div>
+              {/* Scroll hint - only show on larger screens */}
+              <div className="hidden sm:flex text-sm text-neutral-500 items-center gap-1 bg-neutral-50 px-3 py-1.5 rounded-full">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
                 </svg>
                 {t('scrollHint')}
               </div>
+            </div>
+
+            {/* Mobile swipe hint */}
+            <div className="sm:hidden flex items-center justify-center gap-2 text-xs text-neutral-400 bg-neutral-50 py-2 rounded-lg">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              {locale === 'zh' ? '左右滑动查看更多模板' : 'Swipe to see more templates'}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -222,29 +242,30 @@ export default function TemplateSelector({
           </div>
 
           <div className="relative overflow-hidden">
+            {/* Navigation arrows - larger and more visible */}
             <button
               onClick={scrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg border border-neutral-200 rounded-full p-2 transition-all hover:scale-110"
+              className="absolute left-1 top-1/2 -translate-y-1/2 z-10 bg-primary-600 hover:bg-primary-700 shadow-lg rounded-full p-2.5 transition-all hover:scale-110 text-white"
               aria-label={locale === 'zh' ? '向左滚动' : 'Scroll left'}
             >
-              <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
             <button
               onClick={scrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg border border-neutral-200 rounded-full p-2 transition-all hover:scale-110"
+              className="absolute right-1 top-1/2 -translate-y-1/2 z-10 bg-primary-600 hover:bg-primary-700 shadow-lg rounded-full p-2.5 transition-all hover:scale-110 text-white"
               aria-label={locale === 'zh' ? '向右滚动' : 'Scroll right'}
             >
-              <svg className="w-5 h-5 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
 
             <div
               ref={scrollContainerRef}
-              className="template-scroll-container flex overflow-x-auto gap-6 pb-4 px-6 snap-x snap-mandatory"
+              className="template-scroll-container flex overflow-x-auto gap-3 sm:gap-4 pb-4 px-8 sm:px-10 snap-x snap-mandatory"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {sortedTemplates.map((template) => {
@@ -257,8 +278,8 @@ export default function TemplateSelector({
                 return (
                   <div
                     key={template.id}
-                    className={`relative flex flex-col group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center w-[280px] ${isCurrent
-                      ? 'border-primary-500 bg-primary-50 shadow-lg'
+                    className={`relative flex flex-col group border-2 rounded-xl cursor-pointer transition-all duration-300 overflow-hidden flex-shrink-0 snap-center w-[140px] sm:w-[180px] md:w-[220px] lg:w-[260px] ${isCurrent
+                      ? 'border-primary-500 bg-primary-50 shadow-lg ring-2 ring-primary-200'
                       : !isFree && !isPurchased
                         ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 hover:border-orange-300 hover:shadow-lg'
                         : 'border-neutral-200 bg-white hover:border-primary-300 hover:shadow-lg'
@@ -288,42 +309,42 @@ export default function TemplateSelector({
                       )}
                     </div>
 
-                    <div className="p-4 flex-grow flex flex-col">
-                      <div className="text-center mb-3 flex-grow">
-                        <h4 className="font-bold text-lg text-neutral-900 mb-1">{template.name}</h4>
-                        <p className="text-sm text-neutral-600 mb-2">
+                    <div className="p-2 sm:p-3 flex-grow flex flex-col">
+                      <div className="text-center mb-2 flex-grow">
+                        <h4 className="font-bold text-xs sm:text-sm md:text-base text-neutral-900 mb-0.5 truncate">{template.name}</h4>
+                        <p className="text-xs text-neutral-600 mb-1 hidden sm:block">
                           {themeInfo?.icon} {themeInfo?.name[locale as 'zh' | 'en'] || template.theme}
                         </p>
 
-                        <div className="flex justify-center items-center gap-2 mb-3">
+                        <div className="flex justify-center items-center gap-1 sm:gap-2 mb-2 flex-wrap">
                           {!isPurchased && (
                             <>
                               {hasDiscount && template.effectivePrice.originalPrice && (
-                                <span className="text-sm text-neutral-400 line-through">
+                                <span className="text-xs text-neutral-400 line-through hidden sm:inline">
                                   {formatPrice(template.effectivePrice.originalPrice, template.config.pricing.currency, locale)}
                                 </span>
                               )}
-                              <span className={`text-xl font-bold ${isFree ? 'text-green-600' : 'text-orange-600'}`}>
+                              <span className={`text-sm sm:text-base md:text-lg font-bold ${isFree ? 'text-green-600' : 'text-orange-600'}`}>
                                 {formatPrice(template.effectivePrice.price, template.config.pricing.currency, locale)}
                               </span>
                             </>
                           )}
 
                           {isPurchased && (
-                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                              {locale === 'zh' ? '已购买' : 'Purchased'}
+                            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">
+                              {locale === 'zh' ? '已购' : 'Owned'}
                             </span>
                           )}
                           {isCurrent && (
-                            <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
-                              {t('currentlyUsing')}
+                            <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full">
+                              {locale === 'zh' ? '使用中' : 'In Use'}
                             </span>
                           )}
                         </div>
                       </div>
 
                       <button
-                        className={`w-full py-2 px-4 rounded-lg font-medium transition-all ${isCurrent
+                        className={`w-full py-1.5 sm:py-2 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-all ${isCurrent
                           ? 'bg-green-600 text-white'
                           : !isFree && !isPurchased
                             ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600'
@@ -336,10 +357,10 @@ export default function TemplateSelector({
                         disabled={isCurrent}
                       >
                         {isCurrent
-                          ? t('currentlyUsing')
+                          ? (locale === 'zh' ? '使用中' : 'In Use')
                           : !isFree && !isPurchased
-                            ? t('purchaseUse')
-                            : t('selectTemplate')}
+                            ? (locale === 'zh' ? '购买' : 'Buy')
+                            : (locale === 'zh' ? '使用' : 'Use')}
                       </button>
                     </div>
 

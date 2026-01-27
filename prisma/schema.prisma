@@ -105,6 +105,7 @@ model Party {
   allowPhotoSharing     Boolean    @default(false) @map("allow_photo_sharing")
   guestCanSeeOthers     Boolean    @default(false) @map("guest_can_see_others")
   targetAge             Int?       @map("target_age")
+  childGender           String?    @map("child_gender")
   photoSharingPaymentId String?    @map("photo_sharing_payment_id")
   photoSharingEnabledAt DateTime?  @map("photo_sharing_enabled_at")
   createdAt             DateTime   @default(now()) @map("created_at")

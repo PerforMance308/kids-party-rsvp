@@ -76,17 +76,26 @@ export default function HomePage() {
                   : 'Beautiful invitations, QR code RSVPs, real-time guest tracking'}
               </p>
 
-              {/* Feature highlights */}
+              {/* Feature highlights - clickable links to create party */}
               <div className="flex flex-wrap gap-2 mb-5">
-                <span className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                <Link
+                  href={isAuthenticated ? `/${locale}/party/new` : `/${locale}/register`}
+                  className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium hover:bg-primary-200/80 transition-colors cursor-pointer"
+                >
                   📱 {locale === 'zh' ? '扫码回复' : 'QR RSVP'}
-                </span>
-                <span className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                </Link>
+                <Link
+                  href={isAuthenticated ? `/${locale}/party/new` : `/${locale}/register`}
+                  className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium hover:bg-primary-200/80 transition-colors cursor-pointer"
+                >
                   🎨 {locale === 'zh' ? '精美模板' : 'Templates'}
-                </span>
-                <span className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                </Link>
+                <Link
+                  href={isAuthenticated ? `/${locale}/party/new` : `/${locale}/register`}
+                  className="inline-flex items-center gap-1 bg-primary-100/80 text-primary-700 px-2.5 py-1 rounded-full text-xs font-medium hover:bg-primary-200/80 transition-colors cursor-pointer"
+                >
                   ✨ {locale === 'zh' ? '免费使用' : 'Free'}
-                </span>
+                </Link>
               </div>
 
               {/* Action Buttons */}
@@ -99,69 +108,20 @@ export default function HomePage() {
                   )}
                 </div>
               ) : isAuthenticated ? (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href={`/${locale}/party/new`} className="btn btn-primary px-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex flex-row gap-3 flex-wrap">
+                  <Link href={`/${locale}/party/new`} className="btn btn-primary px-4 sm:px-6 shadow-md hover:shadow-lg transition-shadow whitespace-nowrap">
                     {t('home.createNewParty')}
                   </Link>
-                  <Link href={`/${locale}/dashboard`} className="btn btn-secondary px-6 bg-white/80 hover:bg-white">
+                  <Link href={`/${locale}/dashboard`} className="btn btn-secondary px-4 sm:px-6 bg-white/80 hover:bg-white whitespace-nowrap">
                     {t('home.goToDashboard')}
                   </Link>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href={`/${locale}/register`} className="btn btn-primary px-6 shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex flex-row gap-3">
+                  <Link href={`/${locale}/register`} className="btn btn-primary px-4 sm:px-6 shadow-md hover:shadow-lg transition-shadow whitespace-nowrap">
                     {locale === 'zh' ? '免费开始' : 'Get Started Free'}
                   </Link>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* What is KidsPartyRSVP - SEO Critical Section */}
-      <section id="what-is-kidspartyrsvp" className="section-spacing bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6 text-center">
-              {locale === 'zh' ? '什么是 KidsPartyRSVP？' : 'What is KidsPartyRSVP?'}
-            </h2>
-            <div className="prose prose-lg max-w-none text-neutral-700 text-justify">
-              {locale === 'zh' ? (
-                <>
-                  <p>
-                    KidsPartyRSVP 是一款专为家长设计的在线工具，帮助您轻松创建儿童生日派对邀请函并管理宾客回复（RSVP）。
-                    无论是恐龙主题、公主主题还是独角兽主题的生日派对，我们都提供精美的邀请函模板，让您的派对邀请脱颖而出。
-                  </p>
-                  <p>
-                    通过二维码RSVP功能，宾客只需扫一扫即可回复邀请，无需下载任何APP。系统会自动追踪宾客回复状态，
-                    包括参加人数、过敏信息和联系方式。自动提醒功能会在派对前发送通知给尚未回复的宾客，确保您准确掌握参与人数。
-                  </p>
-                  <p>
-                    告别繁琐的微信群统计和纸质邀请函。KidsPartyRSVP 让派对策划变得简单、高效、有趣。
-                    基础功能完全免费，几分钟内即可创建专业的派对邀请。
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p>
-                    KidsPartyRSVP is an online tool designed to help parents create beautiful kids birthday party
-                    invitations and manage RSVPs effortlessly. Whether you're planning a dinosaur birthday party,
-                    princess party, unicorn celebration, or superhero bash, our platform provides stunning invitation
-                    templates that make your party stand out.
-                  </p>
-                  <p>
-                    With our QR code RSVP feature, guests can respond to invitations instantly by scanning a code -
-                    no app download required. The system automatically tracks guest responses in real-time, including
-                    headcount, allergy information, and contact details. Automatic reminder notifications are sent to
-                    guests who haven't responded, ensuring you have an accurate guest count before the big day.
-                  </p>
-                  <p>
-                    Say goodbye to messy group chats and paper invitations. KidsPartyRSVP makes party planning simple,
-                    efficient, and fun. Core features are completely free, and you can create a professional party
-                    invitation in just minutes.
-                  </p>
-                </>
               )}
             </div>
           </div>
@@ -273,6 +233,55 @@ export default function HomePage() {
                 {locale === 'zh' ? '浏览器直接使用' : 'Works in any browser'}
               </p>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* What is KidsPartyRSVP - SEO Critical Section */}
+      <section id="what-is-kidspartyrsvp" className="section-spacing bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-6 text-center">
+              {locale === 'zh' ? '什么是 KidsPartyRSVP？' : 'What is KidsPartyRSVP?'}
+            </h2>
+            <div className="prose prose-lg max-w-none text-neutral-700 text-justify">
+              {locale === 'zh' ? (
+                <>
+                  <p>
+                    KidsPartyRSVP 是一款专为家长设计的在线工具，帮助您轻松创建儿童生日派对邀请函并管理宾客回复（RSVP）。
+                    无论是恐龙主题、公主主题还是独角兽主题的生日派对，我们都提供精美的邀请函模板，让您的派对邀请脱颖而出。
+                  </p>
+                  <p>
+                    通过二维码RSVP功能，宾客只需扫一扫即可回复邀请，无需下载任何APP。系统会自动追踪宾客回复状态，
+                    包括参加人数、过敏信息和联系方式。自动提醒功能会在派对前发送通知给尚未回复的宾客，确保您准确掌握参与人数。
+                  </p>
+                  <p>
+                    告别繁琐的微信群统计和纸质邀请函。KidsPartyRSVP 让派对策划变得简单、高效、有趣。
+                    基础功能完全免费，几分钟内即可创建专业的派对邀请。
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>
+                    KidsPartyRSVP is an online tool designed to help parents create beautiful kids birthday party
+                    invitations and manage RSVPs effortlessly. Whether you're planning a dinosaur birthday party,
+                    princess party, unicorn celebration, or superhero bash, our platform provides stunning invitation
+                    templates that make your party stand out.
+                  </p>
+                  <p>
+                    With our QR code RSVP feature, guests can respond to invitations instantly by scanning a code -
+                    no app download required. The system automatically tracks guest responses in real-time, including
+                    headcount, allergy information, and contact details. Automatic reminder notifications are sent to
+                    guests who haven't responded, ensuring you have an accurate guest count before the big day.
+                  </p>
+                  <p>
+                    Say goodbye to messy group chats and paper invitations. KidsPartyRSVP makes party planning simple,
+                    efficient, and fun. Core features are completely free, and you can create a professional party
+                    invitation in just minutes.
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>

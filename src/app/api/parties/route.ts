@@ -6,6 +6,16 @@ import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { createReminderSchedule } from '@/lib/scheduler'
 import { calculateAge } from '@/lib/utils'
 
+// Get default template based on child gender
+function getDefaultTemplate(childGender?: string | null): string {
+  if (childGender === 'boy') {
+    return 'dinosaur/dinosaur_1'
+  } else if (childGender === 'girl') {
+    return 'unicorn/unicorn_1'
+  }
+  return 'dinosaur/dinosaur_1' // Default fallback
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -14,6 +24,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+
+    // Determine default template based on gender
+    const defaultTemplate = getDefaultTemplate(body.childGender)
 
     let party
 
@@ -51,6 +64,8 @@ export async function POST(request: NextRequest) {
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
           targetAge: validatedData.targetAge || null,
+          childGender: body.childGender || null,
+          template: defaultTemplate,
         },
         include: {
           child: true
@@ -88,6 +103,8 @@ export async function POST(request: NextRequest) {
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
           targetAge: validatedData.targetAge || null,
+          childGender: body.childGender || null,
+          template: defaultTemplate,
         },
         include: {
           child: true
@@ -166,6 +183,7 @@ export async function GET(request: NextRequest) {
         id: party.id,
         childName: party.child.name,
         childAge,
+        childGender: party.childGender,
         eventDatetime: party.eventDatetime,
         eventEndDatetime: party.eventEndDatetime,
         location: party.location,

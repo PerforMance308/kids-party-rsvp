@@ -48,6 +48,7 @@ export default function NewPartyPage() {
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState('')
   const [targetAge, setTargetAge] = useState('')
+  const [childGender, setChildGender] = useState<'boy' | 'girl' | ''>('')
 
   // 当开始时间变化时，自动调整结束时间（保持2小时间隔）
   const handleEventTimeChange = (time: string) => {
@@ -119,6 +120,7 @@ export default function NewPartyPage() {
           location,
           theme: theme || undefined,
           notes: notes || undefined,
+          childGender: childGender || undefined,
         }
       } else {
         // New form submission with child selection
@@ -136,6 +138,7 @@ export default function NewPartyPage() {
           theme: theme || undefined,
           notes: notes || undefined,
           targetAge: targetAge ? parseInt(targetAge) : undefined,
+          childGender: childGender || undefined,
         }
       }
 
@@ -317,6 +320,37 @@ export default function NewPartyPage() {
                 )}
               </>
             )}
+
+            {/* Gender Selection */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                {locale === 'zh' ? '孩子性别' : 'Child Gender'}
+              </label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setChildGender('boy')}
+                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
+                    childGender === 'boy'
+                      ? 'border-blue-500 bg-blue-50 shadow-md'
+                      : 'border-neutral-200 hover:border-blue-300 hover:bg-blue-50/50'
+                  }`}
+                >
+                  <span className={`text-2xl ${childGender === 'boy' ? 'text-blue-500' : 'text-blue-400'}`}>♂</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChildGender('girl')}
+                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
+                    childGender === 'girl'
+                      ? 'border-pink-500 bg-pink-50 shadow-md'
+                      : 'border-neutral-200 hover:border-pink-300 hover:bg-pink-50/50'
+                  }`}
+                >
+                  <span className={`text-2xl ${childGender === 'girl' ? 'text-pink-500' : 'text-pink-400'}`}>♀</span>
+                </button>
+              </div>
+            </div>
 
             <div>
               <label htmlFor="eventDate" className="block text-sm font-medium text-neutral-700 mb-1">
