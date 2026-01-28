@@ -46,7 +46,8 @@
   
   .card {
     @apply bg-white rounded-xl shadow-sm border border-neutral-200 p-6;
-    @apply hover:shadow-md transition-shadow duration-200;
+    @apply hover:shadow-md transition-all duration-200;
+    @apply hover:-translate-y-0.5;
   }
   
   .mobile-container {
@@ -78,5 +79,80 @@
   /* Safe area for iPhone notch/home indicator */
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Button size variants */
+  .btn-sm {
+    @apply px-3 py-2 text-sm;
+    min-height: 36px;
+  }
+
+  .btn-lg {
+    @apply px-6 py-4 text-lg;
+    min-height: 52px;
+  }
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes checkmark-draw {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes success-scale {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.2s ease-out;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-down {
+    animation: none;
+  }
+
+  .card {
+    transition: none !important;
   }
 }

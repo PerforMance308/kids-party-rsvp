@@ -341,14 +341,16 @@ export default function NewPartyPage() {
 
             {/* Gender Selection */}
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+              <label id="gender-label" className="block text-sm font-medium text-neutral-700 mb-2">
                 {locale === 'zh' ? '孩子性别' : 'Child Gender'}
               </label>
-              <div className="flex gap-3">
+              <div className="flex gap-3" role="group" aria-labelledby="gender-label">
                 <button
                   type="button"
                   onClick={() => setChildGender('boy')}
-                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
+                  aria-label={locale === 'zh' ? '选择男孩' : 'Select boy'}
+                  aria-pressed={childGender === 'boy'}
+                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                     childGender === 'boy'
                       ? 'border-blue-500 bg-blue-50 shadow-md'
                       : 'border-neutral-200 hover:border-blue-300 hover:bg-blue-50/50'
@@ -359,7 +361,9 @@ export default function NewPartyPage() {
                 <button
                   type="button"
                   onClick={() => setChildGender('girl')}
-                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
+                  aria-label={locale === 'zh' ? '选择女孩' : 'Select girl'}
+                  aria-pressed={childGender === 'girl'}
+                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 ${
                     childGender === 'girl'
                       ? 'border-pink-500 bg-pink-50 shadow-md'
                       : 'border-neutral-200 hover:border-pink-300 hover:bg-pink-50/50'
@@ -466,18 +470,18 @@ export default function NewPartyPage() {
               </div>
             )}
 
-            <div className="flex gap-4">
+            <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="btn btn-secondary"
+                className="btn btn-secondary flex-1 sm:flex-none"
               >
                 {t('newParty.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="btn btn-primary disabled:opacity-50"
+                className="btn btn-primary flex-1 sm:flex-none disabled:opacity-50"
               >
                 {isLoading ? t('newParty.creating') : t('newParty.createParty')}
               </button>

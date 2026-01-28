@@ -298,6 +298,18 @@ const translations = {
     'invite.success': '成功发送 {count} 份邀请！',
     'invite.error': '发送邀请失败，请重试。',
     'invite.sendError': '发送邀请时发生错误。',
+
+    // 页脚
+    'footer.description': '让派对策划变得更简单。创建精美邀请函、管理宾客回复、一起庆祝美好时刻。',
+    'footer.quickLinks': '快速链接',
+    'footer.home': '首页',
+    'footer.dashboard': '仪表板',
+    'footer.contact': '联系我们',
+    'footer.legal': '法律信息',
+    'footer.terms': '服务条款',
+    'footer.privacy': '隐私政策',
+    'footer.copyright': 'Kid Party RSVP. 保留所有权利。',
+    'footer.followUs': '关注我们',
   },
   en: {
     // 导航
@@ -589,6 +601,18 @@ const translations = {
     'invite.success': 'Successfully sent {count} invitations!',
     'invite.error': 'Failed to send invitations. Please try again.',
     'invite.sendError': 'An error occurred while sending invitations.',
+
+    // Footer
+    'footer.description': 'Making party planning easier for parents everywhere. Create beautiful invitations, manage RSVPs, and celebrate together.',
+    'footer.quickLinks': 'Quick Links',
+    'footer.home': 'Home',
+    'footer.dashboard': 'Dashboard',
+    'footer.contact': 'Contact Us',
+    'footer.legal': 'Legal',
+    'footer.terms': 'Terms of Service',
+    'footer.privacy': 'Privacy Policy',
+    'footer.copyright': 'Kid Party RSVP. All rights reserved.',
+    'footer.followUs': 'Follow Us',
   }
 }
 

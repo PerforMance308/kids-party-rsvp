@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { PartyWithStats } from '@/types'
 import { formatDate, getDaysUntilEvent, getDaysUntilColor } from '@/lib/utils'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
+import { PencilIcon, TrashIcon, CakeIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon } from '@heroicons/react/24/solid'
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -83,9 +85,46 @@ export default function DashboardPage() {
   if (status === 'loading' || isLoading) {
     return (
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-neutral-600">{t('home.loading')}</p>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <div className="h-8 w-48 bg-neutral-200 rounded animate-pulse mb-2"></div>
+              <div className="h-5 w-64 bg-neutral-100 rounded animate-pulse"></div>
+            </div>
+            <div className="h-11 w-32 bg-neutral-200 rounded-lg animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="card animate-pulse">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <div className="h-5 w-3/4 bg-neutral-200 rounded mb-2"></div>
+                    <div className="h-4 w-1/2 bg-neutral-100 rounded"></div>
+                  </div>
+                  <div className="h-6 w-16 bg-neutral-100 rounded-full"></div>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <div className="h-4 w-2/3 bg-neutral-100 rounded"></div>
+                  <div className="h-4 w-1/2 bg-neutral-100 rounded"></div>
+                </div>
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {[1, 2, 3, 4].map((j) => (
+                    <div key={j} className="text-center">
+                      <div className="h-6 w-8 bg-neutral-200 rounded mx-auto mb-1"></div>
+                      <div className="h-3 w-10 bg-neutral-100 rounded mx-auto"></div>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2 mt-auto">
+                  <div className="h-11 w-full bg-neutral-200 rounded-lg"></div>
+                  <div className="flex gap-2">
+                    <div className="h-9 flex-1 bg-neutral-100 rounded-lg"></div>
+                    <div className="h-9 flex-1 bg-neutral-100 rounded-lg"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     )
@@ -122,9 +161,7 @@ export default function DashboardPage() {
         {parties.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-neutral-400 mb-4">
-              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zM3 10h18M7 15h1m4 0h1m4 0h1m-7 4h1m4 0h1" />
-              </svg>
+              <CakeIcon className="w-16 h-16 mx-auto" />
             </div>
             <h3 className="text-lg font-medium text-neutral-900 mb-2">
               {t('dashboard.noParties')}
@@ -166,26 +203,26 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="grid grid-cols-4 gap-2 mb-4 text-center">
-                    <div>
+                    <div className="p-2 rounded-lg transition-colors hover:bg-neutral-50 cursor-default">
                       <div className="text-lg font-semibold text-neutral-900">
                         {party.stats.total}
                       </div>
                       <div className="text-xs text-neutral-500">{t('dashboard.stats.invited')}</div>
                     </div>
-                    <div>
+                    <div className="p-2 rounded-lg transition-colors hover:bg-green-50 cursor-default">
                       <div className="text-lg font-semibold text-green-600">
                         {party.stats.attending}
                       </div>
                       <div className="text-xs text-neutral-500">{t('dashboard.stats.yes')}</div>
                     </div>
-                    <div>
+                    <div className="p-2 rounded-lg transition-colors hover:bg-red-50 cursor-default">
                       <div className="text-lg font-semibold text-red-600">
                         {party.stats.notAttending}
                       </div>
                       <div className="text-xs text-neutral-500">{t('dashboard.stats.no')}</div>
                     </div>
-                    <div>
-                      <div className="text-lg font-semibold text-yellow-600">
+                    <div className="p-2 rounded-lg transition-colors hover:bg-amber-50 cursor-default">
+                      <div className="text-lg font-semibold text-amber-700">
                         {party.stats.maybe}
                       </div>
                       <div className="text-xs text-neutral-500">{t('dashboard.stats.maybe')}</div>
@@ -203,9 +240,10 @@ export default function DashboardPage() {
                     <div className="flex gap-2">
                       <Link
                         href={`/${locale}/party/${party.id}/edit`}
-                        className="flex-1 btn btn-secondary text-center text-sm"
+                        className="flex-1 btn btn-secondary text-center text-sm inline-flex items-center justify-center gap-1.5"
                       >
-                        ✏️ {t('dashboard.edit')}
+                        <PencilIcon className="w-4 h-4" />
+                        {t('dashboard.edit')}
                       </Link>
                       <button
                         onClick={() => {
@@ -214,9 +252,19 @@ export default function DashboardPage() {
                           }
                         }}
                         disabled={deletingParty === party.id}
-                        className="flex-1 btn bg-red-500 hover:bg-red-600 text-white text-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 btn bg-red-500 hover:bg-red-600 text-white text-center text-sm disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1.5"
                       >
-                        {deletingParty === party.id ? `⏳ ${t('dashboard.deleting')}` : `🗑️ ${t('dashboard.delete')}`}
+                        {deletingParty === party.id ? (
+                          <>
+                            <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                            {t('dashboard.deleting')}
+                          </>
+                        ) : (
+                          <>
+                            <TrashIcon className="w-4 h-4" />
+                            {t('dashboard.delete')}
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

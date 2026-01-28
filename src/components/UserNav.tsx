@@ -92,12 +92,12 @@ export default function UserNav() {
                     <>
                         {/* Backdrop */}
                         <div
-                            className="fixed inset-0 bg-black bg-opacity-25 z-40 sm:hidden"
+                            className="fixed inset-0 bg-black bg-opacity-25 z-40 sm:hidden transition-opacity duration-200 animate-fade-in"
                             onClick={closeMobileMenu}
                         />
 
                         {/* Mobile Menu */}
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-50 sm:hidden">
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-neutral-200 py-2 z-50 sm:hidden transform transition-all duration-200 animate-slide-down origin-top-right">
                             {session.user.role === 'ADMIN' && (
                                 <Link
                                     href={`/${locale}/admin`}

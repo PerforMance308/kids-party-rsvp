@@ -4,6 +4,7 @@ import { useRef } from 'react'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import { formatDate } from '@/lib/utils'
+import { DocumentArrowDownIcon, PrinterIcon } from '@heroicons/react/24/outline'
 
 interface InvitationCardProps {
   party: {
@@ -392,7 +393,7 @@ export default function InvitationCard({ party, qrCodeUrl, rsvpUrl }: Invitation
                 <img
                   src={qrCodeUrl}
                   alt="RSVP QR Code"
-                  className="mx-auto rounded border border-gray-200"
+                  className="mx-auto rounded border border-neutral-200"
                   style={{
                     width: 'clamp(5rem, 18vw, 12rem)',
                     height: 'clamp(5rem, 18vw, 12rem)',
@@ -403,7 +404,7 @@ export default function InvitationCard({ party, qrCodeUrl, rsvpUrl }: Invitation
                      style={{ fontSize: 'clamp(0.5rem, 2vw, 0.9rem)' }}>
                   Scan to RSVP
                 </div>
-                <div className="text-gray-600 break-all" 
+                <div className="text-neutral-600 break-all" 
                      style={{ 
                        fontSize: 'clamp(0.4rem, 1.5vw, 0.7rem)',
                        marginTop: 'clamp(0.2rem, 0.5vw, 0.5rem)'
@@ -430,16 +431,16 @@ export default function InvitationCard({ party, qrCodeUrl, rsvpUrl }: Invitation
           className="btn btn-primary flex items-center justify-center space-x-2 px-6 py-3"
           style={{ fontSize: 'clamp(0.8rem, 2.5vw, 1rem)' }}
         >
-          <span>📄</span>
+          <DocumentArrowDownIcon className="w-5 h-5" />
           <span>Download PDF</span>
         </button>
-        
+
         <button
           onClick={printInvitation}
           className="btn btn-secondary flex items-center justify-center space-x-2 px-6 py-3"
           style={{ fontSize: 'clamp(0.8rem, 2.5vw, 1rem)' }}
         >
-          <span>🖨️</span>
+          <PrinterIcon className="w-5 h-5" />
           <span>Print Invitation</span>
         </button>
       </div>

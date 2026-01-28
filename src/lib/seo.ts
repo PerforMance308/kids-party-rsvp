@@ -193,7 +193,11 @@ export function generateOrganizationSchema() {
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     description: 'Easy kids birthday party invitations and RSVP management platform',
-    sameAs: [],
+    sameAs: [
+      'https://twitter.com/kidpartyrsvp',
+      'https://facebook.com/kidpartyrsvp',
+      'https://instagram.com/kidpartyrsvp',
+    ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',

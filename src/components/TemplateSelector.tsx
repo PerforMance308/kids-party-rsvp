@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { useTranslations, useLocale } from '@/contexts/LanguageContext'
 import PaymentForm from './PaymentForm'
 import { toast } from '@/lib/toast'
@@ -10,6 +11,7 @@ import type {
   TemplatesApiResponse,
 } from '@/types/invitation-template'
 import { formatPrice } from '@/types/invitation-template'
+import { SwatchIcon } from '@heroicons/react/24/outline'
 
 interface Party {
   childName: string
@@ -74,6 +76,18 @@ export default function TemplateSelector({
     }
     fetchTemplates()
   }, [])
+
+  // Lock background scroll when payment modal is open
+  useEffect(() => {
+    if (showPayment) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showPayment])
 
   const isTemplatePurchased = (templateId: string) => {
     return paidTemplates.includes(templateId)
@@ -164,16 +178,16 @@ export default function TemplateSelector({
     return (
       <div className="card">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-6 bg-neutral-200 rounded w-1/4"></div>
           <div className="flex gap-2">
-            <div className="h-8 bg-gray-200 rounded w-16"></div>
-            <div className="h-8 bg-gray-200 rounded w-20"></div>
-            <div className="h-8 bg-gray-200 rounded w-20"></div>
+            <div className="h-8 bg-neutral-200 rounded w-16"></div>
+            <div className="h-8 bg-neutral-200 rounded w-20"></div>
+            <div className="h-8 bg-neutral-200 rounded w-20"></div>
           </div>
           <div className="flex gap-4">
-            <div className="h-64 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-64 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-64 bg-neutral-200 rounded w-1/3"></div>
+            <div className="h-64 bg-neutral-200 rounded w-1/3"></div>
+            <div className="h-64 bg-neutral-200 rounded w-1/3"></div>
           </div>
         </div>
       </div>
@@ -190,7 +204,7 @@ export default function TemplateSelector({
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 flex items-center gap-2">
-                  <span className="text-xl">🎨</span>
+                  <SwatchIcon className="w-6 h-6 text-primary-600" />
                   {locale === 'zh' ? '更换邀请卡样式' : 'Change Invitation Style'}
                 </h3>
                 <p className="text-sm text-neutral-500 mt-1">
@@ -216,10 +230,10 @@ export default function TemplateSelector({
               {locale === 'zh' ? '左右滑动查看更多模板' : 'Swipe to see more templates'}
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2" role="group" aria-label={locale === 'zh' ? '模板主题筛选' : 'Template theme filter'}>
               <button
                 onClick={() => setSelectedTheme(null)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTheme === null
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${selectedTheme === null
                   ? 'bg-primary-600 text-white'
                   : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
@@ -230,7 +244,7 @@ export default function TemplateSelector({
                 <button
                   key={theme.id}
                   onClick={() => setSelectedTheme(theme.id)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTheme === theme.id
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${selectedTheme === theme.id
                     ? 'bg-primary-600 text-white'
                     : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                     }`}
@@ -408,41 +422,48 @@ export default function TemplateSelector({
         </div>
 
         {showPayment && selectedTemplate && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl my-8">
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-center text-neutral-900 mb-4">
-                  {t('purchaseTitle')}
-                </h3>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="mb-4">
+                  <h3 className="text-xl font-bold text-center text-neutral-900 mb-4">
+                    {t('purchaseTitle')}
+                  </h3>
 
-                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg mb-4">
-                  <h4 className="font-medium text-orange-800 mb-2">{selectedTemplate.name}</h4>
-                  <p className="text-sm text-orange-700 mb-2">
-                    {getThemeInfo(selectedTemplate.theme)?.icon}{' '}
-                    {getThemeInfo(selectedTemplate.theme)?.name[locale as 'zh' | 'en']}
-                  </p>
-                  <img
-                    src={selectedTemplate.imageUrl}
-                    alt={selectedTemplate.name}
-                    className="w-full aspect-[5/7] rounded-lg shadow-md object-fill"
-                  />
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-3 rounded-lg mb-4 flex items-center gap-3">
+                    <img
+                      src={selectedTemplate.imageUrl}
+                      alt={selectedTemplate.name}
+                      className="w-20 h-28 rounded-lg shadow-md object-cover flex-shrink-0"
+                    />
+                    <div>
+                      <h4 className="font-medium text-orange-800">{selectedTemplate.name}</h4>
+                      <p className="text-sm text-orange-700">
+                        {getThemeInfo(selectedTemplate.theme)?.icon}{' '}
+                        {getThemeInfo(selectedTemplate.theme)?.name[locale as 'zh' | 'en']}
+                      </p>
+                      <p className="text-lg font-bold text-orange-600 mt-1">
+                        {formatPrice(selectedTemplate.effectivePrice.price, selectedTemplate.config.pricing.currency, locale)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <PaymentForm
-                amount={selectedTemplate.effectivePrice.price}
-                currency={selectedTemplate.config.pricing.currency}
-                description={`Premium template: ${selectedTemplate.name}`}
-                metadata={{
-                  partyId,
-                  feature: 'template',
-                  templateId: selectedTemplate.id,
-                  templateName: selectedTemplate.name,
-                }}
-                onSuccess={handlePaymentSuccess}
-                onError={handlePaymentError}
-                onCancel={() => setShowPayment(false)}
-              />
+                <PaymentForm
+                  amount={selectedTemplate.effectivePrice.price}
+                  currency={selectedTemplate.config.pricing.currency}
+                  description={`Premium template: ${selectedTemplate.name}`}
+                  metadata={{
+                    partyId,
+                    feature: 'template',
+                    templateId: selectedTemplate.id,
+                    templateName: selectedTemplate.name,
+                  }}
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                  onCancel={() => setShowPayment(false)}
+                />
+              </div>
             </div>
           </div>
         )}

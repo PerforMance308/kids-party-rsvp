@@ -146,3 +146,48 @@ export function EmptyState({ title, description, action, icon, className = '' }:
     </div>
   )
 }
+
+interface SuccessCheckmarkProps {
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+  message?: string
+}
+
+export function SuccessCheckmark({ size = 'md', className = '', message }: SuccessCheckmarkProps) {
+  const sizes = {
+    sm: { container: 'w-12 h-12', icon: 'w-6 h-6' },
+    md: { container: 'w-16 h-16', icon: 'w-8 h-8' },
+    lg: { container: 'w-24 h-24', icon: 'w-12 h-12' }
+  }
+
+  return (
+    <div className={`text-center ${className}`}>
+      <div
+        className={`${sizes[size].container} mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center`}
+        style={{ animation: 'success-scale 0.4s ease-out forwards' }}
+      >
+        <svg
+          className={`${sizes[size].icon} text-green-600`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+            style={{
+              strokeDasharray: 100,
+              strokeDashoffset: 100,
+              animation: 'checkmark-draw 0.4s ease-out 0.2s forwards'
+            }}
+          />
+        </svg>
+      </div>
+      {message && (
+        <p className="text-green-700 font-medium">{message}</p>
+      )}
+    </div>
+  )
+}

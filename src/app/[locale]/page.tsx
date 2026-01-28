@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { LoadingSpinner } from '@/components/LoadingStates'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
@@ -47,10 +48,15 @@ export default function HomePage() {
     <main className="flex-1">
       {/* Hero Section with Banner */}
       <section className="relative h-[350px] md:h-[420px] lg:h-[460px] overflow-hidden">
-        {/* Banner Background Image - full height, crop from left only */}
-        <div
-          className="absolute inset-0 bg-[length:auto_100%] bg-right bg-no-repeat"
-          style={{ backgroundImage: 'url(/banner/banner.jpg)' }}
+        {/* Banner Background Image - optimized with Next.js Image */}
+        <Image
+          src="/banner/banner.jpg"
+          alt={locale === 'zh' ? '儿童生日派对邀请函' : 'Kids Birthday Party Invitations'}
+          fill
+          priority
+          className="object-cover object-right"
+          sizes="100vw"
+          quality={85}
         />
 
         {/* Gradient Overlay - stronger on left for text readability */}
@@ -142,7 +148,7 @@ export default function HomePage() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mx-auto max-w-7xl">
-            <Link href={`/${locale}/templates/dinosaur-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/templates/dinosaur-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-5xl mb-3">🦖</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '恐龙生日派对' : 'Dinosaur Birthday Party'}
@@ -151,7 +157,7 @@ export default function HomePage() {
                 {locale === 'zh' ? '适合喜欢恐龙的小朋友' : 'Perfect for dino-loving kids'}
               </p>
             </Link>
-            <Link href={`/${locale}/templates/princess-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/templates/princess-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-5xl mb-3">👸</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '公主生日派对' : 'Princess Birthday Party'}
@@ -160,7 +166,7 @@ export default function HomePage() {
                 {locale === 'zh' ? '梦幻公主主题派对' : 'Magical princess celebrations'}
               </p>
             </Link>
-            <Link href={`/${locale}/templates/unicorn-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/templates/unicorn-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-5xl mb-3">🦄</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '独角兽生日派对' : 'Unicorn Birthday Party'}
@@ -169,7 +175,7 @@ export default function HomePage() {
                 {locale === 'zh' ? '彩虹独角兽梦幻派对' : 'Rainbow unicorn magic'}
               </p>
             </Link>
-            <Link href={`/${locale}/templates/superhero-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/templates/superhero-birthday-party`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-5xl mb-3">🦸</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '超级英雄生日派对' : 'Superhero Birthday Party'}
@@ -197,7 +203,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mx-auto max-w-7xl">
-            <Link href={`/${locale}/features/qr-code-rsvp`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/features/qr-code-rsvp`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-4xl mb-3">📱</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '二维码RSVP' : 'QR Code RSVP'}
@@ -206,7 +212,7 @@ export default function HomePage() {
                 {locale === 'zh' ? '扫码即可回复邀请' : 'Scan to respond instantly'}
               </p>
             </Link>
-            <Link href={`/${locale}/features/guest-tracking`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/features/guest-tracking`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-4xl mb-3">👥</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '宾客追踪' : 'Guest Tracking'}
@@ -215,7 +221,7 @@ export default function HomePage() {
                 {locale === 'zh' ? '实时查看回复状态' : 'Real-time response tracking'}
               </p>
             </Link>
-            <Link href={`/${locale}/features/automatic-reminders`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/features/automatic-reminders`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-4xl mb-3">🔔</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '自动提醒' : 'Automatic Reminders'}
@@ -224,7 +230,7 @@ export default function HomePage() {
                 {locale === 'zh' ? '自动发送回复提醒' : 'Auto-remind pending guests'}
               </p>
             </Link>
-            <Link href={`/${locale}/features/no-app-required`} className="card hover:shadow-lg transition-shadow text-center group">
+            <Link href={`/${locale}/features/no-app-required`} className="card hover:shadow-lg transition-shadow text-center group cursor-pointer">
               <div className="text-4xl mb-3">✨</div>
               <h3 className="text-lg font-semibold text-neutral-900 group-hover:text-primary-600 transition-colors">
                 {locale === 'zh' ? '无需下载APP' : 'No App Required'}
