@@ -33,20 +33,26 @@ export async function POST(request: NextRequest) {
 
     // Validate file type and size
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ 
-        error: 'Only JPEG, PNG, and WebP images are allowed' 
+      return NextResponse.json({
+        error: 'Only JPEG, PNG, and WebP images are allowed'
       }, { status: 400 })
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ 
-        error: 'File size must be less than 5MB' 
+      return NextResponse.json({
+        error: 'File size must be less than 5MB'
       }, { status: 400 })
     }
 
     // Verify party exists and user has access
     const party = await prisma.party.findUnique({
-      where: { id: partyId }
+      where: { id: partyId },
+      select: {
+        id: true,
+        userId: true,
+        allowPhotoSharing: true,
+        photoSharingPaid: true
+      }
     })
 
     if (!party) {
@@ -55,8 +61,8 @@ export async function POST(request: NextRequest) {
 
     // Check if photo sharing is enabled and paid for
     if (!party.allowPhotoSharing || !party.photoSharingPaid) {
-      return NextResponse.json({ 
-        error: 'Photo sharing is not enabled for this party' 
+      return NextResponse.json({
+        error: 'Photo sharing is not enabled for this party'
       }, { status: 403 })
     }
 
@@ -73,8 +79,8 @@ export async function POST(request: NextRequest) {
     }) : null
 
     if (!isHost && !hasRSVP) {
-      return NextResponse.json({ 
-        error: 'You must RSVP to this party to upload photos' 
+      return NextResponse.json({
+        error: 'You must RSVP to this party to upload photos'
       }, { status: 403 })
     }
 

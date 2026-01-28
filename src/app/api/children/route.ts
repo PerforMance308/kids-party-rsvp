@@ -14,6 +14,15 @@ export async function GET(request: NextRequest) {
 
     const children = await prisma.child.findMany({
       where: { userId: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        birthDate: true,
+        gender: true,
+        allergies: true,
+        notes: true,
+        createdAt: true
+      },
       orderBy: { createdAt: 'desc' }
     })
 
