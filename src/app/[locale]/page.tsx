@@ -13,36 +13,12 @@ export default function HomePage() {
   const router = useRouter()
   const locale = useLocale()
   const { t } = useLanguage()
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
-  const [sessionError, setSessionError] = useState<string | null>(null)
+  // Derive authentication state directly from session status
+  const isAuthenticated = status === 'authenticated' && !!session?.user?.id
+  const isLoading = status === 'loading'
 
-  useEffect(() => {
-    if (status === 'loading') {
-      setIsAuthenticated(null)
-      setSessionError(null)
-    } else if (status === 'authenticated' && session?.user?.id) {
-      setIsAuthenticated(true)
-      setSessionError(null)
-    } else if (status === 'unauthenticated') {
-      setIsAuthenticated(false)
-      setSessionError(null)
-    } else {
-      setSessionError('Session check failed')
-      setIsAuthenticated(false)
-    }
-  }, [status, session])
-
-  // Add timeout for loading state to prevent infinite loading
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (status === 'loading') {
-        setSessionError('Connection timeout')
-        setIsAuthenticated(false)
-      }
-    }, 10000) // 10 second timeout
-
-    return () => clearTimeout(timeout)
-  }, [status])
+  // Optional: You could still have a timeout for debugging, 
+  // but for production, status 'loading' is managed by NextAuth.
 
   return (
     <main className="flex-1">
@@ -105,13 +81,10 @@ export default function HomePage() {
               </div>
 
               {/* Action Buttons */}
-              {isAuthenticated === null ? (
+              {isLoading ? (
                 <div className="flex flex-col items-start">
                   <LoadingSpinner size="md" className="mb-2" />
                   <p className="text-neutral-600 text-sm">{t('home.loading')}</p>
-                  {sessionError && (
-                    <p className="text-red-600 text-xs mt-1">{sessionError}</p>
-                  )}
                 </div>
               ) : isAuthenticated ? (
                 <div className="flex flex-row gap-3 flex-wrap">

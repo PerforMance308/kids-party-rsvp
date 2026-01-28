@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
@@ -112,12 +112,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Create reminder schedule
-    try {
-      await createReminderSchedule(party.id)
-    } catch (error) {
-      console.error('Failed to create reminder schedule:', error)
-    }
+    // Create reminder schedule in the background (Non-blocking)
+    after(async () => {
+      try {
+        await createReminderSchedule(party.id)
+      } catch (error) {
+        console.error('Failed to create reminder schedule in background:', error)
+      }
+    })
 
     return NextResponse.json(party, { status: 201 })
   } catch (error) {
@@ -157,26 +159,41 @@ export async function GET(request: NextRequest) {
       orderBy: { eventDatetime: 'asc' }
     })
 
-    const partiesWithStats = await Promise.all(parties.map(async (party) => {
-      const rsvpStats = await prisma.rSVP.groupBy({
-        by: ['status'],
-        where: {
-          guest: {
-            partyId: party.id
-          }
-        },
-        _count: {
-          status: true
-        }
-      })
+    // Get all party IDs for batching RSVP stats
+    const partyIds = parties.map(p => p.id)
 
-      const stats = {
-        total: party._count.guests,
-        attending: rsvpStats.find(s => s.status === 'YES')?._count.status || 0,
-        notAttending: rsvpStats.find(s => s.status === 'NO')?._count.status || 0,
-        maybe: rsvpStats.find(s => s.status === 'MAYBE')?._count.status || 0,
+    // Pre-calculate stats per party for O(1) lookup
+    const statsMap: Record<string, { total: number; attending: number; notAttending: number; maybe: number }> = {}
+
+    // Initialize statsMap
+    partyIds.forEach(id => {
+      const party = parties.find(p => p.id === id)
+      statsMap[id] = {
+        total: party?._count.guests || 0,
+        attending: 0,
+        notAttending: 0,
+        maybe: 0
       }
+    })
 
+    // Process RSVP stats in memory to avoid N+1 queries
+    // We fetch all relevant RSVPs for all parties in one go
+    const rsvps = await prisma.rSVP.findMany({
+      where: { guest: { partyId: { in: partyIds } } },
+      select: { status: true, guest: { select: { partyId: true } } }
+    })
+
+    rsvps.forEach(rsvp => {
+      const pId = rsvp.guest.partyId
+      if (statsMap[pId]) {
+        if (rsvp.status === 'YES') statsMap[pId].attending++
+        else if (rsvp.status === 'NO') statsMap[pId].notAttending++
+        else if (rsvp.status === 'MAYBE') statsMap[pId].maybe++
+      }
+    })
+
+    const partiesWithStats = parties.map((party) => {
+      const stats = statsMap[party.id]
       const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
 
       return {
@@ -195,7 +212,7 @@ export async function GET(request: NextRequest) {
         publicRsvpToken: party.publicRsvpToken,
         stats
       }
-    }))
+    })
 
     return NextResponse.json(partiesWithStats)
   } catch (error) {
