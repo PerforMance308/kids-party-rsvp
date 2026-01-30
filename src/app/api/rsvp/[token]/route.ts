@@ -36,6 +36,34 @@ export async function GET(
 
     const childAge = (party as any).targetAge ?? calculatedAge
 
+    // Check if user has existing RSVP
+    let existingRsvp = null
+    const session = await getServerSession(authOptions)
+    if (session?.user?.email) {
+      const guest = await prisma.guest.findFirst({
+        where: {
+          partyId: party.id,
+          email: session.user.email
+        },
+        include: {
+          rsvp: true
+        }
+      })
+      if (guest?.rsvp) {
+        existingRsvp = {
+          parentName: guest.parentName,
+          childName: guest.childName,
+          childId: guest.childId,
+          phone: guest.phone,
+          status: guest.rsvp.status,
+          numChildren: guest.rsvp.numChildren,
+          parentStaying: guest.rsvp.parentStaying,
+          allergies: guest.rsvp.allergies,
+          message: guest.rsvp.message,
+        }
+      }
+    }
+
     const partyData = {
       id: party.id,
       childName: party.child.name,
@@ -43,7 +71,8 @@ export async function GET(
       eventDatetime: party.eventDatetime,
       location: party.location,
       theme: party.theme,
-      notes: party.notes
+      notes: party.notes,
+      existingRsvp,
     }
 
     return NextResponse.json(partyData)
@@ -151,15 +180,7 @@ export async function POST(
       })
 
       if (existingGuest) {
-        // If user already has an RSVP, block second submission
-        if (existingGuest.rsvp) {
-          return NextResponse.json(
-            { error: '您已经提交过该派对的回复了 (You have already RSVP\'d to this party)' },
-            { status: 400 }
-          )
-        }
-
-        // Update existing guest info if no RSVP yet
+        // Update existing guest info
         await prisma.guest.update({
           where: { id: existingGuest.id },
           data: {
@@ -171,17 +192,31 @@ export async function POST(
           }
         })
 
-        // Create RSVP
-        await prisma.rSVP.create({
-          data: {
-            guestId: existingGuest.id,
-            status,
-            numChildren,
-            parentStaying,
-            allergies: allergies || null,
-            message: message || null,
-          }
-        })
+        if (existingGuest.rsvp) {
+          // Update existing RSVP
+          await prisma.rSVP.update({
+            where: { id: existingGuest.rsvp.id },
+            data: {
+              status,
+              numChildren,
+              parentStaying,
+              allergies: allergies || null,
+              message: message || null,
+            }
+          })
+        } else {
+          // Create new RSVP
+          await prisma.rSVP.create({
+            data: {
+              guestId: existingGuest.id,
+              status,
+              numChildren,
+              parentStaying,
+              allergies: allergies || null,
+              message: message || null,
+            }
+          })
+        }
       }
     }
 
@@ -211,75 +246,77 @@ export async function POST(
       })
     }
 
-    // Send email notification to party host only
-    try {
-      // Calculate child age for email
-      const today = new Date()
-      const birthDate = new Date(party.child.birthDate)
-      const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-
-      // Determine host language (default to zh if not set)
-      const hostLanguage = (party.user.language === 'en' || party.user.language?.startsWith('en')) ? 'en' : 'zh'
-
-      const hostNotificationEmail = generateHostRSVPNotificationEmail(
-        {
-          childName: party.child.name,
-          childAge,
-          eventDatetime: party.eventDatetime,
-          location: party.location
-        },
-        {
-          parentName,
-          childName,
-          status,
-          numChildren,
-          parentStaying,
-          allergies: allergies || undefined,
-          message: message || undefined
-        },
-        hostLanguage as 'en' | 'zh'
-      )
-
-      await sendEmail({
-        to: party.user.email,
-        subject: hostNotificationEmail.subject,
-        text: hostNotificationEmail.text,
-        html: hostNotificationEmail.html
-      })
-
-      console.log(`📧 Notification sent to host: ${party.user.email}`)
-    } catch (emailError) {
-      console.error('Failed to send host notification email:', emailError)
-      // Don't fail the RSVP if email fails
-    }
-
-    // Auto-save guest as a contact for the host (only if user is authenticated)
-    if (user?.email) {
+    // Send email notification to party host (async, don't wait)
+    const sendHostNotification = async () => {
       try {
-        const existingContact = await prisma.contact.findFirst({
-          where: {
-            userId: party.userId,
-            email: user.email
-          }
-        })
+        const today = new Date()
+        const birthDate = new Date(party.child.birthDate)
+        const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+        const hostLanguage = (party.user.language === 'en' || party.user.language?.startsWith('en')) ? 'en' : 'zh'
 
-        if (!existingContact) {
-          await prisma.contact.create({
-            data: {
+        const hostNotificationEmail = generateHostRSVPNotificationEmail(
+          {
+            childName: party.child.name,
+            childAge,
+            eventDatetime: party.eventDatetime,
+            location: party.location
+          },
+          {
+            parentName,
+            childName,
+            status,
+            numChildren,
+            parentStaying,
+            allergies: allergies || undefined,
+            message: message || undefined
+          },
+          hostLanguage as 'en' | 'zh'
+        )
+
+        await sendEmail({
+          to: party.user.email,
+          subject: hostNotificationEmail.subject,
+          text: hostNotificationEmail.text,
+          html: hostNotificationEmail.html
+        })
+        console.log(`📧 Notification sent to host: ${party.user.email}`)
+      } catch (emailError) {
+        console.error('Failed to send host notification email:', emailError)
+      }
+    }
+    // Fire and forget - don't await
+    sendHostNotification()
+
+    // Auto-save guest as a contact for the host (async, don't wait)
+    if (user?.email) {
+      const saveContact = async () => {
+        try {
+          const existingContact = await prisma.contact.findFirst({
+            where: {
               userId: party.userId,
-              name: parentName,
-              childName: childName,
-              email: user.email,
-              phone: phone || null,
-              source: 'RSVP'
+              email: user.email
             }
           })
-          console.log(`✅ Auto-saved contact for host: ${user.email}`)
+
+          if (!existingContact) {
+            await prisma.contact.create({
+              data: {
+                userId: party.userId,
+                name: parentName,
+                childName: childName,
+                email: user.email,
+                phone: phone || null,
+                source: 'RSVP'
+              }
+            })
+            console.log(`✅ Auto-saved contact for host: ${user.email}`)
+          }
+        } catch (contactError) {
+          console.error('Failed to auto-save contact:', contactError)
         }
-      } catch (contactError) {
-        console.error('Failed to auto-save contact:', contactError)
-        // Don't fail the RSVP if contact save fails
       }
+      // Fire and forget
+      saveContact()
     }
 
     return NextResponse.json({ message: 'RSVP submitted successfully' })

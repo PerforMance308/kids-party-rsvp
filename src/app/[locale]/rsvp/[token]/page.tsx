@@ -7,6 +7,18 @@ import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageContext'
 
+interface ExistingRsvp {
+  parentName: string
+  childName: string
+  childId?: string
+  phone?: string
+  status: 'YES' | 'NO' | 'MAYBE'
+  numChildren: number
+  parentStaying: boolean
+  allergies?: string
+  message?: string
+}
+
 interface Party {
   id: string
   childName: string
@@ -15,6 +27,7 @@ interface Party {
   location: string
   theme?: string
   notes?: string
+  existingRsvp?: ExistingRsvp
 }
 
 export default function RSVPPage() {
@@ -30,6 +43,8 @@ export default function RSVPPage() {
   const locale = useLocale()
   const tr = useTranslations('rsvp')
   const [rsvpIntent, setRsvpIntent] = useState<'ATTENDING' | 'NOT_ATTENDING' | null>(null)
+  const [authMode, setAuthMode] = useState<'register' | 'login'>('register')
+  const [isEditMode, setIsEditMode] = useState(false)
   const [showRegistration, setShowRegistration] = useState(false)
   const [userChildren, setUserChildren] = useState<any[]>([])
   const [selectedChildId, setSelectedChildId] = useState('')
@@ -73,6 +88,21 @@ export default function RSVPPage() {
         if (partyResponse.ok) {
           const data = await partyResponse.json()
           setParty(data)
+
+          // Pre-fill form if user has existing RSVP
+          if (data.existingRsvp) {
+            const rsvp = data.existingRsvp
+            setParentName(rsvp.parentName || '')
+            setChildName(rsvp.childName || '')
+            setSelectedChildId(rsvp.childId || '')
+            setPhone(rsvp.phone || '')
+            setRsvpStatus(rsvp.status)
+            setNumChildren(rsvp.numChildren || 1)
+            setParentStaying(rsvp.parentStaying ?? true)
+            setAllergies(rsvp.allergies || '')
+            setMessage(rsvp.message || '')
+            setIsEditMode(true)
+          }
         } else {
           setError(t('rsvp.invitationNotFound'))
         }
@@ -119,18 +149,6 @@ export default function RSVPPage() {
     }
   }, [isAuthenticated, session?.user?.name, parentName])
 
-  // Auto-scroll when RSVP intent is selected
-  useEffect(() => {
-    if (rsvpIntent === 'ATTENDING' && authSectionRef.current) {
-      setTimeout(() => {
-        authSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 100)
-    } else if (rsvpIntent === 'NOT_ATTENDING' && notAttendingFormRef.current) {
-      setTimeout(() => {
-        notAttendingFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 100)
-    }
-  }, [rsvpIntent])
 
   const handleAddChild = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -212,11 +230,7 @@ export default function RSVPPage() {
         })
 
         if (result?.ok) {
-          setShowRegistration(false)
-          setError('')
-          // Refresh to update session state
-          router.refresh()
-          // Force reload to ensure session is picked up if refresh isn't enough
+          // Reload page to update session
           window.location.reload()
         } else {
           setError('Registration successful but auto-login failed. Please try signing in.')
@@ -228,6 +242,31 @@ export default function RSVPPage() {
     } catch (error) {
       setError('An error occurred during registration.')
     } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    setError('')
+
+    try {
+      const result = await signIn('credentials', {
+        email: regEmail,
+        password: regPassword,
+        redirect: false,
+      })
+
+      if (result?.ok) {
+        // Reload page to update session
+        window.location.reload()
+      } else {
+        setError(t('login.invalidCredentials') || 'Invalid email or password')
+        setIsSubmitting(false)
+      }
+    } catch (error) {
+      setError('An error occurred during login.')
       setIsSubmitting(false)
     }
   }
@@ -401,14 +440,35 @@ export default function RSVPPage() {
             </div>
           </div>
 
-          {/* RSVP Intent Selection - Directly under party info */}
-          {!isAuthenticated && !rsvpIntent && (
+          {/* RSVP Intent Selection - Inline expandable design */}
+          {!isAuthenticated && (
             <div className="border-t pt-4">
+              {/* Step indicator - only show after selection */}
+              {rsvpIntent === 'ATTENDING' && (
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary-600"></div>
+                  <div className="w-8 h-0.5 bg-primary-200"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary-600 animate-pulse"></div>
+                  <div className="w-8 h-0.5 bg-neutral-200"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-neutral-300"></div>
+                </div>
+              )}
+
+              {/* Selection buttons */}
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => setRsvpIntent('ATTENDING')}
-                  className="btn btn-primary px-6 py-2"
+                  className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                    rsvpIntent === 'ATTENDING'
+                      ? 'bg-primary-600 text-white ring-2 ring-primary-600 ring-offset-2'
+                      : 'btn btn-primary'
+                  }`}
                 >
+                  {rsvpIntent === 'ATTENDING' && (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
                   {tr('attendingButton')}
                 </button>
                 <button
@@ -416,245 +476,316 @@ export default function RSVPPage() {
                     setRsvpIntent('NOT_ATTENDING')
                     setRsvpStatus('NO')
                   }}
-                  className="btn btn-secondary px-6 py-2"
+                  className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                    rsvpIntent === 'NOT_ATTENDING'
+                      ? 'bg-neutral-600 text-white ring-2 ring-neutral-600 ring-offset-2'
+                      : 'btn btn-secondary'
+                  }`}
                 >
+                  {rsvpIntent === 'NOT_ATTENDING' && (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
                   {tr('notAttendingButton')}
                 </button>
+              </div>
+
+              {/* Inline expanded auth form - smooth transition */}
+              <div className={`overflow-hidden transition-all duration-300 ease-out ${
+                rsvpIntent === 'ATTENDING' ? 'max-h-[800px] opacity-100 mt-6' : 'max-h-0 opacity-0'
+              }`}>
+                <div ref={authSectionRef} className="bg-neutral-50 rounded-xl p-5 border border-neutral-200">
+                  {authMode === 'register' ? (
+                    /* Register Form */
+                    <form onSubmit={handleRegistration} className="space-y-4">
+                      <div>
+                        <label htmlFor="quickEmail" className="block text-sm font-medium text-neutral-700 mb-1">
+                          {tr('emailLabel')}
+                        </label>
+                        <input
+                          type="email"
+                          id="quickEmail"
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          className="input"
+                          placeholder="your@email.com"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="quickPassword" className="block text-sm font-medium text-neutral-700 mb-1">
+                          {tr('passwordLabel')}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showRegPassword ? "text" : "password"}
+                            id="quickPassword"
+                            value={regPassword}
+                            onChange={(e) => setRegPassword(e.target.value)}
+                            className="input pr-10"
+                            placeholder="••••••••"
+                            minLength={8}
+                            required
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onClick={() => setShowRegPassword(!showRegPassword)}
+                          >
+                            {showRegPassword ? (
+                              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-neutral-500 mt-1">
+                          {t('register.atLeast8Chars')}
+                        </p>
+                      </div>
+
+                      <div className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          id="termsQuick"
+                          checked={agreedToTerms}
+                          onChange={(e) => setAgreedToTerms(e.target.checked)}
+                          className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
+                        />
+                        <label htmlFor="termsQuick" className="text-sm text-neutral-600">
+                          {t('register.iAgreeTo')}{' '}
+                          <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline" target="_blank">
+                            {t('register.termsOfService')}
+                          </Link>{' '}
+                          {t('common.and')}{' '}
+                          <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline" target="_blank">
+                            {t('register.privacyPolicy')}
+                          </Link>
+                        </label>
+                      </div>
+
+                      {error && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                          {error}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !agreedToTerms}
+                        className="w-full btn btn-primary disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isSubmitting ? (
+                          tr('creatingAccount')
+                        ) : (
+                          <>
+                            {t('common.next')}
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="text-center text-sm text-neutral-600">
+                        {tr('haveAccount')}{' '}
+                        <button
+                          type="button"
+                          onClick={() => { setAuthMode('login'); setError('') }}
+                          className="text-primary-600 hover:underline font-medium"
+                        >
+                          {tr('signInBtn')}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    /* Login Form */
+                    <form onSubmit={handleLogin} className="space-y-4">
+                      <div>
+                        <label htmlFor="loginEmail" className="block text-sm font-medium text-neutral-700 mb-1">
+                          {tr('emailLabel')}
+                        </label>
+                        <input
+                          type="email"
+                          id="loginEmail"
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          className="input"
+                          placeholder="your@email.com"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label htmlFor="loginPassword" className="block text-sm font-medium text-neutral-700 mb-1">
+                          {tr('passwordLabel')}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showRegPassword ? "text" : "password"}
+                            id="loginPassword"
+                            value={regPassword}
+                            onChange={(e) => setRegPassword(e.target.value)}
+                            className="input pr-10"
+                            placeholder="••••••••"
+                            required
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onClick={() => setShowRegPassword(!showRegPassword)}
+                          >
+                            {showRegPassword ? (
+                              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                              </svg>
+                            ) : (
+                              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {error && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                          {error}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full btn btn-primary disabled:opacity-50 flex items-center justify-center gap-2"
+                      >
+                        {isSubmitting ? (
+                          t('login.signingIn')
+                        ) : (
+                          <>
+                            {tr('signInBtn')}
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+
+                      <div className="text-center text-sm text-neutral-600">
+                        {t('login.noAccount')}{' '}
+                        <button
+                          type="button"
+                          onClick={() => { setAuthMode('register'); setError('') }}
+                          className="text-primary-600 hover:underline font-medium"
+                        >
+                          {t('register.signUp')}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-neutral-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-neutral-50 text-neutral-500">{t('login.orContinueWith')}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => signIn('google', { callbackUrl: `/${locale}/rsvp/${token}` })}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-neutral-300 rounded-lg bg-white hover:bg-neutral-50 transition-colors"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span className="font-medium text-neutral-700">{t('login.signInWithGoogle')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Inline expanded not-attending form */}
+              <div className={`overflow-hidden transition-all duration-300 ease-out ${
+                rsvpIntent === 'NOT_ATTENDING' ? 'max-h-[600px] opacity-100 mt-6' : 'max-h-0 opacity-0'
+              }`}>
+                <div ref={notAttendingFormRef} className="bg-neutral-50 rounded-xl p-5 border border-neutral-200">
+                  <p className="text-neutral-600 text-sm mb-4 text-center">
+                    {tr('optionalInfo')}
+                  </p>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="parentNameDecline" className="block text-sm font-medium text-neutral-700 mb-1">
+                          {tr('parentNameLabel')} ({tr('optional')})
+                        </label>
+                        <input
+                          type="text"
+                          id="parentNameDecline"
+                          value={parentName}
+                          onChange={(e) => setParentName(e.target.value)}
+                          className="input"
+                          placeholder={tr('parentNameLabel')}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="childNameDecline" className="block text-sm font-medium text-neutral-700 mb-1">
+                          {tr('childNameLabel')} ({tr('optional')})
+                        </label>
+                        <input
+                          type="text"
+                          id="childNameDecline"
+                          value={childName}
+                          onChange={(e) => setChildName(e.target.value)}
+                          className="input"
+                          placeholder={tr('childNameLabel')}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="messageDecline" className="block text-sm font-medium text-neutral-700 mb-1">
+                        {tr('messageLabel')} ({tr('optional')})
+                      </label>
+                      <textarea
+                        id="messageDecline"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        className="input"
+                        rows={2}
+                        placeholder={tr('messagePlaceholder')}
+                      />
+                    </div>
+                    {error && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {error}
+                      </div>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full btn btn-primary disabled:opacity-50"
+                    >
+                      {isSubmitting ? tr('submitting') : tr('submitResponse')}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Registration/Login Step - Only show if attending */}
-        {!isAuthenticated && rsvpIntent === 'ATTENDING' && (
-          <div ref={authSectionRef} className="card mb-6">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                {tr('createAccountTitle')}
-              </h3>
-              <p className="text-neutral-600 text-sm">
-                {tr('createAccountDesc')}
-              </p>
-            </div>
-
-            {!showRegistration ? (
-              <div className="space-y-4">
-                <p className="text-center text-neutral-700">
-                  {tr('haveAccount')}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={() => setShowRegistration(true)}
-                    className="btn btn-primary flex-1"
-                  >
-                    {tr('createAccountBtn')}
-                  </button>
-                  <a
-                    href={`/login/redirect=${encodeURIComponent(`/rsvp/${token}`)}`}
-                    className="btn btn-secondary flex-1 text-center"
-                  >
-                    {tr('signInBtn')}
-                  </a>
-                </div>
-                <div className="text-center">
-                  <button
-                    onClick={() => setRsvpIntent(null)}
-                    className="text-sm text-neutral-600 hover:text-neutral-800"
-                  >
-                    ← {tr('backToSelection') || 'Back'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleRegistration} className="space-y-4">
-                <div>
-                  <label htmlFor="regEmail" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {tr('emailLabel')}
-                  </label>
-                  <input
-                    type="email"
-                    id="regEmail"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    className="input"
-                    required
-                    autoFocus
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="regPassword" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {tr('passwordLabel')}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showRegPassword ? "text" : "password"}
-                      id="regPassword"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      className="input pr-10"
-                      required
-                      minLength={8}
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                      onClick={() => setShowRegPassword(!showRegPassword)}
-                    >
-                      {showRegPassword ? (
-                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                        </svg>
-                      ) : (
-                        <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                  <div className="text-sm text-neutral-500 mt-1">
-                    <p className="font-medium mb-1">{t('register.passwordRequirements')}</p>
-                    <ul className="text-xs space-y-0.5">
-                      <li>• {t('register.atLeast8Chars')}</li>
-                      <li>• {t('register.oneUppercase')} (A-Z)</li>
-                      <li>• {t('register.oneLowercase')} (a-z)</li>
-                      <li>• {t('register.oneNumber')} (0-9)</li>
-                      <li>• {t('register.oneNumber')} (!@#$%^&*)</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500"
-                  />
-                  <label htmlFor="terms" className="text-sm text-neutral-600">
-                    {t('register.iAgreeTo')}{' '}
-                    <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline" target="_blank">
-                      {t('register.termsOfService')}
-                    </Link>{' '}
-                    {t('common.and')}{' '}
-                    <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline" target="_blank">
-                      {t('register.privacyPolicy')}
-                    </Link>
-                  </label>
-                </div>
-
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full btn btn-primary disabled:opacity-50"
-                >
-                  {isSubmitting ? tr('creatingAccount') : tr('createAndContinue')}
-                </button>
-
-                <div className="text-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowRegistration(false)}
-                    className="text-sm text-neutral-600 hover:text-neutral-800"
-                  >
-                    {tr('backToOptions')}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        )}
-
-        {/* Not Attending Form - Simple form without login */}
-        {!isAuthenticated && rsvpIntent === 'NOT_ATTENDING' && (
-          <div ref={notAttendingFormRef} className="card mb-6">
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                {tr('sorryNotAttending')}
-              </h3>
-              <p className="text-neutral-600 text-sm">
-                {tr('optionalInfo')}
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {tr('parentNameLabel')} ({tr('optional')})
-                  </label>
-                  <input
-                    type="text"
-                    id="parentName"
-                    value={parentName}
-                    onChange={(e) => setParentName(e.target.value)}
-                    className="input"
-                    placeholder={tr('parentNameLabel')}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {tr('childNameLabel')} ({tr('optional')})
-                  </label>
-                  <input
-                    type="text"
-                    id="childName"
-                    value={childName}
-                    onChange={(e) => setChildName(e.target.value)}
-                    className="input"
-                    placeholder={tr('childNameLabel')}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="message" className="block text-sm font-medium text-neutral-700 mb-1">
-                  {tr('messageLabel')} ({tr('optional')})
-                </label>
-                <textarea
-                  id="message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="input"
-                  rows={3}
-                  placeholder={tr('messagePlaceholder')}
-                />
-              </div>
-
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRsvpIntent(null)}
-                  className="btn btn-secondary flex-1"
-                >
-                  ← {tr('back')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn btn-primary flex-1 disabled:opacity-50"
-                >
-                  {isSubmitting ? tr('submitting') : tr('submitResponse')}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {/* Quick Add Child Form */}
         {isAuthenticated && showAddChild && (
@@ -866,9 +997,14 @@ export default function RSVPPage() {
                   type="tel"
                   id="phone"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    // Only allow numbers, +, -, spaces, and parentheses
+                    const value = e.target.value.replace(/[^0-9+\-\s()]/g, '')
+                    setPhone(value)
+                  }}
                   className="input"
                   placeholder={tr('phonePlaceholder')}
+                  pattern="[0-9+\-\s()]*"
                 />
               </div>
 
@@ -995,7 +1131,7 @@ export default function RSVPPage() {
                 disabled={isSubmitting}
                 className="w-full btn btn-primary disabled:opacity-50 text-lg py-3"
               >
-                {isSubmitting ? tr('submitting') : tr('submitBtn')}
+                {isSubmitting ? tr('submitting') : (isEditMode ? tr('updateBtn') : tr('submitBtn'))}
               </button>
             </form>
           </div>

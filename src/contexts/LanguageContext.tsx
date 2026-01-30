@@ -14,6 +14,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 // 完整的翻译函数
 const translations = {
   zh: {
+    // 通用
+    'common.next': '下一步',
+    'common.and': '和',
+
     // 导航
     'nav.dashboard': '仪表板',
     'nav.invitations': '邀请函',
@@ -138,6 +142,7 @@ const translations = {
     'login.signUpLink': '注册',
     'login.noAccount': '还没有账户？',
     'login.orContinueWith': '或者使用邮箱继续',
+    'login.invalidCredentials': '邮箱或密码错误',
 
     // 注册页面
     'register.title': '创建账户',
@@ -157,6 +162,10 @@ const translations = {
     'register.oneLowercase': '一个小写字母',
     'register.oneNumber': '一个数字',
     'register.googleSignUpFailed': 'Google 注册失败，请重试。',
+    'register.iAgreeTo': '我同意',
+    'register.termsOfService': '服务条款',
+    'register.privacyPolicy': '隐私政策',
+    'register.agreeToTerms': '请同意服务条款和隐私政策',
 
     // 儿童管理页面
     'children.title': '我的孩子',
@@ -230,6 +239,7 @@ const translations = {
     'rsvp.autoFilled': '✓ 已根据 {name} 的资料自动填写',
     'rsvp.submitting': '正在提交...',
     'rsvp.submitBtn': '提交回复',
+    'rsvp.updateBtn': '更新回复',
     'rsvp.attendingButton': '我会去',
     'rsvp.notAttendingButton': '不能去',
     'rsvp.sorryNotAttending': '很遗憾你不能来！',
@@ -312,6 +322,10 @@ const translations = {
     'footer.followUs': '关注我们',
   },
   en: {
+    // Common
+    'common.next': 'Next',
+    'common.and': 'and',
+
     // 导航
     'nav.dashboard': 'Dashboard',
     'nav.invitations': 'Invitations',
@@ -441,6 +455,7 @@ const translations = {
     'login.signUpLink': 'Sign up',
     'login.noAccount': 'Don\'t have an account?',
     'login.orContinueWith': 'Or continue with email',
+    'login.invalidCredentials': 'Invalid email or password',
 
     // 注册页面
     'register.title': 'Create Account',
@@ -460,6 +475,10 @@ const translations = {
     'register.oneLowercase': 'One lowercase letter',
     'register.oneNumber': 'One number',
     'register.googleSignUpFailed': 'Google sign-up failed. Please try again.',
+    'register.iAgreeTo': 'I agree to the',
+    'register.termsOfService': 'Terms of Service',
+    'register.privacyPolicy': 'Privacy Policy',
+    'register.agreeToTerms': 'Please agree to the Terms of Service and Privacy Policy',
 
     // 儿童管理页面
     'children.title': 'My Children',
@@ -533,6 +552,7 @@ const translations = {
     'rsvp.autoFilled': "✓ Auto-filled from {name}'s profile",
     'rsvp.submitting': 'Submitting...',
     'rsvp.submitBtn': 'Submit RSVP',
+    'rsvp.updateBtn': 'Update RSVP',
     'rsvp.attendingButton': "I'll attend",
     'rsvp.notAttendingButton': "Can't attend",
     'rsvp.sorryNotAttending': "Sorry you can't make it!",
