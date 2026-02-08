@@ -103,7 +103,6 @@ export async function processReminders() {
             rsvpUrl,
           },
           {
-            parentName: guest.parentName,
             childName: guest.childName,
           },
           reminderType

@@ -130,7 +130,7 @@ model Guest {
   partyId    String   @map("party_id")
   userId     String?  @map("user_id")
   childId    String?  @map("child_id")
-  parentName String   @map("parent_name")
+  parentName String?  @map("parent_name")
   childName  String   @map("child_name")
   email      String
   phone      String?

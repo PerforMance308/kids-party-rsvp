@@ -3,12 +3,11 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatPhoneInput } from '@/lib/utils'
 import Link from 'next/link'
 import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageContext'
 
 interface ExistingRsvp {
-  parentName: string
   childName: string
   childId?: string
   phone?: string
@@ -65,7 +64,6 @@ export default function RSVPPage() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
 
   // Form state
-  const [parentName, setParentName] = useState('')
   const [childName, setChildName] = useState('')
   const [phone, setPhone] = useState('')
   const [rsvpStatus, setRsvpStatus] = useState<'YES' | 'NO' | 'MAYBE'>('YES')
@@ -80,10 +78,10 @@ export default function RSVPPage() {
 
   useEffect(() => {
     const loadParty = async () => {
-      if (!token) return
+      if (!token || sessionStatus === 'loading') return
 
       try {
-        // Load party details
+        // Load party details (wait for session so API can return existingRsvp)
         const partyResponse = await fetch(`/api/rsvp/${token}`)
         if (partyResponse.ok) {
           const data = await partyResponse.json()
@@ -92,10 +90,9 @@ export default function RSVPPage() {
           // Pre-fill form if user has existing RSVP
           if (data.existingRsvp) {
             const rsvp = data.existingRsvp
-            setParentName(rsvp.parentName || '')
             setChildName(rsvp.childName || '')
             setSelectedChildId(rsvp.childId || '')
-            setPhone(rsvp.phone || '')
+            setPhone(rsvp.phone ? formatPhoneInput(rsvp.phone) : '')
             setRsvpStatus(rsvp.status)
             setNumChildren(rsvp.numChildren || 1)
             setParentStaying(rsvp.parentStaying ?? true)
@@ -114,7 +111,7 @@ export default function RSVPPage() {
     }
 
     loadParty()
-  }, [token])
+  }, [token, sessionStatus])
 
   // Get authentication status from NextAuth session
   const isAuthenticated = sessionStatus === 'authenticated' && session?.user?.id
@@ -141,14 +138,6 @@ export default function RSVPPage() {
 
     loadUserChildren()
   }, [isAuthenticated])
-
-  // Auto-fill parent name when session is available
-  useEffect(() => {
-    if (isAuthenticated && session?.user?.name && !parentName) {
-      setParentName(session.user.name)
-    }
-  }, [isAuthenticated, session?.user?.name, parentName])
-
 
   const handleAddChild = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -286,6 +275,16 @@ export default function RSVPPage() {
     setIsSubmitting(true)
     setError('')
 
+    // Validate phone number if provided
+    if (phone) {
+      const digits = phone.replace(/\D/g, '')
+      if (digits.length > 0 && digits.length < 10) {
+        setError(locale === 'zh' ? '请输入完整的10位电话号码' : 'Please enter a complete 10-digit phone number')
+        setIsSubmitting(false)
+        return
+      }
+    }
+
     try {
       let requestBody
 
@@ -299,7 +298,6 @@ export default function RSVPPage() {
         }
 
         requestBody = {
-          parentName: parentName || session?.user?.name,
           childName: selectedChild.name,
           childId: selectedChildId,
           phone: phone || undefined,
@@ -312,7 +310,6 @@ export default function RSVPPage() {
       } else {
         // Manual form
         requestBody = {
-          parentName,
           childName,
           phone: phone || undefined,
           status: rsvpStatus,
@@ -679,6 +676,12 @@ export default function RSVPPage() {
                         )}
                       </button>
 
+                      <div className="text-center mt-1">
+                        <Link href={`/${locale}/login/forgot-password`} className="text-sm text-primary-600 hover:text-primary-700">
+                          {t('login.forgotPassword')}
+                        </Link>
+                      </div>
+
                       <div className="text-center text-sm text-neutral-600">
                         {t('login.noAccount')}{' '}
                         <button
@@ -726,33 +729,18 @@ export default function RSVPPage() {
                     {tr('optionalInfo')}
                   </p>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="parentNameDecline" className="block text-sm font-medium text-neutral-700 mb-1">
-                          {tr('parentNameLabel')} ({tr('optional')})
-                        </label>
-                        <input
-                          type="text"
-                          id="parentNameDecline"
-                          value={parentName}
-                          onChange={(e) => setParentName(e.target.value)}
-                          className="input"
-                          placeholder={tr('parentNameLabel')}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="childNameDecline" className="block text-sm font-medium text-neutral-700 mb-1">
-                          {tr('childNameLabel')} ({tr('optional')})
-                        </label>
-                        <input
-                          type="text"
-                          id="childNameDecline"
-                          value={childName}
-                          onChange={(e) => setChildName(e.target.value)}
-                          className="input"
-                          placeholder={tr('childNameLabel')}
-                        />
-                      </div>
+                    <div>
+                      <label htmlFor="childNameDecline" className="block text-sm font-medium text-neutral-700 mb-1">
+                        {tr('childNameLabel')} ({tr('optional')})
+                      </label>
+                      <input
+                        type="text"
+                        id="childNameDecline"
+                        value={childName}
+                        onChange={(e) => setChildName(e.target.value)}
+                        className="input"
+                        placeholder={tr('childNameLabel')}
+                      />
                     </div>
                     <div>
                       <label htmlFor="messageDecline" className="block text-sm font-medium text-neutral-700 mb-1">
@@ -893,21 +881,6 @@ export default function RSVPPage() {
               {!showManualForm && userChildren.length > 0 ? (
                 <>
                   <div>
-                    <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
-                      {tr('parentNameLabel')}
-                    </label>
-                    <input
-                      type="text"
-                      id="parentName"
-                      value={parentName}
-                      onChange={(e) => setParentName(e.target.value)}
-                      className="input"
-                      required
-                      autoFocus
-                    />
-                  </div>
-
-                  <div>
                     <label htmlFor="childSelect" className="block text-sm font-medium text-neutral-700 mb-1">
                       {tr('childSelectLabel')}
                     </label>
@@ -945,35 +918,19 @@ export default function RSVPPage() {
                 </>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="parentName" className="block text-sm font-medium text-neutral-700 mb-1">
-                        {tr('parentNameLabel')}
-                      </label>
-                      <input
-                        type="text"
-                        id="parentName"
-                        value={parentName}
-                        onChange={(e) => setParentName(e.target.value)}
-                        className="input"
-                        required
-                        autoFocus
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
-                        {tr('childNameLabel')}
-                      </label>
-                      <input
-                        type="text"
-                        id="childName"
-                        value={childName}
-                        onChange={(e) => setChildName(e.target.value)}
-                        className="input"
-                        required
-                      />
-                    </div>
+                  <div>
+                    <label htmlFor="childName" className="block text-sm font-medium text-neutral-700 mb-1">
+                      {tr('childNameLabel')}
+                    </label>
+                    <input
+                      type="text"
+                      id="childName"
+                      value={childName}
+                      onChange={(e) => setChildName(e.target.value)}
+                      className="input"
+                      required
+                      autoFocus
+                    />
                   </div>
                   {userChildren.length > 0 && (
                     <div className="text-center">
@@ -997,15 +954,15 @@ export default function RSVPPage() {
                   type="tel"
                   id="phone"
                   value={phone}
-                  onChange={(e) => {
-                    // Only allow numbers, +, -, spaces, and parentheses
-                    const value = e.target.value.replace(/[^0-9+\-\s()]/g, '')
-                    setPhone(value)
-                  }}
-                  className="input"
-                  placeholder={tr('phonePlaceholder')}
-                  pattern="[0-9+\-\s()]*"
+                  onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+                  className={`input ${phone && phone.replace(/\D/g, '').length > 0 && phone.replace(/\D/g, '').length < 10 ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : ''}`}
+                  placeholder="(555) 123-4567"
                 />
+                {phone && phone.replace(/\D/g, '').length > 0 && phone.replace(/\D/g, '').length < 10 && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {locale === 'zh' ? `请输入10位电话号码（已输入 ${phone.replace(/\D/g, '').length} 位）` : `Please enter a 10-digit phone number (${phone.replace(/\D/g, '').length} digits entered)`}
+                  </p>
+                )}
               </div>
 
               <div>

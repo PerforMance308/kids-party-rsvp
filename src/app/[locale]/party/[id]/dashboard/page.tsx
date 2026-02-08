@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatPhoneDisplay } from '@/lib/utils'
 import { useLanguage, useTranslations, useLocale } from '@/contexts/LanguageContext'
 import InvitationCard from '@/components/InvitationCard'
 import TemplateSelector from '@/components/TemplateSelector'
@@ -15,7 +15,6 @@ import { toast } from '@/lib/toast'
 
 interface Guest {
   id: string
-  parentName: string
   childName: string
   email: string
   phone?: string
@@ -153,12 +152,11 @@ export default function PartyDashboard() {
   const exportToCSV = () => {
     if (!party) return
 
-    const headers = ['Parent Name', 'Child Name', 'Email', 'Phone', 'Status', 'Children', 'Parent Staying', 'Allergies', 'Message']
+    const headers = ['Child Name', 'Email', 'Phone', 'Status', 'Children', 'Parent Staying', 'Allergies', 'Message']
     const rows = party.guests.map(guest => [
-      guest.parentName,
       guest.childName,
       guest.email,
-      guest.phone || '',
+      guest.phone ? formatPhoneDisplay(guest.phone) : '',
       guest.rsvp?.status || 'No response',
       guest.rsvp?.numChildren || '',
       guest.rsvp?.parentStaying ? 'Yes' : 'No',
@@ -494,8 +492,7 @@ export default function PartyDashboard() {
                       <div key={guest.id} className="border border-neutral-200 rounded-lg p-3">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <div className="font-medium text-neutral-900">{guest.parentName}</div>
-                            <div className="text-xs text-neutral-500">{guest.childName}</div>
+                            <div className="font-medium text-neutral-900">{guest.childName}</div>
                           </div>
                           <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${guest.rsvp?.status === 'YES'
                             ? 'bg-green-100 text-green-700'
@@ -540,14 +537,13 @@ export default function PartyDashboard() {
                           <tr key={guest.id} className="hover:bg-neutral-50">
                             <td className="px-4 py-3">
                               <div>
-                                <div className="font-medium text-neutral-900">{guest.parentName}</div>
-                                <div className="text-sm text-neutral-600">{guest.childName}</div>
+                                <div className="font-medium text-neutral-900">{guest.childName}</div>
                               </div>
                             </td>
                             <td className="px-4 py-3">
                               <div>
                                 <div className="text-sm text-neutral-900">{guest.email}</div>
-                                {guest.phone && <div className="text-sm text-neutral-600">{guest.phone}</div>}
+                                {guest.phone && <div className="text-sm text-neutral-600">{formatPhoneDisplay(guest.phone)}</div>}
                               </div>
                             </td>
                             <td className="px-4 py-3">

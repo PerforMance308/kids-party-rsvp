@@ -123,6 +123,35 @@ export function getRsvpStatusText(status?: string, locale: string = 'en'): strin
 }
 
 /**
+ * Format phone number as user types: (XXX) XXX-XXXX
+ * Only formats 10-digit North American numbers, leaves others as-is
+ */
+export function formatPhoneInput(value: string): string {
+  // Strip everything except digits
+  const digits = value.replace(/\D/g, '')
+
+  if (digits.length === 0) return ''
+  if (digits.length <= 3) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`
+}
+
+/**
+ * Format a stored phone number for display: (XXX) XXX-XXXX
+ */
+export function formatPhoneDisplay(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+  }
+  if (digits.length === 11 && digits[0] === '1') {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
+  }
+  // Return as-is if not a standard NA number
+  return phone
+}
+
+/**
  * Get color classes for days until event
  */
 export function getDaysUntilColor(days: number): string {

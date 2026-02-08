@@ -186,7 +186,6 @@ export function generateRSVPConfirmationEmail(
     notes?: string
   },
   guestData: {
-    parentName: string
     childName: string
     status: string
     numChildren: number
@@ -227,7 +226,7 @@ export function generateRSVPConfirmationEmail(
       ? `<p>Thank you for letting us know you might be able to make it. We hope to see <strong>${guestData.childName}</strong> there!</p>`
       : `<p>Thank you for letting us know. We'll miss <strong>${guestData.childName}</strong> but hope to celebrate together next time!</p>`
 
-  const plainText = `Hi ${guestData.parentName},
+  const plainText = `Hi,
 
 Thank you for your RSVP to ${partyData.childName}'s ${partyData.childAge}th birthday party!
 
@@ -246,7 +245,7 @@ Best regards,
 Kid Party RSVP Team`
 
   const htmlContent = `
-    <p class="greeting">Hi ${guestData.parentName},</p>
+    <p class="greeting">Hi,</p>
     <p>Thank you for your RSVP to <strong>${partyData.childName}'s ${partyData.childAge}th birthday party</strong>!</p>
     
     <div style="font-size: 1.2em; padding: 15px; background: #fefce8; border-radius: 8px; text-align: center; margin: 20px 0;">
@@ -284,7 +283,6 @@ export function generateHostRSVPNotificationEmail(
     location: string
   },
   guestData: {
-    parentName: string
     childName: string
     status: string
     numChildren: number
@@ -314,7 +312,7 @@ export function generateHostRSVPNotificationEmail(
   const content = {
     zh: {
       statusText: { 'YES': '接受邀请', 'NO': '无法参加', 'MAYBE': '可能参加' },
-      subject: `新的RSVP回复：${guestData.parentName} ${{'YES': '接受邀请', 'NO': '无法参加', 'MAYBE': '可能参加'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}的生日派对`,
+      subject: `新的RSVP回复：${guestData.childName} ${{'YES': '接受邀请', 'NO': '无法参加', 'MAYBE': '可能参加'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}的生日派对`,
       greeting: '您好！',
       received: '您收到了一个新的RSVP回复：',
       guest: '客人：',
@@ -341,7 +339,7 @@ export function generateHostRSVPNotificationEmail(
     },
     en: {
       statusText: { 'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe' },
-      subject: `New RSVP: ${guestData.parentName} ${{'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}'s Birthday`,
+      subject: `New RSVP: ${guestData.childName} ${{'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}'s Birthday`,
       greeting: 'Hello!',
       received: 'You received a new RSVP response:',
       guest: 'Guest:',
@@ -375,7 +373,7 @@ export function generateHostRSVPNotificationEmail(
 
 ${t.received}
 
-👥 ${t.guest} ${guestData.parentName} ${locale === 'zh' ? '和' : 'and'} ${guestData.childName}
+👥 ${t.guest} ${guestData.childName}
 📝 ${t.response} ${statusEmoji[guestData.status as keyof typeof statusEmoji]} ${t.statusText[guestData.status as keyof typeof statusEmoji]}
 
 ${guestData.status === 'YES' ? `
@@ -384,7 +382,7 @@ ${guestData.status === 'YES' ? `
 • ${t.parent} ${guestData.parentStaying ? t.willStay : t.dropOff}
 ${guestData.allergies ? `• ⚠️ ${t.allergies} ${guestData.allergies}` : ''}
 ` : guestData.status === 'MAYBE' ? `
-🤔 ${guestData.parentName} ${t.maybeText}
+🤔 ${guestData.childName} ${t.maybeText}
 ` : `
 😢 ${t.sorryText} ${guestData.childName} ${t.cannotAttend}
 `}${guestData.message ? `
@@ -403,7 +401,7 @@ ${t.footer}`
 
     <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0; font-size: 1.1em;">
-        <strong>👥 ${t.guest}</strong> ${guestData.parentName} ${locale === 'zh' ? '和' : 'and'} ${guestData.childName}<br>
+        <strong>👥 ${t.guest}</strong> ${guestData.childName}<br>
         <strong>📝 ${t.response}</strong> ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <span style="color: ${guestData.status === 'YES' ? '#059669' : guestData.status === 'NO' ? '#dc2626' : '#d97706'};">${t.statusText[guestData.status as keyof typeof statusEmoji]}</span>
       </p>
     </div>
@@ -449,7 +447,6 @@ export function generateReminderEmail(
     rsvpUrl: string
   },
   guestData: {
-    parentName: string
     childName: string
   },
   reminderType: 'SEVEN_DAYS' | 'TWO_DAYS' | 'SAME_DAY'
@@ -475,7 +472,7 @@ export function generateReminderEmail(
     ? `Today: ${partyData.childName}'s Birthday Party!`
     : `Reminder: ${partyData.childName}'s Party in ${timeMap[reminderType]}`
 
-  const plainText = `Hi ${guestData.parentName},
+  const plainText = `Hi,
 
 This is a friendly reminder about ${partyData.childName}'s ${partyData.childAge}th birthday party!
 
@@ -492,7 +489,7 @@ Best regards,
 Kid Party RSVP Team`
 
   const htmlContent = `
-    <p class="greeting">Hi ${guestData.parentName},</p>
+    <p class="greeting">Hi,</p>
     <p>This is a friendly reminder about <strong>${partyData.childName}'s ${partyData.childAge}th birthday party</strong>!</p>
     
     <div class="details-card">
@@ -530,7 +527,6 @@ export function generatePartyUpdateEmail(
     publicRsvpToken: string
   },
   guestData: {
-    parentName: string
     childName: string
   },
   changes: {
@@ -559,7 +555,7 @@ export function generatePartyUpdateEmail(
   if (changes.childName) changesList.push('🎂 Child\'s name')
   if (changes.childAge) changesList.push('🎈 Age')
 
-  const plainText = `Hi ${guestData.parentName},
+  const plainText = `Hi,
 
 We have some important updates for ${partyData.childName}'s ${partyData.childAge}th birthday party!
 
@@ -580,7 +576,7 @@ Best regards,
 Kid Party RSVP Team`
 
   const htmlContent = `
-    <p class="greeting">Hi ${guestData.parentName},</p>
+    <p class="greeting">Hi,</p>
     <p>We have some <strong>important updates</strong> for ${partyData.childName}'s ${partyData.childAge}th birthday party!</p>
     
     <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 20px; margin: 20px 0;">
@@ -613,13 +609,12 @@ Kid Party RSVP Team`
 
 export async function sendPartyUpdateEmail(
   email: string,
-  parentName: string,
   partyData: any,
   changes: any
 ) {
   const emailContent = generatePartyUpdateEmail(
     partyData,
-    { parentName, childName: 'your child' },
+    { childName: 'your child' },
     changes
   )
 
@@ -714,7 +709,6 @@ export function generatePhotoSharingAvailableEmail(
     publicRsvpToken: string
   },
   guestData: {
-    parentName: string
     childName: string
   }
 ) {
@@ -733,7 +727,7 @@ export function generatePhotoSharingAvailableEmail(
 
   const subject = `📷 Share Your Photos: ${partyData.childName}'s Birthday Party Memories!`
 
-  const plainText = `Hi ${guestData.parentName},
+  const plainText = `Hi,
 
 Hope ${partyData.childName}'s ${partyData.childAge}th birthday party was amazing! 🎉
 
@@ -760,7 +754,7 @@ Best regards,
 Kid Party RSVP Team`
 
   const htmlContent = `
-    <p class="greeting">Hi ${guestData.parentName},</p>
+    <p class="greeting">Hi,</p>
     <p>Hope <strong>${partyData.childName}'s ${partyData.childAge}th birthday party</strong> was amazing! 🎉</p>
     
     <p>We know you probably took some wonderful photos during the celebration, and we'd love for everyone to share their memories together.</p>

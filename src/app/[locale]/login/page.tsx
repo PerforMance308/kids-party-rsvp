@@ -176,7 +176,7 @@ function LoginForm() {
             </button>
             <div className="text-center mt-2">
               <Link href={`/${locale}/login/forgot-password`} className="text-sm text-primary-600 hover:text-primary-700">
-                Forgot password?
+                {t('login.forgotPassword')}
               </Link>
             </div>
           </form>

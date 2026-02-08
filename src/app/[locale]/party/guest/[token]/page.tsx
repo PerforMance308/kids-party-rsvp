@@ -33,7 +33,6 @@ interface RSVP {
 
 interface Guest {
   id: string
-  parentName: string
   childName: string
   email: string
   phone?: string
@@ -412,10 +411,7 @@ export default function GuestPartyPage() {
                   <div key={guest.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                     <div>
                       <div className="font-medium text-neutral-900">
-                        {guest.parentName}
-                      </div>
-                      <div className="text-sm text-neutral-600">
-                        with {guest.childName}
+                        {guest.childName}
                       </div>
                     </div>
                     {guest.rsvp && (

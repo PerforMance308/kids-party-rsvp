@@ -48,7 +48,6 @@ export async function GET(request: NextRequest) {
       return {
         id: guest.id,
         partyId: guest.partyId,
-        parentName: guest.parentName,
         childName: guest.childName,
         email: guest.email,
         phone: guest.phone,

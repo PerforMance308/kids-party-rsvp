@@ -143,6 +143,7 @@ const translations = {
     'login.noAccount': '还没有账户？',
     'login.orContinueWith': '或者使用邮箱继续',
     'login.invalidCredentials': '邮箱或密码错误',
+    'login.forgotPassword': '忘记密码？',
 
     // 注册页面
     'register.title': '创建账户',
@@ -456,6 +457,7 @@ const translations = {
     'login.noAccount': 'Don\'t have an account?',
     'login.orContinueWith': 'Or continue with email',
     'login.invalidCredentials': 'Invalid email or password',
+    'login.forgotPassword': 'Forgot password?',
 
     // 注册页面
     'register.title': 'Create Account',

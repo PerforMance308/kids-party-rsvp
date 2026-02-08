@@ -177,7 +177,6 @@ export async function PUT(
           try {
             await sendPartyUpdateEmail(
               guest.email,
-              guest.parentName || 'Guest',
               updatedParty,
               importantChanges
             )

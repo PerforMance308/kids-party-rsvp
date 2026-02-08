@@ -51,7 +51,6 @@ export async function GET(
       })
       if (guest?.rsvp) {
         existingRsvp = {
-          parentName: guest.parentName,
           childName: guest.childName,
           childId: guest.childId,
           phone: guest.phone,
@@ -142,7 +141,6 @@ export async function POST(
 
     // Validate and sanitize input - no email needed since user is authenticated
     const validatedData = {
-      parentName: sanitizeInput(body.parentName || ''),
       childName: sanitizeInput(body.childName || ''),
       childId: body.childId ? sanitizeInput(body.childId) : undefined,
       phone: body.phone ? sanitizeInput(body.phone) : undefined,
@@ -154,7 +152,6 @@ export async function POST(
     }
 
     const {
-      parentName,
       childName,
       childId,
       phone,
@@ -184,7 +181,6 @@ export async function POST(
         await prisma.guest.update({
           where: { id: existingGuest.id },
           data: {
-            parentName,
             childName,
             childId: childId || null,
             phone: phone || null,
@@ -225,7 +221,6 @@ export async function POST(
       const newGuest = await prisma.guest.create({
         data: {
           partyId: party.id,
-          parentName: parentName || 'Anonymous',
           childName: childName || 'Anonymous',
           childId: childId || null,
           email: user?.email || `anonymous-${Date.now()}@no-email.com`, // Generate a unique email for anonymous guests
@@ -262,7 +257,6 @@ export async function POST(
             location: party.location
           },
           {
-            parentName,
             childName,
             status,
             numChildren,
@@ -302,7 +296,7 @@ export async function POST(
             await prisma.contact.create({
               data: {
                 userId: party.userId,
-                name: parentName,
+                name: childName,
                 childName: childName,
                 email: user.email,
                 phone: phone || null,

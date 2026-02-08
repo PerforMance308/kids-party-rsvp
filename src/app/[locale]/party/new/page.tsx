@@ -8,7 +8,7 @@ import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 interface Contact {
   id: string
-  parentName: string
+  name: string
   childName: string
   email: string
   phone?: string
@@ -183,8 +183,7 @@ export default function NewPartyPage() {
                   },
                   body: JSON.stringify({
                     partyId: party.id,
-                    parentName: contact.parentName,
-                    childName: contact.childName,
+                    childName: contact.childName || contact.name,
                     email: contact.email,
                     phone: contact.phone,
                   }),

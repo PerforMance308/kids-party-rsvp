@@ -67,7 +67,6 @@ export async function schedulePhotoSharingNotifications(partyId: string) {
           publicRsvpToken: party.publicRsvpToken
         },
         {
-          parentName: guest.parentName,
           childName: guest.childName
         }
       )

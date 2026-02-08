@@ -37,7 +37,6 @@ export const legacyPartySchema = z.object({
 })
 
 export const rsvpSchema = z.object({
-  parentName: z.string().min(1, 'Parent name is required'),
   childName: z.string().min(1, 'Child name is required'),
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),

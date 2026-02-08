@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { partyId, parentName, childName, email, phone } = body
+    const { partyId, childName, email, phone } = body
 
     // Verify party belongs to user
     const party = await prisma.party.findFirst({
@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
     const guest = await prisma.guest.create({
       data: {
         partyId,
-        parentName,
         childName,
         email,
         phone: phone || null,

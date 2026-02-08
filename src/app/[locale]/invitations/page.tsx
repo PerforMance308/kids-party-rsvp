@@ -10,7 +10,6 @@ import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageCont
 interface Invitation {
   id: string
   partyId: string
-  parentName: string
   childName: string
   email: string
   phone?: string

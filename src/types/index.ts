@@ -11,7 +11,6 @@ export interface CreatePartyInput {
 }
 
 export interface RSVPInput {
-  parentName: string
   childName: string
   email: string
   phone?: string

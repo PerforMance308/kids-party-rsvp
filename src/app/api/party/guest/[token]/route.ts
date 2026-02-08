@@ -98,7 +98,7 @@ export async function GET(
           rsvp: true
         },
         orderBy: {
-          parentName: 'asc'
+          childName: 'asc'
         }
       })
     }
@@ -140,7 +140,6 @@ export async function GET(
       myRSVP: myGuest.rsvp,
       guests: guests.map(guest => ({
         id: guest.id,
-        parentName: guest.parentName,
         childName: guest.childName,
         email: guest.email,
         phone: guest.phone,
