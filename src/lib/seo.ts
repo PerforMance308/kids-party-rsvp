@@ -193,11 +193,6 @@ export function generateOrganizationSchema() {
     url: SITE_URL,
     logo: `${SITE_URL}/logo.png`,
     description: 'Easy kids birthday party invitations and RSVP management platform',
-    sameAs: [
-      'https://twitter.com/kidpartyrsvp',
-      'https://facebook.com/kidpartyrsvp',
-      'https://instagram.com/kidpartyrsvp',
-    ],
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
@@ -214,14 +209,6 @@ export function generateWebsiteSchema() {
     url: SITE_URL,
     description: 'Create beautiful digital invitations for kids birthday parties with QR code RSVPs',
     inLanguage: ['en', 'zh'],
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
   }
 }
 
@@ -238,13 +225,6 @@ export function generateSoftwareApplicationSchema() {
       priceCurrency: 'USD',
     },
     description: 'Free kids birthday party invitation and RSVP management tool',
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '150',
-      bestRating: '5',
-      worstRating: '1',
-    },
     featureList: [
       'Digital party invitations',
       'QR code RSVPs',
