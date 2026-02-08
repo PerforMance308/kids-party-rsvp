@@ -2,12 +2,27 @@ import { NextRequest } from 'next/server'
 
 // Rate limiting store (in production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+let lastCleanup = Date.now()
+const CLEANUP_INTERVAL = 60000 // Clean up expired entries every 60 seconds
+
+function cleanupExpiredEntries() {
+  const now = Date.now()
+  if (now - lastCleanup < CLEANUP_INTERVAL) return
+  lastCleanup = now
+  for (const [key, record] of rateLimitStore) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key)
+    }
+  }
+}
 
 export function rateLimit(
   identifier: string,
   maxRequests: number = 10,
   windowMs: number = 60000 // 1 minute
 ): boolean {
+  cleanupExpiredEntries()
+
   const now = Date.now()
   const record = rateLimitStore.get(identifier)
 

@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth-config'
+import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    // In a real app, you'd want to restrict this to admin users only
-    // For demo purposes, we'll allow authenticated users to see notifications
-    const session = await getServerSession(authOptions)
-    if (!session || !session.user?.id) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    const adminCheck = await requireAdmin()
+    if (!adminCheck.authorized) {
+      return adminCheck.response!
     }
 
     // Get all notifications, ordered by creation date

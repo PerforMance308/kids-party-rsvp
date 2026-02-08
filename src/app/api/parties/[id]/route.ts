@@ -132,7 +132,7 @@ export async function PUT(
       location: body.location,
       theme: body.theme || null,
       notes: body.notes || null,
-      template: body.template || 'free',
+      template: body.template !== undefined ? body.template : existingParty.template,
       targetAge: body.targetAge != null ? parseInt(body.targetAge) : null,
     }
 

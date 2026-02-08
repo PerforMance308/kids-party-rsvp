@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
+import { requireAdmin } from '@/lib/admin'
 import { sendEmail } from '@/lib/email'
 import { testEmailProviders } from '@/lib/email-providers'
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify user authentication
-    const session = await getServerSession(authOptions)
-    if (!session || !session.user?.email) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    const adminCheck = await requireAdmin()
+    if (!adminCheck.authorized) {
+      return adminCheck.response!
     }
 
+    const session = (await getServerSession(authOptions))!
+
     const { testEmail } = await request.json()
-    const emailToTest = testEmail || session.user.email
+    const emailToTest = testEmail || session.user?.email
 
     console.log(`🧪 Testing email send to: ${emailToTest}`)
 
@@ -30,7 +32,7 @@ If you received this email, your email configuration is working correctly! 🎉
 Test details:
 • Sent to: ${emailToTest}
 • Time: ${new Date().toISOString()}
-• From: ${session.user.name || session.user.email}
+• From: ${session.user?.name || session.user?.email}
 
 You can now use all email features:
 • RSVP confirmations
@@ -58,7 +60,11 @@ Kid Party RSVP System`
 
 export async function GET(request: NextRequest) {
   try {
-    // Test all email providers
+    const adminCheck = await requireAdmin()
+    if (!adminCheck.authorized) {
+      return adminCheck.response!
+    }
+
     const results = await testEmailProviders()
 
     return NextResponse.json({

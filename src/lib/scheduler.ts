@@ -63,9 +63,10 @@ export async function processReminders() {
 
     let reminderType: 'SEVEN_DAYS' | 'TWO_DAYS' | 'SAME_DAY' | null = null
 
-    if (daysUntilEvent === 7) {
+    // Use ranges to avoid missing reminders due to timing of cron runs
+    if (daysUntilEvent >= 6 && daysUntilEvent <= 7) {
       reminderType = 'SEVEN_DAYS'
-    } else if (daysUntilEvent === 2) {
+    } else if (daysUntilEvent >= 1 && daysUntilEvent <= 2) {
       reminderType = 'TWO_DAYS'
     } else if (daysUntilEvent === 0) {
       reminderType = 'SAME_DAY'

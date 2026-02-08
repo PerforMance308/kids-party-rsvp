@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { 
+import { requireAdmin } from '@/lib/admin'
+import {
   processPendingEmails,
-  scheduleBirthdayReminders 
+  scheduleBirthdayReminders
 } from '@/lib/notification-scheduler'
 
-// This endpoint would be called by a cron job in production
-// For development/demo, it can be called manually
 export async function POST(request: NextRequest) {
   try {
-    // In production, you'd want to add authentication here
-    // For demo purposes, we'll allow it without auth
-    
+    const adminCheck = await requireAdmin()
+    if (!adminCheck.authorized) {
+      return adminCheck.response!
+    }
+
     console.log('🚀 Manual notification trigger started...')
 
     // Process pending emails
@@ -44,6 +45,11 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
+  const adminCheck = await requireAdmin()
+  if (!adminCheck.authorized) {
+    return adminCheck.response!
+  }
+
   return NextResponse.json({
     message: 'Manual notification trigger endpoint',
     usage: 'POST to this endpoint to manually trigger notification processing',

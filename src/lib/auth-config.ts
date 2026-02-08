@@ -12,7 +12,6 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: 'credentials',
@@ -26,15 +25,16 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
+          where: { email: credentials.email.toLowerCase() }
         })
 
-        if (!user || !user.passwordHash) {
-          return null
-        }
+        // Always run bcrypt compare to prevent timing attacks that reveal
+        // whether an email exists. Use a dummy hash when user is not found.
+        const dummyHash = '$2a$12$000000000000000000000000000000000000000000000000000000'
+        const hashToCompare = user?.passwordHash || dummyHash
+        const isValidPassword = await comparePassword(credentials.password, hashToCompare)
 
-        const isValidPassword = await comparePassword(credentials.password, user.passwordHash)
-        if (!isValidPassword) {
+        if (!user || !user.passwordHash || !isValidPassword) {
           return null
         }
 
@@ -49,7 +49,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 60 * 60, // 1 hour
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   cookies: {
     sessionToken: {
@@ -59,7 +59,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60, // 1 hour
+        maxAge: 7 * 24 * 60 * 60, // 7 days
       },
     },
   },
@@ -86,19 +86,31 @@ export const authOptions: NextAuthOptions = {
       return true
     },
     jwt: async ({ token, user }) => {
-      // Store user ID in token for session access
+      // Store user ID in token on initial sign-in
       if (user) {
         token.userId = user.id
+        // Fetch role and emailVerified on sign-in
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { emailVerified: true, role: true }
+        })
+        token.emailVerified = dbUser?.emailVerified
+        token.role = dbUser?.role || 'USER'
+        token.lastRefresh = Date.now()
+        return token
       }
 
-      // Always fetch latest user data for the token if we have a userId
-      if (token.userId) {
+      // Refresh user data every 5 minutes instead of every request
+      const REFRESH_INTERVAL = 5 * 60 * 1000
+      const lastRefresh = (token.lastRefresh as number) || 0
+      if (token.userId && Date.now() - lastRefresh > REFRESH_INTERVAL) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.userId as string },
           select: { emailVerified: true, role: true }
         })
         token.emailVerified = dbUser?.emailVerified
         token.role = dbUser?.role || 'USER'
+        token.lastRefresh = Date.now()
       }
 
       return token

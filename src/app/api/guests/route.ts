@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
-import { verifyToken } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('token')?.value
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const user = verifyToken(token)
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
+    const user = { id: session.user.id }
 
     const body = await request.json()
     const { partyId, childName, email, phone } = body

@@ -37,12 +37,12 @@ export const legacyPartySchema = z.object({
 })
 
 export const rsvpSchema = z.object({
-  childName: z.string().min(1, 'Child name is required'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().optional(),
+  childName: z.string().min(1, 'Child name is required').max(100, 'Child name is too long'),
+  email: z.string().email('Invalid email address').max(254, 'Email is too long'),
+  phone: z.string().max(20, 'Phone number is too long').optional(),
   status: z.enum(['YES', 'NO', 'MAYBE']),
-  numChildren: z.number().min(0, 'Number of children must be 0 or more'),
+  numChildren: z.number().min(0, 'Number of children must be 0 or more').max(20, 'Too many children'),
   parentStaying: z.boolean(),
-  allergies: z.string().optional(),
-  message: z.string().optional(),
+  allergies: z.string().max(500, 'Allergies text is too long').optional(),
+  message: z.string().max(1000, 'Message is too long').optional(),
 })
