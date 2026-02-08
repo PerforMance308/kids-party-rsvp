@@ -139,6 +139,18 @@ export const PAGE_METADATA = {
   },
 }
 
+// Page key to URL path mapping
+const PAGE_PATHS: Record<keyof typeof PAGE_METADATA, string> = {
+  home: '',
+  login: '/login',
+  register: '/register',
+  dashboard: '/dashboard',
+  newParty: '/party/new',
+  terms: '/terms',
+  privacy: '/privacy',
+  contact: '/contact',
+}
+
 // Generate metadata for a specific page
 export function generatePageMetadata(
   page: keyof typeof PAGE_METADATA,
@@ -146,6 +158,8 @@ export function generatePageMetadata(
 ): Metadata {
   const pageData = PAGE_METADATA[page]?.[locale] || PAGE_METADATA[page]?.en
   const keywords = SEO_KEYWORDS[locale] || SEO_KEYWORDS.en
+  const pagePath = PAGE_PATHS[page] || ''
+  const pageUrl = `${SITE_URL}/${locale}${pagePath}`
 
   return {
     title: pageData?.title,
@@ -154,7 +168,7 @@ export function generatePageMetadata(
     openGraph: {
       title: pageData?.title,
       description: pageData?.description,
-      url: `${SITE_URL}/${locale}`,
+      url: pageUrl,
       siteName: SITE_NAME,
       locale: locale === 'zh' ? 'zh_CN' : 'en_US',
       type: 'website',
@@ -174,11 +188,11 @@ export function generatePageMetadata(
       images: [`${SITE_URL}/logo.png`],
     },
     alternates: {
-      canonical: `${SITE_URL}/${locale}`,
+      canonical: pageUrl,
       languages: {
-        'en': `${SITE_URL}/en`,
-        'zh': `${SITE_URL}/zh`,
-        'x-default': `${SITE_URL}/en`,
+        'en': `${SITE_URL}/en${pagePath}`,
+        'zh': `${SITE_URL}/zh${pagePath}`,
+        'x-default': `${SITE_URL}/en${pagePath}`,
       },
     },
   }

@@ -2,6 +2,22 @@ import { MetadataRoute } from 'next'
 import { SITE_URL } from '@/lib/seo'
 
 export default function robots(): MetadataRoute.Robots {
+  const locales = ['en', 'zh']
+  // Private paths that should not be indexed (need locale prefix to match actual URLs)
+  const privatePaths = [
+    '/dashboard',
+    '/party/',
+    '/children',
+    '/invitations',
+    '/payment/',
+    '/verify-result',
+    '/admin/',
+  ]
+  // Generate disallow rules with locale prefixes so they actually match real URLs
+  const localizedDisallows = locales.flatMap(locale =>
+    privatePaths.map(path => `/${locale}${path}`)
+  )
+
   return {
     rules: [
       {
@@ -9,31 +25,11 @@ export default function robots(): MetadataRoute.Robots {
         allow: ['/en/', '/zh/'],
         disallow: [
           '/api/',
-          '/dashboard/',
-          '/party/',
-          '/children/',
-          '/invitations/',
-          '/payment/',
-          '/*.json$',
-          '/verify-result/',
-          '/rsvp/', // Redirect-only path, use /en/rsvp/ or /zh/rsvp/ instead
-        ],
-      },
-      {
-        userAgent: 'Googlebot',
-        allow: ['/en/', '/zh/'],
-        disallow: [
-          '/api/',
-          '/dashboard/',
-          '/party/',
-          '/children/',
-          '/invitations/',
-          '/payment/',
-          '/rsvp/', // Redirect-only path
+          '/rsvp/',  // Redirect-only path without locale
+          ...localizedDisallows,
         ],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
-    host: SITE_URL,
   }
 }

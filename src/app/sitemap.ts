@@ -8,7 +8,6 @@ const pageConfig = {
   '/contact': { priority: 0.7, changeFrequency: 'monthly' as const },
   '/terms': { priority: 0.3, changeFrequency: 'monthly' as const },
   '/privacy': { priority: 0.3, changeFrequency: 'monthly' as const },
-  '/login': { priority: 0.3, changeFrequency: 'monthly' as const },   // login - low priority for SEO
 }
 
 // Template pages - SEO important

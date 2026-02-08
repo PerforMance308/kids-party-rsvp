@@ -23,8 +23,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, { status: 308 })
   }
 
+  // Detect locale from pathname for html lang attribute
+  const pathnameLocale = pathname.split('/')[1]
+  const currentLocale = ['zh', 'en'].includes(pathnameLocale) ? pathnameLocale : 'en'
+
+  // Set locale as request header so Server Components can read it via headers()
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-locale', currentLocale)
+
   // Security headers
-  const response = NextResponse.next()
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  })
 
   // Add security headers
   response.headers.set('X-Content-Type-Options', 'nosniff')
@@ -84,9 +94,7 @@ export async function middleware(request: NextRequest) {
   const token = await getToken({ req: request })
   const user = token ? { userId: token.userId as string, email: token.email as string } : null
 
-  // Detect locale from pathname
-  const pathnameLocale = pathname.split('/')[1]
-  const currentLocale = ['zh', 'en'].includes(pathnameLocale) ? pathnameLocale : 'zh'
+  // Use locale already detected above
 
   if (isProtectedRoute && !user) {
     const loginUrl = new URL(`/${currentLocale}/login`, request.url)
