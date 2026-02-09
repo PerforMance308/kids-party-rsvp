@@ -9,7 +9,7 @@ export default function AdminPage() {
   const locale = useLocale()
 
   useEffect(() => {
-    router.replace(`/${locale}/admin/templates`)
+    router.replace(`/${locale}/admin/overview` as const)
   }, [router, locale])
 
   return (

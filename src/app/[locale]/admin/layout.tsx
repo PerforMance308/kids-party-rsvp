@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { useLocale } from '@/contexts/LanguageContext'
@@ -9,6 +9,7 @@ import { useLocale } from '@/contexts/LanguageContext'
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
   const locale = useLocale()
 
   useEffect(() => {
@@ -42,8 +43,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Link>
             <nav className="flex gap-4">
               <Link
+                href={`/${locale}/admin/overview` as const}
+                className={`font-medium ${pathname?.includes('/admin/overview') ? 'text-gray-900 underline underline-offset-4' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                Overview
+              </Link>
+              <Link
                 href={`/${locale}/admin/templates`}
-                className="text-gray-600 hover:text-gray-900 font-medium"
+                className={`font-medium ${pathname?.includes('/admin/templates') ? 'text-gray-900 underline underline-offset-4' : 'text-gray-600 hover:text-gray-900'}`}
               >
                 Templates
               </Link>

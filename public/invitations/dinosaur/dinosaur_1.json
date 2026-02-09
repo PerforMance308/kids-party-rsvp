@@ -5,9 +5,9 @@
     1400
   ],
   "pricing": {
-    "price": 1.39,
+    "price": 2.39,
     "currency": "USD",
-    "isFree": true,
+    "isFree": false,
     "freeUntil": "2026-01-25T21:41:00.000Z"
   },
   "elements": [
