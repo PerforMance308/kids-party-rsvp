@@ -2,17 +2,26 @@
 
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { useLocale } from '@/contexts/LanguageContext'
 
 function VerifyResultContent() {
     const searchParams = useSearchParams()
     const locale = useLocale()
+    const { update } = useSession()
 
     const status = searchParams.get('status')
     const reason = searchParams.get('reason')
 
     const isSuccess = status === 'success'
+
+    // Force session refresh so emailVerified updates immediately
+    useEffect(() => {
+        if (isSuccess) {
+            update()
+        }
+    }, [isSuccess])
 
     const getErrorMessage = () => {
         switch (reason) {
@@ -60,10 +69,10 @@ function VerifyResultContent() {
 
                 <div className="space-y-3">
                     <Link
-                        href={`/${locale}/login`}
+                        href={isSuccess ? `/${locale}/dashboard` : `/${locale}/login`}
                         className="btn btn-primary w-full"
                     >
-                        Sign In
+                        {isSuccess ? (locale === 'zh' ? '进入主页' : 'Go to Dashboard') : 'Sign In'}
                     </Link>
 
                     {!isSuccess && (
@@ -71,7 +80,7 @@ function VerifyResultContent() {
                             href={`/${locale}`}
                             className="btn btn-secondary w-full"
                         >
-                            Go to Home
+                            {locale === 'zh' ? '回到首页' : 'Go to Home'}
                         </Link>
                     )}
                 </div>

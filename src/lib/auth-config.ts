@@ -85,7 +85,7 @@ export const authOptions: NextAuthOptions = {
       }
       return true
     },
-    jwt: async ({ token, user }) => {
+    jwt: async ({ token, user, trigger }) => {
       // Store user ID in token on initial sign-in
       if (user) {
         token.userId = user.id
@@ -100,10 +100,13 @@ export const authOptions: NextAuthOptions = {
         return token
       }
 
-      // Refresh user data every 5 minutes instead of every request
+      // Force refresh when session.update() is called (e.g. after email verification)
+      const forceRefresh = trigger === 'update'
+
+      // Refresh user data every 5 minutes or on forced update
       const REFRESH_INTERVAL = 5 * 60 * 1000
       const lastRefresh = (token.lastRefresh as number) || 0
-      if (token.userId && Date.now() - lastRefresh > REFRESH_INTERVAL) {
+      if (token.userId && (forceRefresh || Date.now() - lastRefresh > REFRESH_INTERVAL)) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.userId as string },
           select: { emailVerified: true, role: true }
