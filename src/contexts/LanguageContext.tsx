@@ -371,6 +371,7 @@ const translations = {
     'auth.resendVerify': 'Resend verification email',
     'auth.sending': 'Sending...',
     'auth.sendFailed': 'Failed to send. Please try again later.',
+    'auth.emailAlreadyVerified': 'Your email is already verified!',
 
     // Dashboard
     'dashboard.title': 'My Dashboard',

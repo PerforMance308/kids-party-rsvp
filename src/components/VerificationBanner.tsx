@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface VerificationBannerProps {
@@ -8,8 +9,9 @@ interface VerificationBannerProps {
 }
 
 export default function VerificationBanner({ email }: VerificationBannerProps) {
-    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+    const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'already'>('idle')
     const { t } = useLanguage()
+    const { update } = useSession()
 
     const handleResend = async () => {
         setStatus('sending')
@@ -20,11 +22,28 @@ export default function VerificationBanner({ email }: VerificationBannerProps) {
             if (response.ok) {
                 setStatus('success')
             } else {
-                setStatus('error')
+                const data = await response.json().catch(() => ({}))
+                if (data.error === 'Email already verified') {
+                    setStatus('already')
+                    // Refresh session so banner disappears
+                    update()
+                } else {
+                    setStatus('error')
+                }
             }
         } catch (error) {
             setStatus('error')
         }
+    }
+
+    if (status === 'already') {
+        return (
+            <div className="bg-green-50 border-b border-green-200 py-3 px-4">
+                <div className="container mx-auto text-center text-sm text-green-700">
+                    <span>✅ {t('auth.emailAlreadyVerified') || 'Your email is already verified!'}</span>
+                </div>
+            </div>
+        )
     }
 
     if (status === 'success') {
