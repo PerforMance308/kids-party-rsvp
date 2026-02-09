@@ -152,9 +152,9 @@ function HeroSection({ locale, t }: { locale: string; t: Record<string, string> 
                   <span>Sunshine Park</span>
                 </div>
               </div>
-              <button className="w-full mt-4 bg-party-green text-white py-2.5 rounded-xl font-semibold text-sm">
+              <div className="w-full mt-4 bg-party-green text-white py-2.5 rounded-xl font-semibold text-sm text-center pointer-events-none select-none">
                 {locale === 'zh' ? '✓ 我们来！' : "✓ We'll be there!"}
-              </button>
+              </div>
             </motion.div>
           </motion.div>
         </div>
