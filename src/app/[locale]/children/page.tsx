@@ -319,7 +319,7 @@ export default function ChildrenPage() {
                 <div className="space-y-1.5 text-sm text-neutral-500 mb-4">
                   <p className="flex items-center gap-1.5">
                     <CakeIcon className="w-3.5 h-3.5" />
-                    {new Date(child.birthDate).toLocaleDateString()}
+                    {new Date(child.birthDate + 'T00:00:00').toLocaleDateString()}
                   </p>
                   {child.allergies && (
                     <p className="text-red-500 text-xs bg-red-50 px-2 py-1 rounded-lg">
