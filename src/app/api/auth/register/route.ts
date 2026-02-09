@@ -55,32 +55,31 @@ export async function POST(request: NextRequest) {
 
     console.log(`[AUTH] User created: ${email}, sending verification email...`)
 
-    // Generate Verification Token and Send Email
-    try {
-      const token = uuidv4()
-      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    // Send verification email in the background (don't block the response)
+    const token = uuidv4()
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-      await prisma.verificationToken.create({
-        data: {
-          identifier: email,
-          token,
-          expires
-        }
-      })
-
+    prisma.verificationToken.create({
+      data: {
+        identifier: email,
+        token,
+        expires
+      }
+    }).then(() => {
       const emailContent = generateVerificationEmail(email, token, 'en')
-      await sendEmail({
+      return sendEmail({
         to: email,
         subject: emailContent.subject,
         text: emailContent.text,
         html: emailContent.html
       })
+    }).then(() => {
       console.log(`✅ Verification email sent to ${email} upon registration`)
-    } catch (emailError) {
+    }).catch((emailError) => {
       console.error('[AUTH] Failed to send verification email on registration:', emailError)
-    }
+    })
 
-    // Return success without setting tokens - NextAuth will handle authentication
+    // Return success immediately - NextAuth will handle authentication
     return NextResponse.json({
       message: 'Registration successful',
       user: { id: user.id, email: user.email }
