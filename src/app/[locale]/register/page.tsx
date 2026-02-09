@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
@@ -16,6 +16,7 @@ function RegisterForm() {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [termsShake, setTermsShake] = useState(false)
   const [error, setError] = useState('')
+  const termsRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -35,6 +36,7 @@ function RegisterForm() {
 
   const triggerTermsShake = () => {
     setTermsShake(true)
+    termsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     setTimeout(() => setTermsShake(false), 600)
   }
 
@@ -75,10 +77,6 @@ function RegisterForm() {
   }
 
   const handleGoogleSignIn = async () => {
-    if (!agreedToTerms) {
-      triggerTermsShake()
-      return
-    }
     try {
       await signIn('google', { callbackUrl: redirectUrl || `/${locale}` })
     } catch {
@@ -157,44 +155,15 @@ function RegisterForm() {
           <h1 className="font-display text-2xl font-bold text-neutral-900 text-center mb-1">
             {t('register.title')}
           </h1>
-          <p className="text-neutral-500 text-center mb-6">
+          <p className="text-neutral-500 text-center mb-8">
             {locale === 'zh' ? '开始规划精彩派对' : 'Start planning amazing parties'}
           </p>
-
-          {/* Terms - above all sign-up methods */}
-          <motion.div
-            animate={termsShake ? { x: [0, -8, 8, -6, 6, -3, 3, 0] } : {}}
-            transition={{ duration: 0.5 }}
-            className={`flex items-start gap-2.5 p-3 rounded-xl border transition-colors mb-6 ${
-              termsShake ? 'bg-red-50 border-red-300' :
-              agreedToTerms ? 'bg-green-50 border-green-200' :
-              'bg-neutral-50 border-neutral-100'
-            }`}
-          >
-            <input
-              type="checkbox"
-              id="terms"
-              checked={agreedToTerms}
-              onChange={(e) => { setAgreedToTerms(e.target.checked); setError('') }}
-              className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
-            />
-            <label htmlFor="terms" className="text-sm text-neutral-600 cursor-pointer">
-              {locale === 'zh' ? '我同意' : 'I agree to the'}{' '}
-              <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline font-medium" target="_blank">
-                {locale === 'zh' ? '服务条款' : 'Terms'}
-              </Link>
-              {' '}{locale === 'zh' ? '和' : 'and'}{' '}
-              <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline font-medium" target="_blank">
-                {locale === 'zh' ? '隐私政策' : 'Privacy Policy'}
-              </Link>
-            </label>
-          </motion.div>
 
           {/* Google Sign Up */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center px-4 py-3 border border-neutral-200 rounded-xl bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm mb-6"
+            className="w-full flex items-center justify-center px-4 py-3 border border-neutral-200 rounded-xl bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -204,6 +173,16 @@ function RegisterForm() {
             </svg>
             {t('register.signUpWithGoogle')}
           </button>
+          <p className="text-xs text-neutral-400 text-center mt-2 mb-6">
+            {locale === 'zh' ? '点击注册即表示同意' : 'By signing up, you agree to our'}{' '}
+            <Link href={`/${locale}/terms`} className="text-primary-500 hover:underline" target="_blank">
+              {locale === 'zh' ? '服务条款' : 'Terms'}
+            </Link>
+            {' '}{locale === 'zh' ? '和' : 'and'}{' '}
+            <Link href={`/${locale}/privacy`} className="text-primary-500 hover:underline" target="_blank">
+              {locale === 'zh' ? '隐私政策' : 'Privacy Policy'}
+            </Link>
+          </p>
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
@@ -290,6 +269,36 @@ function RegisterForm() {
                 </div>
               )}
             </div>
+
+            {/* Terms checkbox for email registration */}
+            <motion.div
+              ref={termsRef}
+              animate={termsShake ? { x: [0, -8, 8, -6, 6, -3, 3, 0] } : {}}
+              transition={{ duration: 0.5 }}
+              className={`flex items-start gap-2.5 p-3 rounded-xl border transition-colors ${
+                termsShake ? 'bg-red-50 border-red-300' :
+                agreedToTerms ? 'bg-green-50/50 border-green-200' :
+                'bg-neutral-50 border-neutral-100'
+              }`}
+            >
+              <input
+                type="checkbox"
+                id="terms"
+                checked={agreedToTerms}
+                onChange={(e) => { setAgreedToTerms(e.target.checked); setError('') }}
+                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+              />
+              <label htmlFor="terms" className={`text-sm cursor-pointer ${termsShake ? 'text-red-600 font-medium' : 'text-neutral-600'}`}>
+                {locale === 'zh' ? '我同意' : 'I agree to the'}{' '}
+                <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline font-medium" target="_blank">
+                  {locale === 'zh' ? '服务条款' : 'Terms'}
+                </Link>
+                {' '}{locale === 'zh' ? '和' : 'and'}{' '}
+                <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline font-medium" target="_blank">
+                  {locale === 'zh' ? '隐私政策' : 'Privacy Policy'}
+                </Link>
+              </label>
+            </motion.div>
 
             {error && (
               <motion.div
