@@ -17,6 +17,7 @@ function RegisterForm() {
   const [error, setError] = useState('')
   const termsRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingStep, setLoadingStep] = useState<'register' | 'signin' | 'redirect' | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const locale = useLocale()
@@ -47,6 +48,7 @@ function RegisterForm() {
     }
     setIsLoading(true)
     setError('')
+    setLoadingStep('register')
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -54,6 +56,7 @@ function RegisterForm() {
         body: JSON.stringify({ email, password }),
       })
       if (response.ok) {
+        setLoadingStep('signin')
         const loginResult = await signIn('credentials', {
           email,
           password,
@@ -61,17 +64,21 @@ function RegisterForm() {
           callbackUrl: redirectUrl || '/',
         })
         if (loginResult?.ok) {
+          setLoadingStep('redirect')
           window.location.href = redirectUrl || `/${locale}`
+          return
         }
         return
       } else {
         const data = await response.json()
         setError(data.error || 'Registration failed')
+        setIsLoading(false)
+        setLoadingStep(null)
       }
     } catch {
       setError('An error occurred. Please try again.')
-    } finally {
       setIsLoading(false)
+      setLoadingStep(null)
     }
   }
 
@@ -304,9 +311,18 @@ function RegisterForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn btn-primary disabled:opacity-50"
+              className="w-full btn btn-primary disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isLoading ? t('register.creatingAccount') : t('register.signUp')}
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  {loadingStep === 'register'
+                    ? (locale === 'zh' ? '正在创建账号...' : 'Creating account...')
+                    : loadingStep === 'signin'
+                      ? (locale === 'zh' ? '正在登录...' : 'Signing in...')
+                      : (locale === 'zh' ? '正在跳转...' : 'Redirecting...')}
+                </>
+              ) : t('register.signUp')}
             </button>
           </form>
 
