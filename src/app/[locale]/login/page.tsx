@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn, getSession, useSession } from 'next-auth/react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 import { SparklesIcon, QrCodeIcon, UserGroupIcon } from '@heroicons/react/24/outline'
@@ -125,17 +124,6 @@ function LoginForm() {
         >
           {/* Mobile: gradient bar */}
           <div className="lg:hidden h-1.5 w-16 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full mb-8" />
-
-          <div className="flex justify-center mb-6">
-            <Image
-              src="/logo.png"
-              alt="Kid Party RSVP"
-              width={200}
-              height={50}
-              className="h-12 w-auto object-contain"
-              priority
-            />
-          </div>
 
           <h1 className="font-display text-2xl font-bold text-neutral-900 text-center mb-1">
             {t('login.title')}
