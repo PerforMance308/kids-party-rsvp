@@ -605,7 +605,7 @@ export default function PartyDashboard() {
       </div>
 
       {/* Mobile Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 px-4 py-3 lg:hidden safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 px-4 py-3 lg:hidden safe-area-bottom z-20">
         <div className="flex gap-3 max-w-lg mx-auto">
           <button
             onClick={copyRsvpLink}
