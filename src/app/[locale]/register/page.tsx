@@ -14,6 +14,7 @@ function RegisterForm() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [termsShake, setTermsShake] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -32,10 +33,15 @@ function RegisterForm() {
   }
   const strength = Object.values(checks).filter(Boolean).length
 
+  const triggerTermsShake = () => {
+    setTermsShake(true)
+    setTimeout(() => setTermsShake(false), 600)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!agreedToTerms) {
-      setError('Please agree to the Terms of Service and Privacy Policy')
+      triggerTermsShake()
       return
     }
     setIsLoading(true)
@@ -70,7 +76,7 @@ function RegisterForm() {
 
   const handleGoogleSignIn = async () => {
     if (!agreedToTerms) {
-      setError('Please agree to the Terms of Service and Privacy Policy')
+      triggerTermsShake()
       return
     }
     try {
@@ -151,9 +157,38 @@ function RegisterForm() {
           <h1 className="font-display text-2xl font-bold text-neutral-900 text-center mb-1">
             {t('register.title')}
           </h1>
-          <p className="text-neutral-500 text-center mb-8">
+          <p className="text-neutral-500 text-center mb-6">
             {locale === 'zh' ? '开始规划精彩派对' : 'Start planning amazing parties'}
           </p>
+
+          {/* Terms - above all sign-up methods */}
+          <motion.div
+            animate={termsShake ? { x: [0, -8, 8, -6, 6, -3, 3, 0] } : {}}
+            transition={{ duration: 0.5 }}
+            className={`flex items-start gap-2.5 p-3 rounded-xl border transition-colors mb-6 ${
+              termsShake ? 'bg-red-50 border-red-300' :
+              agreedToTerms ? 'bg-green-50 border-green-200' :
+              'bg-neutral-50 border-neutral-100'
+            }`}
+          >
+            <input
+              type="checkbox"
+              id="terms"
+              checked={agreedToTerms}
+              onChange={(e) => { setAgreedToTerms(e.target.checked); setError('') }}
+              className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
+            />
+            <label htmlFor="terms" className="text-sm text-neutral-600 cursor-pointer">
+              {locale === 'zh' ? '我同意' : 'I agree to the'}{' '}
+              <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline font-medium" target="_blank">
+                {locale === 'zh' ? '服务条款' : 'Terms'}
+              </Link>
+              {' '}{locale === 'zh' ? '和' : 'and'}{' '}
+              <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline font-medium" target="_blank">
+                {locale === 'zh' ? '隐私政策' : 'Privacy Policy'}
+              </Link>
+            </label>
+          </motion.div>
 
           {/* Google Sign Up */}
           <button
@@ -254,23 +289,6 @@ function RegisterForm() {
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Terms */}
-            <div className={`flex items-start gap-2.5 p-3 rounded-xl border transition-colors ${!agreedToTerms && error ? 'bg-red-50 border-red-200' : 'bg-neutral-50 border-neutral-100'}`}>
-              <input
-                type="checkbox"
-                id="terms"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-1 h-4 w-4 text-primary-600 border-neutral-300 rounded focus:ring-primary-500 cursor-pointer"
-              />
-              <label htmlFor="terms" className="text-sm text-neutral-600 cursor-pointer">
-                I agree to the{' '}
-                <Link href={`/${locale}/terms`} className="text-primary-600 hover:underline font-medium" target="_blank">Terms</Link>
-                {' '}and{' '}
-                <Link href={`/${locale}/privacy`} className="text-primary-600 hover:underline font-medium" target="_blank">Privacy Policy</Link>
-              </label>
             </div>
 
             {error && (
