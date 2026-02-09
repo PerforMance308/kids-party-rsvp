@@ -220,14 +220,14 @@ export default function NewPartyPage() {
   }
 
   return (
-    <main className="flex-1 container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="max-w-2xl mx-auto">
-        <div className="card">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-neutral-900">
+        <div className="bg-white rounded-2xl border border-neutral-100 p-6 md:p-8 shadow-sm">
+          <div className="mb-8">
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-neutral-900">
               {t('newParty.title')}
             </h1>
-            <p className="text-neutral-600 mt-2">
+            <p className="text-neutral-500 mt-2">
               {t('newParty.subtitle')}
             </p>
           </div>
@@ -349,26 +349,32 @@ export default function NewPartyPage() {
                   onClick={() => setChildGender('boy')}
                   aria-label={locale === 'zh' ? '选择男孩' : 'Select boy'}
                   aria-pressed={childGender === 'boy'}
-                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                     childGender === 'boy'
-                      ? 'border-blue-500 bg-blue-50 shadow-md'
-                      : 'border-neutral-200 hover:border-blue-300 hover:bg-blue-50/50'
+                      ? 'border-blue-400 bg-blue-50 shadow-md shadow-blue-500/10'
+                      : 'border-neutral-200 hover:border-blue-200 hover:bg-blue-50/50'
                   }`}
                 >
-                  <span className={`text-2xl ${childGender === 'boy' ? 'text-blue-500' : 'text-blue-400'}`}>♂</span>
+                  <span className="text-xl">👦</span>
+                  <span className={`text-sm font-medium ${childGender === 'boy' ? 'text-blue-700' : 'text-neutral-600'}`}>
+                    {locale === 'zh' ? '男孩' : 'Boy'}
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setChildGender('girl')}
                   aria-label={locale === 'zh' ? '选择女孩' : 'Select girl'}
                   aria-pressed={childGender === 'girl'}
-                  className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 ${
+                  className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 transition-all focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 ${
                     childGender === 'girl'
-                      ? 'border-pink-500 bg-pink-50 shadow-md'
-                      : 'border-neutral-200 hover:border-pink-300 hover:bg-pink-50/50'
+                      ? 'border-pink-400 bg-pink-50 shadow-md shadow-pink-500/10'
+                      : 'border-neutral-200 hover:border-pink-200 hover:bg-pink-50/50'
                   }`}
                 >
-                  <span className={`text-2xl ${childGender === 'girl' ? 'text-pink-500' : 'text-pink-400'}`}>♀</span>
+                  <span className="text-xl">👧</span>
+                  <span className={`text-sm font-medium ${childGender === 'girl' ? 'text-pink-700' : 'text-neutral-600'}`}>
+                    {locale === 'zh' ? '女孩' : 'Girl'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -488,6 +494,6 @@ export default function NewPartyPage() {
           </form>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

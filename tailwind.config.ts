@@ -10,6 +10,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)'],
+        display: ['var(--font-nunito)'],
       },
       colors: {
         primary: {
@@ -35,7 +36,28 @@ const config: Config = {
           700: '#404040',
           800: '#262626',
           900: '#171717',
-        }
+        },
+        party: {
+          pink: '#f472b6',
+          blue: '#60a5fa',
+          yellow: '#fbbf24',
+          green: '#34d399',
+          coral: '#fb7185',
+        },
+      },
+      keyframes: {
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'float-slow': {
+          '0%, 100%': { transform: 'translateY(0px) rotate(-2deg)' },
+          '50%': { transform: 'translateY(-15px) rotate(2deg)' },
+        },
+      },
+      animation: {
+        'float': 'float 3s ease-in-out infinite',
+        'float-slow': 'float-slow 4s ease-in-out infinite',
       },
     },
   },

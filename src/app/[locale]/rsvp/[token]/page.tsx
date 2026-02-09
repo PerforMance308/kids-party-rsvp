@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { formatDate, formatPhoneInput } from '@/lib/utils'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageContext'
 
 interface ExistingRsvp {
@@ -342,10 +343,68 @@ export default function RSVPPage() {
     }
   }
 
+  // Confetti effect for successful submission
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    if (!submitted || rsvpStatus === 'NO') return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    const colors = ['#f472b6', '#a78bfa', '#60a5fa', '#34d399', '#fbbf24', '#fb923c']
+    const particles: { x: number; y: number; w: number; h: number; color: string; vx: number; vy: number; rotation: number; rotationSpeed: number; opacity: number }[] = []
+
+    for (let i = 0; i < 120; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        w: 6 + Math.random() * 6,
+        h: 4 + Math.random() * 8,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 3,
+        vy: 2 + Math.random() * 4,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.2,
+        opacity: 1,
+      })
+    }
+
+    let animFrame: number
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      let alive = false
+      particles.forEach(p => {
+        p.x += p.vx
+        p.y += p.vy
+        p.vy += 0.05
+        p.rotation += p.rotationSpeed
+        if (p.y > canvas.height) p.opacity -= 0.02
+        if (p.opacity <= 0) return
+        alive = true
+        ctx.save()
+        ctx.translate(p.x, p.y)
+        ctx.rotate(p.rotation)
+        ctx.globalAlpha = p.opacity
+        ctx.fillStyle = p.color
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+        ctx.restore()
+      })
+      if (alive) animFrame = requestAnimationFrame(animate)
+    }
+    animate()
+    return () => cancelAnimationFrame(animFrame)
+  }, [submitted, rsvpStatus])
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center">{t('home.loading')}</div>
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full border-4 border-primary-200 border-t-primary-600 animate-spin mx-auto mb-3" />
+          <p className="text-neutral-500">{t('home.loading')}</p>
+        </div>
       </div>
     )
   }
@@ -353,14 +412,19 @@ export default function RSVPPage() {
   if (!party) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-neutral-900 mb-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <div className="text-5xl mb-4">😢</div>
+          <h1 className="font-display text-2xl font-bold text-neutral-900 mb-2">
             {tr('invitationNotFound')}
           </h1>
-          <p className="text-neutral-600">
+          <p className="text-neutral-500">
             {tr('invitationNotFoundDesc')}
           </p>
-        </div>
+        </motion.div>
       </div>
     )
   }
@@ -369,24 +433,40 @@ export default function RSVPPage() {
     const isDeclined = rsvpStatus === 'NO'
 
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="card">
+      <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
+        {!isDeclined && (
+          <canvas
+            ref={canvasRef}
+            className="fixed inset-0 pointer-events-none z-50"
+          />
+        )}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', duration: 0.6 }}
+          className="w-full max-w-md text-center"
+        >
+          <div className="bg-white rounded-2xl border border-neutral-100 p-6 md:p-8 shadow-sm">
             <div className="text-center mb-6">
-              <div className={`${isDeclined ? 'text-neutral-600' : 'text-green-600'} text-6xl mb-4`}>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', delay: 0.2, stiffness: 200 }}
+                className={`text-6xl mb-4`}
+              >
                 {isDeclined ? '✓' : '🎉'}
-              </div>
-              <h1 className="text-2xl font-bold text-neutral-900 mb-2">
+              </motion.div>
+              <h1 className="font-display text-2xl font-bold text-neutral-900 mb-2">
                 {tr('submittedTitle')}
               </h1>
-              <p className="text-neutral-600">
+              <p className="text-neutral-500">
                 {isDeclined ? tr('submittedDescDeclined') : tr('submittedDesc')}
               </p>
             </div>
 
-            <div className="bg-neutral-50 rounded-lg p-4 mb-4">
-              <h3 className="font-semibold text-neutral-900 mb-2">
-                {party.childName}'s {party.childAge}th Birthday Party
+            <div className="bg-gradient-to-br from-primary-50 to-purple-50 rounded-xl p-4 mb-4">
+              <h3 className="font-display font-bold text-neutral-900 mb-2">
+                {party.childName}&apos;s {party.childAge}th Birthday Party
               </h3>
               <p className="text-sm text-neutral-600 mb-1">
                 {formatDate(new Date(party.eventDatetime), t('locale') || 'zh')}
@@ -405,32 +485,52 @@ export default function RSVPPage() {
               </Link>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="card mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl border border-neutral-100 p-6 md:p-8 shadow-sm mb-6"
+        >
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.1, stiffness: 200 }}
+              className="text-5xl mb-3"
+            >
+              🎈
+            </motion.div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-neutral-900 mb-2">
               {tr('title')}
             </h1>
-            <div className="bg-primary-50 rounded-lg p-4">
-              <h2 className="text-xl font-semibold text-primary-900 mb-2">
-                {party.childName}'s {party.childAge}th Birthday Party
+            <div className="bg-gradient-to-br from-primary-50 via-purple-50 to-pink-50 rounded-2xl p-5 md:p-6 border border-primary-100">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-primary-900 mb-2">
+                {party.childName}&apos;s {party.childAge}th Birthday Party
               </h2>
               {party.theme && (
-                <p className="text-primary-700 mb-2">{party.theme} Theme</p>
+                <span className="inline-block px-3 py-1 rounded-full bg-white/70 text-primary-700 text-sm font-medium mb-3">
+                  {party.theme} Theme
+                </span>
               )}
-              <div className="space-y-1 text-sm text-primary-800">
-                <p><strong>{tr('when')}</strong> {formatDate(new Date(party.eventDatetime), t('locale') || 'zh')}</p>
-                <p><strong>{tr('where')}</strong> {party.location}</p>
+              <div className="space-y-2 text-sm text-primary-800 mt-2">
+                <p className="flex items-center justify-center gap-2">
+                  <span>📅</span>
+                  <strong>{tr('when')}</strong> {formatDate(new Date(party.eventDatetime), t('locale') || 'zh')}
+                </p>
+                <p className="flex items-center justify-center gap-2">
+                  <span>📍</span>
+                  <strong>{tr('where')}</strong> {party.location}
+                </p>
               </div>
               {party.notes && (
-                <div className="mt-3 p-3 bg-white rounded text-sm text-neutral-700">
+                <div className="mt-4 p-3 bg-white/80 rounded-xl text-sm text-neutral-700">
                   <strong>{tr('specialNotes')}</strong> {party.notes}
                 </div>
               )}
@@ -439,60 +539,69 @@ export default function RSVPPage() {
 
           {/* RSVP Intent Selection - Inline expandable design */}
           {!isAuthenticated && (
-            <div className="border-t pt-4">
+            <div className="border-t border-neutral-100 pt-6">
               {/* Step indicator - only show after selection */}
               {rsvpIntent === 'ATTENDING' && (
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary-600"></div>
-                  <div className="w-8 h-0.5 bg-primary-200"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary-600 animate-pulse"></div>
-                  <div className="w-8 h-0.5 bg-neutral-200"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-neutral-300"></div>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center justify-center gap-2 mb-5"
+                >
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary-600" />
+                  <div className="w-8 h-0.5 bg-primary-300" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary-600 animate-pulse" />
+                  <div className="w-8 h-0.5 bg-neutral-200" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
+                </motion.div>
               )}
 
-              {/* Selection buttons */}
+              <p className="text-center text-neutral-600 mb-4 font-medium">
+                {locale === 'zh' ? '能来参加吗？' : 'Can you make it?'}
+              </p>
+
+              {/* Selection buttons - bigger and more prominent */}
               <div className="flex gap-3 justify-center">
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => setRsvpIntent('ATTENDING')}
-                  className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                  className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 text-base ${
                     rsvpIntent === 'ATTENDING'
-                      ? 'bg-primary-600 text-white ring-2 ring-primary-600 ring-offset-2'
-                      : 'btn btn-primary'
+                      ? 'bg-green-500 text-white ring-2 ring-green-500 ring-offset-2 shadow-lg shadow-green-500/20'
+                      : 'bg-green-500 text-white hover:bg-green-600 shadow-md shadow-green-500/20'
                   }`}
                 >
-                  {rsvpIntent === 'ATTENDING' && (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
+                  <span>🎉</span>
                   {tr('attendingButton')}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     setRsvpIntent('NOT_ATTENDING')
                     setRsvpStatus('NO')
                   }}
-                  className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                  className={`px-8 py-3.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 text-base ${
                     rsvpIntent === 'NOT_ATTENDING'
-                      ? 'bg-neutral-600 text-white ring-2 ring-neutral-600 ring-offset-2'
-                      : 'btn btn-secondary'
+                      ? 'bg-neutral-600 text-white ring-2 ring-neutral-500 ring-offset-2'
+                      : 'bg-white border-2 border-neutral-200 text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50'
                   }`}
                 >
-                  {rsvpIntent === 'NOT_ATTENDING' && (
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
                   {tr('notAttendingButton')}
-                </button>
+                </motion.button>
               </div>
 
               {/* Inline expanded auth form - smooth transition */}
-              <div className={`overflow-hidden transition-all duration-300 ease-out ${
-                rsvpIntent === 'ATTENDING' ? 'max-h-[800px] opacity-100 mt-6' : 'max-h-0 opacity-0'
-              }`}>
-                <div ref={authSectionRef} className="bg-neutral-50 rounded-xl p-5 border border-neutral-200">
+              <AnimatePresence>
+              {rsvpIntent === 'ATTENDING' && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="overflow-hidden mt-6"
+              >
+                <div ref={authSectionRef} className="bg-neutral-50 rounded-xl p-5 border border-neutral-100">
                   {authMode === 'register' ? (
                     /* Register Form */
                     <form onSubmit={handleRegistration} className="space-y-4">
@@ -718,14 +827,22 @@ export default function RSVPPage() {
                     <span className="font-medium text-neutral-700">{t('login.signInWithGoogle')}</span>
                   </button>
                 </div>
-              </div>
+              </motion.div>
+              )}
+              </AnimatePresence>
 
               {/* Inline expanded not-attending form */}
-              <div className={`overflow-hidden transition-all duration-300 ease-out ${
-                rsvpIntent === 'NOT_ATTENDING' ? 'max-h-[600px] opacity-100 mt-6' : 'max-h-0 opacity-0'
-              }`}>
-                <div ref={notAttendingFormRef} className="bg-neutral-50 rounded-xl p-5 border border-neutral-200">
-                  <p className="text-neutral-600 text-sm mb-4 text-center">
+              <AnimatePresence>
+              {rsvpIntent === 'NOT_ATTENDING' && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="overflow-hidden mt-6"
+              >
+                <div ref={notAttendingFormRef} className="bg-neutral-50 rounded-xl p-5 border border-neutral-100">
+                  <p className="text-neutral-500 text-sm mb-4 text-center">
                     {tr('optionalInfo')}
                   </p>
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -769,17 +886,23 @@ export default function RSVPPage() {
                     </button>
                   </form>
                 </div>
-              </div>
+              </motion.div>
+              )}
+              </AnimatePresence>
             </div>
           )}
-        </div>
+        </motion.div>
 
 
         {/* Quick Add Child Form */}
         {isAuthenticated && showAddChild && (
-          <div className="card mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl border border-neutral-100 p-6 shadow-sm mb-6"
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-neutral-900">
+              <h3 className="font-display text-xl font-bold text-neutral-900">
                 {t('children.addChild')}
               </h3>
               <button
@@ -867,13 +990,17 @@ export default function RSVPPage() {
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         )}
 
         {/* RSVP Form - Only show if authenticated */}
         {isAuthenticated && !showAddChild && (
-          <div className="card">
-            <h3 className="text-xl font-semibold text-neutral-900 mb-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl border border-neutral-100 p-6 md:p-8 shadow-sm"
+          >
+            <h3 className="font-display text-xl font-bold text-neutral-900 mb-4">
               {tr('pleaseRSVP')}
             </h3>
 
@@ -969,28 +1096,24 @@ export default function RSVPPage() {
                 <label className="block text-sm font-medium text-neutral-700 mb-3">
                   {tr('attendingLabel')}
                 </label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                   {(['YES', 'NO', 'MAYBE'] as const).map((option) => (
-                    <label key={option} className="flex items-center">
-                      <input
-                        type="radio"
-                        name="rsvpStatus"
-                        value={option}
-                        checked={rsvpStatus === option}
-                        onChange={(e) => setRsvpStatus(e.target.value as 'YES' | 'NO' | 'MAYBE')}
-                        className="mr-2"
-                      />
-                      <span className={`px-3 py-2 rounded-lg text-sm font-medium cursor-pointer flex-1 text-center ${rsvpStatus === option
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setRsvpStatus(option)}
+                      className={`px-4 py-3 rounded-xl text-sm font-semibold cursor-pointer text-center transition-all duration-200 border-2 ${rsvpStatus === option
                         ? option === 'YES'
-                          ? 'bg-green-100 text-green-800 border-2 border-green-300'
+                          ? 'bg-green-50 text-green-700 border-green-400 shadow-md shadow-green-500/10'
                           : option === 'NO'
-                            ? 'bg-red-100 text-red-800 border-2 border-red-300'
-                            : 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
-                        : 'bg-neutral-100 text-neutral-600 border-2 border-transparent'
-                        }`}>
-                        {option === 'YES' ? tr('yes') : option === 'NO' ? tr('no') : tr('maybe')}
-                      </span>
-                    </label>
+                            ? 'bg-red-50 text-red-700 border-red-400 shadow-md shadow-red-500/10'
+                            : 'bg-amber-50 text-amber-700 border-amber-400 shadow-md shadow-amber-500/10'
+                        : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
+                        }`}
+                    >
+                      <span className="text-lg block mb-0.5">{option === 'YES' ? '🎉' : option === 'NO' ? '😢' : '🤔'}</span>
+                      {option === 'YES' ? tr('yes') : option === 'NO' ? tr('no') : tr('maybe')}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1078,26 +1201,28 @@ export default function RSVPPage() {
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
                   {error}
                 </div>
               )}
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full btn btn-primary disabled:opacity-50 text-lg py-3"
+                className="w-full btn btn-primary disabled:opacity-50 text-lg py-3.5 rounded-xl font-semibold shadow-lg shadow-primary-500/20"
               >
                 {isSubmitting ? tr('submitting') : (isEditMode ? tr('updateBtn') : tr('submitBtn'))}
-              </button>
+              </motion.button>
             </form>
-          </div>
+          </motion.div>
         )}
 
-        <div className="text-center mt-6 text-sm text-neutral-500">
+        <div className="text-center mt-8 text-sm text-neutral-400">
           Powered by {t('home.title')}
         </div>
       </div>
-    </div >
+    </div>
   )
 }

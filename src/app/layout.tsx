@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Nunito } from 'next/font/google'
 import { headers } from 'next/headers'
 import './globals.css'
 import { SITE_URL, SITE_NAME, SEO_KEYWORDS, generateOrganizationSchema, generateWebsiteSchema, generateSoftwareApplicationSchema } from '@/lib/seo'
@@ -7,7 +7,13 @@ import { SITE_URL, SITE_NAME, SEO_KEYWORDS, generateOrganizationSchema, generate
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  display: 'swap', // Optimize font loading for Core Web Vitals
+  display: 'swap',
+})
+
+const nunito = Nunito({
+  subsets: ['latin'],
+  variable: '--font-nunito',
+  display: 'swap',
 })
 
 export const viewport: Viewport = {
@@ -101,7 +107,7 @@ export default async function RootLayout({
   const locale = headersList.get('x-locale') || 'en'
 
   return (
-    <html lang={locale} className={inter.variable}>
+    <html lang={locale} className={`${inter.variable} ${nunito.variable}`}>
       <head>
         {/* Structured Data - Organization */}
         <script

@@ -7,68 +7,70 @@
     @apply border-neutral-200;
   }
   body {
-    @apply bg-neutral-50 text-neutral-900;
+    @apply text-neutral-900;
+    background: linear-gradient(135deg, #fdf4ff 0%, #faf5ff 50%, #f0f9ff 100%);
+    background-attachment: fixed;
   }
 }
 
 @layer components {
   .btn {
-    @apply px-4 py-3 rounded-lg font-medium transition-all duration-200;
+    @apply px-4 py-3 rounded-xl font-medium transition-all duration-200;
     @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
     min-height: 44px; /* iOS touch target size */
   }
-  
+
   .btn-primary {
     @apply btn bg-primary-600 text-white hover:bg-primary-700;
-    @apply focus:ring-primary-500 shadow-lg hover:shadow-xl;
+    @apply focus:ring-primary-500 shadow-lg shadow-primary-500/20 hover:shadow-xl hover:shadow-primary-500/30;
   }
-  
+
   .btn-secondary {
-    @apply btn bg-neutral-200 text-neutral-800 hover:bg-neutral-300;
-    @apply focus:ring-neutral-500;
+    @apply btn bg-white text-neutral-800 hover:bg-neutral-50 border border-neutral-200;
+    @apply focus:ring-neutral-500 shadow-sm hover:shadow-md;
   }
-  
+
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700;
     @apply focus:ring-red-500 shadow-lg hover:shadow-xl;
   }
-  
+
   .input {
-    @apply w-full px-4 py-3 border border-neutral-300 rounded-lg transition-all duration-200;
+    @apply w-full px-4 py-3 border border-neutral-200 rounded-xl transition-all duration-200;
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
-    @apply placeholder:text-neutral-500;
+    @apply placeholder:text-neutral-400 bg-white;
     min-height: 44px; /* iOS touch target size */
   }
-  
+
   .input:invalid {
     @apply border-red-300 focus:ring-red-500;
   }
-  
+
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-neutral-200 p-6;
-    @apply hover:shadow-md transition-all duration-200;
+    @apply bg-white rounded-2xl shadow-sm border border-neutral-100 p-6;
+    @apply hover:shadow-lg hover:shadow-primary-500/5 transition-all duration-300;
     @apply hover:-translate-y-0.5;
   }
-  
+
   .mobile-container {
     @apply max-w-md mx-auto lg:max-w-none;
   }
-  
+
   .section-spacing {
     @apply py-8 md:py-12 lg:py-16;
   }
-  
+
   .text-balance {
     text-wrap: balance;
   }
-  
+
   .line-clamp-1 {
     display: -webkit-box;
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -95,12 +97,8 @@
 
 /* Animations */
 @keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slide-down {
@@ -115,12 +113,8 @@
 }
 
 @keyframes checkmark-draw {
-  0% {
-    stroke-dashoffset: 100;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
 }
 
 @keyframes success-scale {
@@ -134,6 +128,17 @@
   100% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
   }
 }
 

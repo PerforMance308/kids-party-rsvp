@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
+import { PlusIcon, PencilIcon, CakeIcon, HeartIcon } from '@heroicons/react/24/outline'
 
 interface Child {
   id: string
@@ -28,7 +30,6 @@ export default function ChildrenPage() {
   const [error, setError] = useState('')
   const [editingChild, setEditingChild] = useState<Child | null>(null)
 
-  // Form state
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
   const [gender, setGender] = useState<'boy' | 'girl' | ''>('')
@@ -40,7 +41,6 @@ export default function ChildrenPage() {
       router.push(`/${locale}/login?redirect=/${locale}/children`)
       return
     }
-
     if (status === 'authenticated') {
       loadChildren()
     }
@@ -55,7 +55,7 @@ export default function ChildrenPage() {
       } else {
         setError('Failed to load children')
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred while loading children')
     } finally {
       setIsLoading(false)
@@ -87,16 +87,12 @@ export default function ChildrenPage() {
     e.preventDefault()
     setIsSubmitting(true)
     setError('')
-
     try {
       const url = editingChild ? `/api/children/${editingChild.id}` : '/api/children'
       const method = editingChild ? 'PUT' : 'POST'
-
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           birthDate,
@@ -105,7 +101,6 @@ export default function ChildrenPage() {
           notes: notes || undefined,
         }),
       })
-
       if (response.ok) {
         const updatedChild = await response.json()
         if (editingChild) {
@@ -118,7 +113,7 @@ export default function ChildrenPage() {
         const data = await response.json()
         setError(data.error || (editingChild ? 'Failed to update child' : 'Failed to add child'))
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -127,209 +122,208 @@ export default function ChildrenPage() {
 
   if (status === 'loading' || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">{t('home.loading')}</div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="h-8 w-48 bg-neutral-200 rounded-xl animate-pulse mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-2xl p-6 animate-pulse">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 bg-neutral-100 rounded-xl" />
+                  <div className="flex-1">
+                    <div className="h-5 w-24 bg-neutral-200 rounded mb-1" />
+                    <div className="h-4 w-16 bg-neutral-100 rounded" />
+                  </div>
+                </div>
+                <div className="h-10 bg-neutral-100 rounded-xl" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
 
-  if (status === 'unauthenticated') {
-    return null
-  }
+  if (status === 'unauthenticated') return null
 
   return (
-    <main className="flex-1 container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-neutral-900">{t('children.title')}</h1>
-            <p className="text-neutral-600 mt-2">
-              {t('children.subtitle')}
-            </p>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-neutral-900">{t('children.title')}</h1>
+            <p className="text-neutral-500 mt-1">{t('children.subtitle')}</p>
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="btn btn-primary"
+            className="btn btn-primary inline-flex items-center gap-2"
           >
+            <PlusIcon className="w-5 h-5" />
             {t('children.addChild')}
           </button>
         </div>
 
-        {/* Add/Edit Child Form */}
-        {showForm && (
-          <div className="card mb-6">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-4">
-              {editingChild ? (locale === 'zh' ? '编辑孩子信息' : 'Edit Child') : t('children.addChild')}
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {t('children.name')} *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="input"
-                    required
-                    autoFocus
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="birthDate" className="block text-sm font-medium text-neutral-700 mb-1">
-                    {t('children.birthDate')} *
-                  </label>
-                  <input
-                    type="date"
-                    id="birthDate"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="input"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Gender Selection */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  {locale === 'zh' ? '性别' : 'Gender'}
-                </label>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setGender('boy')}
-                    className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
-                      gender === 'boy'
-                        ? 'border-blue-500 bg-blue-50 shadow-md'
-                        : 'border-neutral-200 hover:border-blue-300 hover:bg-blue-50/50'
-                    }`}
-                  >
-                    <span className={`text-2xl ${gender === 'boy' ? 'text-blue-500' : 'text-blue-400'}`}>♂</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGender('girl')}
-                    className={`flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all ${
-                      gender === 'girl'
-                        ? 'border-pink-500 bg-pink-50 shadow-md'
-                        : 'border-neutral-200 hover:border-pink-300 hover:bg-pink-50/50'
-                    }`}
-                  >
-                    <span className={`text-2xl ${gender === 'girl' ? 'text-pink-500' : 'text-pink-400'}`}>♀</span>
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="allergies" className="block text-sm font-medium text-neutral-700 mb-1">
-                  {t('children.allergies')} & Dietary Restrictions
-                </label>
-                <input
-                  type="text"
-                  id="allergies"
-                  value={allergies}
-                  onChange={(e) => setAllergies(e.target.value)}
-                  className="input"
-                  placeholder="e.g., nuts, dairy, gluten-free, vegetarian"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="notes" className="block text-sm font-medium text-neutral-700 mb-1">
-                  {t('children.notes')}
-                </label>
-                <textarea
-                  id="notes"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="input"
-                  rows={2}
-                  placeholder="Any special notes about interests, preferences, etc."
-                />
-              </div>
-
-              {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="btn btn-secondary"
-                >
-                  {t('children.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="btn btn-primary disabled:opacity-50"
-                >
-                  {isSubmitting ? t('children.saving') : (editingChild ? (locale === 'zh' ? '保存' : 'Save') : t('children.addChild'))}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Children List */}
-        {children.length === 0 ? (
-          <div className="card text-center">
-            <div className="py-12">
-              <div className="text-neutral-400 text-6xl mb-4">👶</div>
-              <h2 className="text-xl font-semibold text-neutral-900 mb-2">
-                {t('children.noChildren')}
-              </h2>
-              <p className="text-neutral-600 mb-6">
-                {t('children.noChildrenDesc')}
-              </p>
-              <button
-                onClick={() => setShowForm(true)}
-                className="btn btn-primary"
-              >
-                {t('children.addChild')}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {children.map((child) => (
-              <div key={child.id} className="card">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    {child.gender && (
-                      <span className={`text-xl ${child.gender === 'boy' ? 'text-blue-500' : 'text-pink-500'}`}>
-                        {child.gender === 'boy' ? '♂' : '♀'}
-                      </span>
-                    )}
-                    <h3 className="text-xl font-semibold text-neutral-900">
-                      {child.name}
-                    </h3>
+        {/* Add/Edit Form */}
+        <AnimatePresence>
+          {showForm && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden mb-6"
+            >
+              <div className="bg-white rounded-2xl border border-neutral-100 p-6">
+                <h2 className="font-display text-xl font-bold text-neutral-900 mb-4">
+                  {editingChild ? (locale === 'zh' ? '编辑孩子信息' : 'Edit Child') : t('children.addChild')}
+                </h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1.5">
+                        {t('children.name')} *
+                      </label>
+                      <input type="text" id="name" value={name} onChange={e => setName(e.target.value)} className="input" required autoFocus />
+                    </div>
+                    <div>
+                      <label htmlFor="birthDate" className="block text-sm font-medium text-neutral-700 mb-1.5">
+                        {t('children.birthDate')} *
+                      </label>
+                      <input type="date" id="birthDate" value={birthDate} onChange={e => setBirthDate(e.target.value)} className="input" required />
+                    </div>
                   </div>
-                  <span className="px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium">
-                    {child.age} {t('children.years')}
-                  </span>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      {locale === 'zh' ? '性别' : 'Gender'}
+                    </label>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setGender('boy')}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 transition-all ${
+                          gender === 'boy'
+                            ? 'border-party-blue bg-blue-50 shadow-md shadow-blue-500/10'
+                            : 'border-neutral-200 hover:border-blue-200 hover:bg-blue-50/50'
+                        }`}
+                      >
+                        <span className="text-xl">👦</span>
+                        <span className={`text-sm font-medium ${gender === 'boy' ? 'text-blue-700' : 'text-neutral-600'}`}>
+                          {locale === 'zh' ? '男孩' : 'Boy'}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGender('girl')}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-xl border-2 transition-all ${
+                          gender === 'girl'
+                            ? 'border-party-pink bg-pink-50 shadow-md shadow-pink-500/10'
+                            : 'border-neutral-200 hover:border-pink-200 hover:bg-pink-50/50'
+                        }`}
+                      >
+                        <span className="text-xl">👧</span>
+                        <span className={`text-sm font-medium ${gender === 'girl' ? 'text-pink-700' : 'text-neutral-600'}`}>
+                          {locale === 'zh' ? '女孩' : 'Girl'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="allergies" className="block text-sm font-medium text-neutral-700 mb-1.5">
+                      {t('children.allergies')} & {locale === 'zh' ? '饮食限制' : 'Dietary Restrictions'}
+                    </label>
+                    <input type="text" id="allergies" value={allergies} onChange={e => setAllergies(e.target.value)} className="input" placeholder="e.g., nuts, dairy, gluten-free" />
+                  </div>
+
+                  <div>
+                    <label htmlFor="notes" className="block text-sm font-medium text-neutral-700 mb-1.5">
+                      {t('children.notes')}
+                    </label>
+                    <textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} className="input" rows={2} placeholder="Any special notes..." />
+                  </div>
+
+                  {error && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <button type="button" onClick={resetForm} className="btn btn-secondary">{t('children.cancel')}</button>
+                    <button type="submit" disabled={isSubmitting} className="btn btn-primary disabled:opacity-50">
+                      {isSubmitting ? t('children.saving') : (editingChild ? (locale === 'zh' ? '保存' : 'Save') : t('children.addChild'))}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Empty State */}
+        {children.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16 bg-white rounded-2xl border border-neutral-100"
+          >
+            <motion.div
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              className="w-20 h-20 bg-gradient-to-br from-primary-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            >
+              <HeartIcon className="w-10 h-10 text-primary-400" />
+            </motion.div>
+            <h2 className="font-display text-xl font-bold text-neutral-900 mb-2">
+              {t('children.noChildren')}
+            </h2>
+            <p className="text-neutral-500 mb-6 max-w-sm mx-auto">
+              {t('children.noChildrenDesc')}
+            </p>
+            <button onClick={() => setShowForm(true)} className="btn btn-primary inline-flex items-center gap-2">
+              <PlusIcon className="w-5 h-5" />
+              {locale === 'zh' ? '添加您的第一个宝贝' : 'Add Your First Child'}
+            </button>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {children.map((child, i) => (
+              <motion.div
+                key={child.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="bg-white rounded-2xl border border-neutral-100 p-5 hover:shadow-lg hover:shadow-primary-500/5 transition-all duration-300 hover:-translate-y-0.5"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  {/* Avatar */}
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                    child.gender === 'girl'
+                      ? 'bg-gradient-to-br from-pink-100 to-rose-100'
+                      : child.gender === 'boy'
+                        ? 'bg-gradient-to-br from-blue-100 to-sky-100'
+                        : 'bg-gradient-to-br from-primary-100 to-purple-100'
+                  }`}>
+                    {child.gender === 'girl' ? '👧' : child.gender === 'boy' ? '👦' : '👶'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-neutral-900 truncate">{child.name}</h3>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      child.gender === 'girl' ? 'bg-pink-50 text-pink-700' :
+                      child.gender === 'boy' ? 'bg-blue-50 text-blue-700' :
+                      'bg-primary-50 text-primary-700'
+                    }`}>
+                      {child.age} {t('children.years')}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="space-y-2 text-sm text-neutral-600 mb-4">
-                  <p>
-                    <strong>{t('children.born')}</strong> {new Date(child.birthDate).toLocaleDateString()}
+                <div className="space-y-1.5 text-sm text-neutral-500 mb-4">
+                  <p className="flex items-center gap-1.5">
+                    <CakeIcon className="w-3.5 h-3.5" />
+                    {new Date(child.birthDate).toLocaleDateString()}
                   </p>
                   {child.allergies && (
-                    <p>
-                      <strong>{t('children.allergiesLabel')}</strong> <span className="text-red-600">{child.allergies}</span>
-                    </p>
-                  )}
-                  {child.notes && (
-                    <p>
-                      <strong>{t('children.notesLabel')}</strong> {child.notes}
+                    <p className="text-red-500 text-xs bg-red-50 px-2 py-1 rounded-lg">
+                      ⚠ {child.allergies}
                     </p>
                   )}
                 </div>
@@ -337,45 +331,22 @@ export default function ChildrenPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => router.push(`/${locale}/party/new?childId=${child.id}`)}
-                    className="btn btn-primary flex-1 text-sm"
+                    className="flex-1 btn btn-primary text-sm"
                   >
                     {t('children.createParty')}
                   </button>
                   <button
                     onClick={() => startEditing(child)}
-                    className="btn btn-secondary text-sm"
+                    className="btn btn-secondary text-sm px-3"
                   >
-                    {t('children.edit')}
+                    <PencilIcon className="w-4 h-4" />
                   </button>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         )}
-
-        {/* Quick Actions */}
-        {children.length > 0 && (
-          <div className="mt-8 card">
-            <h3 className="text-lg font-semibold text-neutral-900 mb-4">
-              Quick Actions
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => router.push(`/${locale}/party/new`)}
-                className="btn btn-primary"
-              >
-                Create New Party
-              </button>
-              <button
-                onClick={() => router.push(`/${locale}/dashboard`)}
-                className="btn btn-secondary"
-              >
-                View All Parties
-              </button>
-            </div>
-          </div>
-        )}
       </div>
-    </main>
+    </div>
   )
 }

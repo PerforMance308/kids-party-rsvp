@@ -251,7 +251,7 @@ export default function PartyDashboard() {
             {tr('backToDashboard')}
           </Link>
 
-          <h1 className="text-xl md:text-3xl font-bold text-neutral-900">
+          <h1 className="font-display text-xl md:text-3xl font-bold text-neutral-900">
             {t('dashboard.partyTitle', { childName: party.childName, age: party.childAge })}
           </h1>
           {party.theme && (
@@ -276,24 +276,26 @@ export default function PartyDashboard() {
           </div>
         </div>
 
-        {/* Mobile: Stats at top - prominent display */}
+        {/* Mobile: Stats at top - colored cards */}
         <div className="lg:hidden mb-4">
-          <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-4 text-white">
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <div className="text-2xl font-bold">{party.stats.total}</div>
-                <div className="text-xs text-primary-100">{tr('totalInvited')}</div>
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-gradient-to-br from-primary-50 to-purple-50 rounded-2xl p-3 text-center border border-primary-100">
+              <div className="text-xl font-bold text-neutral-900">{party.stats.total}</div>
+              <div className="text-[10px] text-primary-600 font-medium">{tr('totalInvited')}</div>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-3 text-center border border-emerald-100">
+              <div className="text-xl font-bold text-emerald-600">{party.stats.attending}</div>
+              <div className="text-[10px] text-emerald-600 font-medium">{tr('attending')}</div>
+            </div>
+            <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-3 text-center border border-red-100">
+              <div className="text-xl font-bold text-red-500">{party.stats.notAttending}</div>
+              <div className="text-[10px] text-red-500 font-medium">{locale === 'zh' ? '不参加' : 'Declined'}</div>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-3 text-center border border-amber-100">
+              <div className="text-xl font-bold text-amber-600">
+                {party.stats.total > 0 ? Math.round(((party.stats.attending + party.stats.notAttending + party.stats.maybe) / party.stats.total) * 100) : 0}%
               </div>
-              <div>
-                <div className="text-2xl font-bold">{party.stats.attending}</div>
-                <div className="text-xs text-primary-100">{tr('attending')}</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold">
-                  {party.stats.total > 0 ? Math.round(((party.stats.attending + party.stats.notAttending + party.stats.maybe) / party.stats.total) * 100) : 0}%
-                </div>
-                <div className="text-xs text-primary-100">{tr('responseRate')}</div>
-              </div>
+              <div className="text-[10px] text-amber-600 font-medium">{tr('responseRate')}</div>
             </div>
           </div>
         </div>
@@ -402,21 +404,25 @@ export default function PartyDashboard() {
 
           {/* Right Column: Stats + Guest List + Templates */}
           <div className="flex-1 min-w-0 space-y-4 lg:space-y-6">
-            {/* Stats Cards - Desktop only (mobile shows gradient version above) */}
-            <div className="hidden lg:grid grid-cols-3 gap-4">
-              <div className="card text-center py-4">
-                <div className="text-3xl font-bold text-neutral-900">{party.stats.total}</div>
-                <h3 className="text-sm text-neutral-600 mt-1">{tr('totalInvited')}</h3>
+            {/* Stats Cards - Desktop - 4 colored cards */}
+            <div className="hidden lg:grid grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-primary-50 to-purple-50 rounded-2xl p-5 text-center border border-primary-100">
+                <div className="font-display text-3xl font-bold text-neutral-900">{party.stats.total}</div>
+                <h3 className="text-sm text-primary-600 mt-1">{tr('totalInvited')}</h3>
               </div>
-              <div className="card text-center py-4">
-                <div className="text-3xl font-bold text-green-600">{party.stats.attending}</div>
-                <h3 className="text-sm text-neutral-600 mt-1">{tr('attending')}</h3>
+              <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-5 text-center border border-emerald-100">
+                <div className="font-display text-3xl font-bold text-emerald-600">{party.stats.attending}</div>
+                <h3 className="text-sm text-emerald-600 mt-1">{tr('attending')}</h3>
               </div>
-              <div className="card text-center py-4">
-                <div className="text-3xl font-bold text-primary-600">
+              <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-5 text-center border border-red-100">
+                <div className="font-display text-3xl font-bold text-red-500">{party.stats.notAttending}</div>
+                <h3 className="text-sm text-red-500 mt-1">{locale === 'zh' ? '不参加' : 'Declined'}</h3>
+              </div>
+              <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-5 text-center border border-amber-100">
+                <div className="font-display text-3xl font-bold text-amber-600">
                   {party.stats.total > 0 ? Math.round(((party.stats.attending + party.stats.notAttending + party.stats.maybe) / party.stats.total) * 100) : 0}%
                 </div>
-                <h3 className="text-sm text-neutral-600 mt-1">{tr('responseRate')}</h3>
+                <h3 className="text-sm text-amber-600 mt-1">{tr('responseRate')}</h3>
               </div>
             </div>
 
