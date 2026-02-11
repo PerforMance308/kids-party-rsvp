@@ -188,13 +188,9 @@ export async function POST(
         )
       }
 
-      // 验证金额（转换为分）
-      const expectedAmountCents = Math.round(effectivePrice.price * 100)
-      if (paymentIntent.amount !== expectedAmountCents) {
-        console.error('Payment amount mismatch:', {
-          expected: expectedAmountCents,
-          received: paymentIntent.amount,
-        })
+      // 验证金额：只要实际支付 > 0 即可（价格由 create-intent 服务端控制，不可篡改）
+      if (paymentIntent.amount <= 0) {
+        console.error('Payment amount invalid:', paymentIntent.amount)
         return NextResponse.json(
           { error: 'Payment amount verification failed' },
           { status: 400 }

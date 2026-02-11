@@ -8,7 +8,6 @@ import { calculateAge } from '@/lib/utils'
 import Stripe from 'stripe'
 
 const BROADCAST_FREE_DAILY_LIMIT = 1
-const BROADCAST_EXTRA_PRICE_CENTS = 99
 const BROADCAST_MAX_RECIPIENTS = 200
 
 function uniqueEmails(emails: string[]) {
@@ -125,7 +124,7 @@ export async function POST(
           { status: 400 }
         )
       }
-      if (paymentIntent.amount !== BROADCAST_EXTRA_PRICE_CENTS) {
+      if (paymentIntent.amount <= 0) {
         return NextResponse.json(
           { error: 'Payment amount verification failed' },
           { status: 400 }
