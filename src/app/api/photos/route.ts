@@ -16,7 +16,6 @@ export async function POST(_request: NextRequest) {
   // Photo sharing is disabled
   return NextResponse.json({ error: 'Photo sharing is currently disabled' }, { status: 403 })
 
-  /* eslint-disable @typescript-eslint/no-unreachable */
   try {
     // Verify user authentication
     const session = await getServerSession(authOptions)
