@@ -54,10 +54,26 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       }
     }
     
+    // Record payment in database
+    await prisma.payment.create({
+      data: {
+        userId: paymentIntent.metadata.userId,
+        partyId: paymentIntent.metadata.partyId || null,
+        stripePaymentId: paymentIntent.id,
+        feature: paymentIntent.metadata.feature || 'unknown',
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: 'succeeded',
+        metadata: JSON.stringify({
+          templateId: paymentIntent.metadata.templateId,
+        }),
+      },
+    })
+
     // Log successful payment
     const amount = paymentIntent.amount / 100
     console.log(`✅ Payment processed: ${paymentIntent.id} - ${paymentIntent.currency.toUpperCase()} ${amount}`)
-    
+
   } catch (error) {
     console.error('Error handling payment success:', error)
     throw error
@@ -67,13 +83,26 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
 async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
   try {
     console.log('❌ Payment failed:', paymentIntent.id)
-    
-    // Log failed payment for analysis
+
+    // Record failed payment in database
+    await prisma.payment.create({
+      data: {
+        userId: paymentIntent.metadata.userId,
+        partyId: paymentIntent.metadata.partyId || null,
+        stripePaymentId: paymentIntent.id,
+        feature: paymentIntent.metadata.feature || 'unknown',
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        status: 'failed',
+        metadata: JSON.stringify({
+          templateId: paymentIntent.metadata.templateId,
+        }),
+      },
+    })
+
     const amount = paymentIntent.amount / 100
     console.log(`💸 Payment failed: ${paymentIntent.id} - ${paymentIntent.currency.toUpperCase()} ${amount}`)
-    
-    // You could implement retry logic, notification to user, etc.
-    
+
   } catch (error) {
     console.error('Error handling payment failure:', error)
     throw error

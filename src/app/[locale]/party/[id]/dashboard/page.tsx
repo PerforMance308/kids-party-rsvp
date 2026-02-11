@@ -9,8 +9,9 @@ import InvitationCard from '@/components/InvitationCard'
 import TemplateSelector from '@/components/TemplateSelector'
 import InvitationTemplate from '@/components/InvitationTemplates'
 import InviteGuests from '@/components/InviteGuests'
-import PhotoSharingSection from '@/components/PhotoSharingSection'
-import HostPhotoManager from '@/components/HostPhotoManager'
+// Photo sharing disabled
+// import PhotoSharingSection from '@/components/PhotoSharingSection'
+// import HostPhotoManager from '@/components/HostPhotoManager'
 import { toast } from '@/lib/toast'
 
 interface Guest {
@@ -588,18 +589,7 @@ export default function PartyDashboard() {
               )}
             </div>
 
-            {/* Photos Section */}
-            <PhotoSharingSection
-              party={party as any}
-              onUpdate={refreshParty}
-            />
-
-            {party.photoSharingPaid && party.allowPhotoSharing && (
-              <HostPhotoManager
-                partyId={party.id}
-                childName={party.childName}
-              />
-            )}
+            {/* Photo Sharing - disabled */}
           </div>
         </div>
       </div>

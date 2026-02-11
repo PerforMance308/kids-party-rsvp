@@ -28,6 +28,7 @@ model User {
   emailNotifications EmailNotification[]
   guests             Guest[]
   parties            Party[]
+  payments           Payment[]
   photos             Photo[]
   sessions           Session[]
 
@@ -204,6 +205,25 @@ model Photo {
   @@index([partyId])
   @@index([uploaderId])
   @@map("photos")
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  partyId         String?  @map("party_id")
+  stripePaymentId String   @unique @map("stripe_payment_id")
+  feature         String
+  amount          Int
+  currency        String   @default("usd")
+  status          String
+  metadata        String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("payments")
 }
 
 model EmailNotification {

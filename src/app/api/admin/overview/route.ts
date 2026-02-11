@@ -11,185 +11,249 @@ export async function GET() {
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekStart = new Date(todayStart)
     weekStart.setDate(weekStart.getDate() - 7)
+    const monthStart = new Date(todayStart)
+    monthStart.setDate(monthStart.getDate() - 30)
 
-    // Run all queries in parallel
+    // ── Core counts ──────────────────────────────────────────────
     const [
       totalUsers,
       verifiedUsers,
-      newUsersToday,
       newUsersThisWeek,
+      newUsersThisMonth,
       totalParties,
+      newPartiesThisWeek,
+      newPartiesThisMonth,
       upcomingParties,
       totalGuests,
-      totalChildren,
       rsvpCounts,
       totalEmails,
       emailStatusCounts,
-      recentUsers,
-      recentParties,
-      recentRsvps,
+      photoSharingParties,
     ] = await Promise.all([
-      // User stats
       prisma.user.count(),
       prisma.user.count({ where: { emailVerified: { not: null } } }),
-      prisma.user.count({ where: { createdAt: { gte: todayStart } } }),
       prisma.user.count({ where: { createdAt: { gte: weekStart } } }),
-
-      // Party stats
+      prisma.user.count({ where: { createdAt: { gte: monthStart } } }),
       prisma.party.count(),
+      prisma.party.count({ where: { createdAt: { gte: weekStart } } }),
+      prisma.party.count({ where: { createdAt: { gte: monthStart } } }),
       prisma.party.count({ where: { eventDatetime: { gt: now } } }),
-
-      // Guest & children stats
       prisma.guest.count(),
-      prisma.child.count(),
-
-      // RSVP breakdown
-      prisma.rSVP.groupBy({
-        by: ['status'],
-        _count: { status: true },
-      }),
-
-      // Email stats
+      prisma.rSVP.groupBy({ by: ['status'], _count: { status: true } }),
       prisma.emailNotification.count(),
-      prisma.emailNotification.groupBy({
-        by: ['status'],
-        _count: { status: true },
-      }),
+      prisma.emailNotification.groupBy({ by: ['status'], _count: { status: true } }),
+      prisma.party.count({ where: { allowPhotoSharing: true } }),
+    ])
 
-      // Recent users
+    // ── Raw SQL queries (things Prisma can't do well) ────────────
+    const [
+      userGrowthRaw,
+      partyCreationRaw,
+      activeUsersRaw,
+      usersWithMultiplePartiesRaw,
+      paidTemplatePartiesRaw,
+      totalRevenueRaw,
+      monthlyRevenueRaw,
+      revenueTrendRaw,
+      revenueByFeatureRaw,
+    ] = await Promise.all([
+      // 30-day user growth trend
+      prisma.$queryRaw<Array<{ date: string; count: number }>>`
+        SELECT DATE("created_at")::text as date, COUNT(*)::int as count
+        FROM users WHERE "created_at" >= ${monthStart}
+        GROUP BY DATE("created_at") ORDER BY date`,
+
+      // 30-day party creation trend
+      prisma.$queryRaw<Array<{ date: string; count: number }>>`
+        SELECT DATE("created_at")::text as date, COUNT(*)::int as count
+        FROM parties WHERE "created_at" >= ${monthStart}
+        GROUP BY DATE("created_at") ORDER BY date`,
+
+      // Active users (created a party in last 30 days)
+      prisma.$queryRaw<[{ count: number }]>`
+        SELECT COUNT(DISTINCT "user_id")::int as count
+        FROM parties WHERE "created_at" >= ${monthStart}`,
+
+      // Users with 2+ parties
+      prisma.$queryRaw<[{ count: number }]>`
+        SELECT COUNT(*)::int as count FROM (
+          SELECT "user_id" FROM parties GROUP BY "user_id" HAVING COUNT(*) >= 2
+        ) sub`,
+
+      // Parties with paid templates
+      prisma.$queryRaw<[{ count: number }]>`
+        SELECT COUNT(*)::int as count
+        FROM parties WHERE array_length(paid_templates, 1) > 0`,
+
+      // Total revenue (succeeded payments)
+      prisma.$queryRaw<[{ total: number }]>`
+        SELECT COALESCE(SUM(amount), 0)::int as total
+        FROM payments WHERE status = 'succeeded'`,
+
+      // Monthly revenue (last 30 days)
+      prisma.$queryRaw<[{ total: number }]>`
+        SELECT COALESCE(SUM(amount), 0)::int as total
+        FROM payments WHERE status = 'succeeded' AND "created_at" >= ${monthStart}`,
+
+      // 30-day revenue trend
+      prisma.$queryRaw<Array<{ date: string; amount: number; count: number }>>`
+        SELECT DATE("created_at")::text as date, SUM(amount)::int as amount, COUNT(*)::int as count
+        FROM payments WHERE status = 'succeeded' AND "created_at" >= ${monthStart}
+        GROUP BY DATE("created_at") ORDER BY date`,
+
+      // Revenue by feature
+      prisma.$queryRaw<Array<{ feature: string; total: number; count: number }>>`
+        SELECT feature, SUM(amount)::int as total, COUNT(*)::int as count
+        FROM payments WHERE status = 'succeeded' GROUP BY feature`,
+    ])
+
+    // ── Process results ──────────────────────────────────────────
+    const rsvpMap: Record<string, number> = {}
+    for (const r of rsvpCounts) rsvpMap[r.status] = r._count.status
+    const totalRsvps = Object.values(rsvpMap).reduce((a, b) => a + b, 0)
+    const pendingRsvps = totalGuests - totalRsvps
+
+    const emailMap: Record<string, number> = {}
+    for (const e of emailStatusCounts) emailMap[e.status] = e._count.status
+
+    const activeUsers = activeUsersRaw[0]?.count ?? 0
+    const usersWithMultipleParties = usersWithMultiplePartiesRaw[0]?.count ?? 0
+    const paidTemplateParties = paidTemplatePartiesRaw[0]?.count ?? 0
+    const totalRevenue = totalRevenueRaw[0]?.total ?? 0
+    const monthlyRevenue = monthlyRevenueRaw[0]?.total ?? 0
+
+    const overallResponseRate = totalGuests > 0
+      ? Math.round((totalRsvps / totalGuests) * 100)
+      : 0
+
+    const emailsSent = emailMap['sent'] || 0
+    const emailsFailed = emailMap['failed'] || 0
+    const emailsPending = emailMap['pending'] || 0
+    const emailDeliveryRate = (emailsSent + emailsFailed) > 0
+      ? Math.round((emailsSent / (emailsSent + emailsFailed)) * 100)
+      : 100
+
+    const verificationRate = totalUsers > 0
+      ? Math.round((verifiedUsers / totalUsers) * 100) : 0
+    const avgPartiesPerUser = totalUsers > 0
+      ? Math.round((totalParties / totalUsers) * 100) / 100 : 0
+    const avgGuestsPerParty = totalParties > 0
+      ? Math.round((totalGuests / totalParties) * 100) / 100 : 0
+
+    // Revenue by feature map
+    const revenueByFeature: Record<string, { total: number; count: number }> = {}
+    for (const r of revenueByFeatureRaw) {
+      revenueByFeature[r.feature] = { total: r.total, count: r.count }
+    }
+
+    // ── Activity feed ────────────────────────────────────────────
+    const [recentUsers, recentPartiesRaw, recentRsvps] = await Promise.all([
       prisma.user.findMany({
-        take: 10,
+        take: 8,
         orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          email: true,
-          emailVerified: true,
-          createdAt: true,
-          role: true,
-          _count: { select: { parties: true } },
-        },
+        select: { id: true, email: true, createdAt: true },
       }),
-
-      // Recent parties
       prisma.party.findMany({
-        take: 10,
+        take: 8,
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
-          eventDatetime: true,
-          location: true,
           createdAt: true,
           child: { select: { name: true } },
-          targetAge: true,
-          _count: { select: { guests: true } },
-          guests: {
-            select: {
-              rsvp: { select: { status: true } },
-            },
-          },
+          location: true,
         },
       }),
-
-      // Recent RSVPs
       prisma.rSVP.findMany({
-        take: 10,
+        take: 8,
         orderBy: { updatedAt: 'desc' },
         select: {
           id: true,
           status: true,
           updatedAt: true,
-          guest: {
-            select: {
-              childName: true,
-              partyId: true,
-            },
-          },
+          guest: { select: { childName: true, party: { select: { child: { select: { name: true } } } } } },
         },
       }),
     ])
 
-    // Process RSVP counts into a map
-    const rsvpMap: Record<string, number> = {}
-    for (const r of rsvpCounts) {
-      rsvpMap[r.status] = r._count.status
-    }
-    const totalRsvps = Object.values(rsvpMap).reduce((a, b) => a + b, 0)
-    const pendingRsvps = totalGuests - totalRsvps
+    const activityFeed = [
+      ...recentUsers.map((u) => ({
+        type: 'user_registered' as const,
+        description: `New user registered: ${u.email}`,
+        timestamp: u.createdAt.toISOString(),
+      })),
+      ...recentPartiesRaw.map((p) => ({
+        type: 'party_created' as const,
+        description: `Party created for ${p.child.name} at ${p.location}`,
+        timestamp: p.createdAt.toISOString(),
+      })),
+      ...recentRsvps.map((r) => ({
+        type: 'rsvp_received' as const,
+        description: `${r.guest.childName} RSVP'd "${r.status}" to ${r.guest.party.child.name}'s party`,
+        timestamp: r.updatedAt.toISOString(),
+      })),
+    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 15)
 
-    // Process email status counts
-    const emailMap: Record<string, number> = {}
-    for (const e of emailStatusCounts) {
-      emailMap[e.status] = e._count.status
-    }
-
-    // Process recent parties to include RSVP stats
-    const processedParties = recentParties.map((party) => {
-      const rsvpStats: Record<string, number> = {}
-      for (const guest of party.guests) {
-        const status = guest.rsvp?.status || 'pending'
-        rsvpStats[status] = (rsvpStats[status] || 0) + 1
-      }
-      return {
-        id: party.id,
-        childName: party.child.name,
-        targetAge: party.targetAge,
-        eventDatetime: party.eventDatetime,
-        location: party.location,
-        createdAt: party.createdAt,
-        guestCount: party._count.guests,
-        rsvpStats,
-      }
-    })
-
+    // ── Response ─────────────────────────────────────────────────
     return NextResponse.json({
-      stats: {
-        users: {
-          total: totalUsers,
-          verified: verifiedUsers,
-          unverified: totalUsers - verifiedUsers,
-          newToday: newUsersToday,
-          newThisWeek: newUsersThisWeek,
+      kpis: {
+        totalUsers,
+        usersGrowthWeek: newUsersThisWeek,
+        usersGrowthMonth: newUsersThisMonth,
+        totalParties,
+        partiesGrowthWeek: newPartiesThisWeek,
+        partiesGrowthMonth: newPartiesThisMonth,
+        overallResponseRate,
+        emailDeliveryRate,
+        activeUsers,
+        totalRevenue,
+        monthlyRevenue,
+      },
+      charts: {
+        userGrowth: userGrowthRaw,
+        partyCreation: partyCreationRaw,
+        rsvpDistribution: [
+          { status: 'attending', count: rsvpMap['attending'] || 0 },
+          { status: 'declined', count: rsvpMap['declined'] || 0 },
+          { status: 'maybe', count: rsvpMap['maybe'] || 0 },
+          { status: 'pending', count: pendingRsvps },
+        ],
+        revenueTrend: revenueTrendRaw,
+      },
+      operationalMetrics: {
+        userHealth: {
+          verificationRate,
+          retentionRate: totalUsers > 0
+            ? Math.round((usersWithMultipleParties / totalUsers) * 100) : 0,
+          avgPartiesPerUser,
         },
-        parties: {
-          total: totalParties,
-          upcoming: upcomingParties,
-          past: totalParties - upcomingParties,
+        eventOps: {
+          avgGuestsPerParty,
+          avgResponseRate: overallResponseRate,
+          upcomingEvents: upcomingParties,
         },
-        guests: {
-          total: totalGuests,
-          attending: rsvpMap['attending'] || 0,
-          declined: rsvpMap['declined'] || 0,
-          maybe: rsvpMap['maybe'] || 0,
-          pending: pendingRsvps,
+        emailHealth: {
+          deliverySuccessRate: emailDeliveryRate,
+          failureRate: (emailsSent + emailsFailed) > 0
+            ? Math.round((emailsFailed / (emailsSent + emailsFailed)) * 100) : 0,
+          pendingQueueSize: emailsPending,
         },
-        children: {
-          total: totalChildren,
+        featureAdoption: {
+          photoSharingRate: totalParties > 0
+            ? Math.round((photoSharingParties / totalParties) * 100) : 0,
+          paidTemplateRate: totalParties > 0
+            ? Math.round((paidTemplateParties / totalParties) * 100) : 0,
         },
-        emails: {
-          total: totalEmails,
-          sent: emailMap['sent'] || 0,
-          pending: emailMap['pending'] || 0,
-          failed: emailMap['failed'] || 0,
+        revenue: {
+          totalRevenue,
+          monthlyRevenue,
+          byFeature: {
+            photo_sharing: revenueByFeature['photo_sharing'] || { total: 0, count: 0 },
+            template: revenueByFeature['template'] || { total: 0, count: 0 },
+          },
         },
       },
-      recent: {
-        users: recentUsers.map((u) => ({
-          id: u.id,
-          email: u.email,
-          emailVerified: u.emailVerified,
-          createdAt: u.createdAt,
-          role: u.role,
-          partyCount: u._count.parties,
-        })),
-        parties: processedParties,
-        rsvps: recentRsvps.map((r) => ({
-          id: r.id,
-          childName: r.guest.childName,
-          status: r.status,
-          partyId: r.guest.partyId,
-          updatedAt: r.updatedAt,
-        })),
-      },
+      activityFeed,
     })
   } catch (error) {
     console.error('Admin overview error:', error)

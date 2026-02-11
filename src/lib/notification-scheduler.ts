@@ -100,7 +100,6 @@ export async function scheduleBirthdayReminders() {
     const threeWeeksFromNow = new Date(today)
     threeWeeksFromNow.setDate(today.getDate() + 21)
 
-    // Get all children with birthdays in the next 3 weeks
     const children = await prisma.child.findMany({
       include: {
         user: true
@@ -116,11 +115,10 @@ export async function scheduleBirthdayReminders() {
         thisYearBirthday.setFullYear(today.getFullYear() + 1)
       }
 
-      // Check if birthday is in 3 weeks (±2 days for flexibility)
       const timeDiff = thisYearBirthday.getTime() - today.getTime()
       const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
 
-      if (daysDiff >= 19 && daysDiff <= 23) { // 3 weeks ± 2 days
+      if (daysDiff >= 28 && daysDiff <= 32) { // ~1 month ± 2 days
         // Check if reminder already sent this year
         const existingReminder = await prisma.emailNotification.findFirst({
           where: {
@@ -135,6 +133,21 @@ export async function scheduleBirthdayReminders() {
 
         if (existingReminder) {
           console.log(`Birthday reminder already sent for ${child.name} this year`)
+          continue
+        }
+
+        // Check if a party already exists for this child (upcoming)
+        const existingParty = await prisma.party.findFirst({
+          where: {
+            childId: child.id,
+            eventDatetime: {
+              gte: today,
+            }
+          }
+        })
+
+        if (existingParty) {
+          console.log(`Party already exists for ${child.name}, skipping birthday reminder`)
           continue
         }
 
