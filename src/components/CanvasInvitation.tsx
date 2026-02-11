@@ -297,14 +297,68 @@ export default function CanvasInvitation({
     renderCanvas();
   }, [renderCanvas]);
 
+  const createA4FourUpSheet = useCallback((sourceCanvas: HTMLCanvasElement) => {
+    const a4Width = 2480;
+    const a4Height = 3508;
+    const margin = 120;
+    const gap = 80;
+
+    const sheet = document.createElement('canvas');
+    sheet.width = a4Width;
+    sheet.height = a4Height;
+
+    const ctx = sheet.getContext('2d');
+    if (!ctx) {
+      throw new Error('Failed to create A4 sheet');
+    }
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, a4Width, a4Height);
+
+    const slotWidth = (a4Width - margin * 2 - gap) / 2;
+    const slotHeight = (a4Height - margin * 2 - gap) / 2;
+
+    const sourceRatio = sourceCanvas.width / sourceCanvas.height;
+    let cardWidth = slotWidth;
+    let cardHeight = cardWidth / sourceRatio;
+
+    if (cardHeight > slotHeight) {
+      cardHeight = slotHeight;
+      cardWidth = cardHeight * sourceRatio;
+    }
+
+    const offsetX = (slotWidth - cardWidth) / 2;
+    const offsetY = (slotHeight - cardHeight) / 2;
+
+    const slots = [
+      [margin, margin],
+      [margin + slotWidth + gap, margin],
+      [margin, margin + slotHeight + gap],
+      [margin + slotWidth + gap, margin + slotHeight + gap],
+    ];
+
+    ctx.strokeStyle = '#E5E7EB';
+    ctx.lineWidth = 3;
+
+    for (const [x, y] of slots) {
+      const drawX = x + offsetX;
+      const drawY = y + offsetY;
+      ctx.drawImage(sourceCanvas, drawX, drawY, cardWidth, cardHeight);
+      ctx.strokeRect(drawX, drawY, cardWidth, cardHeight);
+    }
+
+    return sheet;
+  }, []);
+
   // 下载功能
   const handleDownload = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const sheet = createA4FourUpSheet(canvas);
     const link = document.createElement('a');
-    link.download = `${party.childName}-birthday-invitation.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.download = `${party.childName}-birthday-invitation-a4-4up.png`;
+    link.href = sheet.toDataURL('image/png');
     link.click();
   };
 
@@ -312,6 +366,9 @@ export default function CanvasInvitation({
   const handlePrint = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
+    const sheet = createA4FourUpSheet(canvas);
+    const sheetDataUrl = sheet.toDataURL('image/png');
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
@@ -324,20 +381,25 @@ export default function CanvasInvitation({
           <head>
             <title>${title}</title>
             <style>
-              body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-              img { max-width: 100%; height: auto; }
+              @page { size: A4 portrait; margin: 0; }
+              html, body { margin: 0; padding: 0; background: #fff; }
+              body { width: 210mm; height: 297mm; }
+              img { width: 210mm; height: 297mm; display: block; }
               @media print {
-                img { width: 6in; height: auto; }
+                html, body { width: 210mm; height: 297mm; }
               }
             </style>
           </head>
           <body>
-            <img src="${canvas.toDataURL('image/png')}" />
+            <img src="${sheetDataUrl}" />
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.print();
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+      };
     }
   };
 
