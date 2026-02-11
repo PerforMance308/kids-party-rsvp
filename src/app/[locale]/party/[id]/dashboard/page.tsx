@@ -9,6 +9,7 @@ import InvitationCard from '@/components/InvitationCard'
 import TemplateSelector from '@/components/TemplateSelector'
 import InvitationTemplate from '@/components/InvitationTemplates'
 import InviteGuests from '@/components/InviteGuests'
+import PaymentForm from '@/components/PaymentForm'
 // Photo sharing disabled
 // import PhotoSharingSection from '@/components/PhotoSharingSection'
 // import HostPhotoManager from '@/components/HostPhotoManager'
@@ -52,15 +53,6 @@ interface Party {
     notAttending: number
     maybe: number
   }
-}
-
-interface GuestMessage {
-  id: string
-  guestId?: string | null
-  childName: string
-  guestEmail: string
-  message: string
-  createdAt: string
 }
 
 export default function PartyDashboard() {
@@ -132,12 +124,13 @@ export default function PartyDashboard() {
   const [showInvitation, setShowInvitation] = useState(true)
   const [showAddGuest, setShowAddGuest] = useState(false)
   const [hasContacts, setHasContacts] = useState(false)
-  const [guestMessages, setGuestMessages] = useState<GuestMessage[]>([])
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
   const [broadcastSubject, setBroadcastSubject] = useState('')
   const [broadcastMessage, setBroadcastMessage] = useState('')
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false)
   const [broadcastResult, setBroadcastResult] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [showBroadcastPaymentModal, setShowBroadcastPaymentModal] = useState(false)
+  const [broadcastSentToday, setBroadcastSentToday] = useState(0)
+  const [broadcastPaymentId, setBroadcastPaymentId] = useState<string | null>(null)
 
   // Fetch contacts count to decide whether to show Add Guests section
   useEffect(() => {
@@ -155,25 +148,30 @@ export default function PartyDashboard() {
     fetchContacts()
   }, [])
 
-  useEffect(() => {
-    const fetchGuestMessages = async () => {
-      if (!id) return
-      setIsLoadingMessages(true)
-      try {
-        const response = await fetch(`/api/parties/${id}/messages`)
-        if (response.ok) {
-          const data = await response.json()
-          setGuestMessages(data.messages || [])
-        }
-      } catch (error) {
-        console.error('Failed to fetch guest messages:', error)
-      } finally {
-        setIsLoadingMessages(false)
-      }
-    }
 
-    fetchGuestMessages()
+  const fetchBroadcastUsage = async () => {
+    if (!id) return
+    try {
+      const response = await fetch(`/api/parties/${id}/broadcast`)
+      if (response.ok) {
+        const data = await response.json()
+        setBroadcastSentToday(data.sentToday ?? 0)
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    if (id) fetchBroadcastUsage()
   }, [id])
+
+  useEffect(() => {
+    if (showBroadcastPaymentModal) {
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = '' }
+    }
+  }, [showBroadcastPaymentModal])
 
   const copyRsvpLink = () => {
     if (party) {
@@ -246,6 +244,8 @@ export default function PartyDashboard() {
     }
   }
 
+  const needsBroadcastPayment = broadcastSentToday >= 1 && !broadcastPaymentId
+
   const sendBroadcast = async () => {
     if (!broadcastSubject.trim() || !broadcastMessage.trim()) {
       setBroadcastResult({ type: 'error', text: locale === 'zh' ? '请填写标题和内容' : 'Please enter both subject and message' })
@@ -257,12 +257,11 @@ export default function PartyDashboard() {
     try {
       const response = await fetch(`/api/parties/${id}/broadcast`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subject: broadcastSubject,
-          message: broadcastMessage
+          message: broadcastMessage,
+          paymentId: broadcastPaymentId || undefined
         })
       })
 
@@ -271,6 +270,8 @@ export default function PartyDashboard() {
         setBroadcastResult({ type: 'success', text: data.message || (locale === 'zh' ? '通知已发送' : 'Broadcast sent') })
         setBroadcastSubject('')
         setBroadcastMessage('')
+        setBroadcastPaymentId(null)
+        await fetchBroadcastUsage()
       } else {
         setBroadcastResult({ type: 'error', text: data.error || (locale === 'zh' ? '发送失败' : 'Failed to send broadcast') })
       }
@@ -278,6 +279,18 @@ export default function PartyDashboard() {
       setBroadcastResult({ type: 'error', text: locale === 'zh' ? '发送失败' : 'Failed to send broadcast' })
     } finally {
       setIsSendingBroadcast(false)
+    }
+  }
+
+  const handleBroadcastClick = () => {
+    if (!broadcastSubject.trim() || !broadcastMessage.trim()) {
+      setBroadcastResult({ type: 'error', text: locale === 'zh' ? '请填写标题和内容' : 'Please enter both subject and message' })
+      return
+    }
+    if (needsBroadcastPayment) {
+      setShowBroadcastPaymentModal(true)
+    } else {
+      sendBroadcast()
     }
   }
 
@@ -558,7 +571,9 @@ export default function PartyDashboard() {
                 {locale === 'zh' ? '群发通知' : 'Broadcast Notification'}
               </h2>
               <p className="text-sm text-neutral-600 mb-3">
-                {locale === 'zh' ? '可给本派对所有宾客发送邮件通知（每日最多 3 次，10 分钟冷却）' : 'Send an email update to all guests (max 3/day, 10-minute cooldown).'}
+                {locale === 'zh'
+                  ? '每天免费 1 条群发，额外每条 $0.99。'
+                  : '1 free broadcast per day; each additional one is $0.99.'}
               </p>
               <div className="space-y-3">
                 <input
@@ -585,40 +600,20 @@ export default function PartyDashboard() {
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    onClick={sendBroadcast}
+                    onClick={handleBroadcastClick}
                     disabled={isSendingBroadcast}
-                    className="btn btn-primary disabled:opacity-50"
+                    className={`btn disabled:opacity-50 ${needsBroadcastPayment
+                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600'
+                      : 'btn-primary'}`}
                   >
-                    {isSendingBroadcast ? (locale === 'zh' ? '发送中...' : 'Sending...') : (locale === 'zh' ? '发送通知' : 'Send Broadcast')}
+                    {isSendingBroadcast
+                      ? (locale === 'zh' ? '发送中...' : 'Sending...')
+                      : needsBroadcastPayment
+                        ? (locale === 'zh' ? '发送通知 ($0.99)' : 'Send Broadcast ($0.99)')
+                        : (locale === 'zh' ? '发送通知' : 'Send Broadcast')}
                   </button>
                 </div>
               </div>
-            </div>
-
-            <div className="card">
-              <h2 className="text-lg lg:text-xl font-semibold text-neutral-900 mb-4">
-                {locale === 'zh' ? '宾客消息' : 'Guest Messages'}
-              </h2>
-              {isLoadingMessages ? (
-                <p className="text-sm text-neutral-500">{locale === 'zh' ? '加载中...' : 'Loading...'}</p>
-              ) : guestMessages.length === 0 ? (
-                <p className="text-sm text-neutral-500">{locale === 'zh' ? '暂无消息' : 'No messages yet'}</p>
-              ) : (
-                <div className="space-y-3">
-                  {guestMessages.map((item) => (
-                    <div key={item.id} className="border border-neutral-200 rounded-lg p-3">
-                      <div className="text-sm font-medium text-neutral-900">{item.childName}</div>
-                      {item.guestEmail && (
-                        <div className="text-xs text-neutral-500 mb-2">{item.guestEmail}</div>
-                      )}
-                      <p className="text-sm text-neutral-700 whitespace-pre-wrap">{item.message}</p>
-                      <div className="text-xs text-neutral-400 mt-2">
-                        {formatDate(new Date(item.createdAt), locale)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="card">
@@ -731,6 +726,52 @@ export default function PartyDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Broadcast Payment Modal */}
+      {showBroadcastPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowBroadcastPaymentModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto my-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-lg font-bold text-neutral-900">
+                {locale === 'zh' ? '购买额外发送次数' : 'Buy Extra Broadcast'}
+              </h3>
+              <button onClick={() => setShowBroadcastPaymentModal(false)} className="text-neutral-400 hover:text-neutral-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <p className="text-sm text-neutral-600 mb-4">
+              {locale === 'zh'
+                ? '今日免费次数已用完，购买后可额外发送 1 次群发通知。'
+                : 'Free daily broadcast used. Purchase 1 additional broadcast send.'}
+            </p>
+
+            <div className="text-center mb-4">
+              <span className="text-2xl font-bold text-neutral-900">$0.99</span>
+              <span className="text-sm text-neutral-500 ml-1">USD</span>
+            </div>
+
+            <PaymentForm
+              amount={0.99}
+              currency="USD"
+              description={locale === 'zh' ? '额外群发通知' : 'Additional broadcast notification'}
+              metadata={{
+                partyId: party.id,
+                feature: 'broadcast_extra',
+              }}
+              onSuccess={(paymentId) => {
+                setBroadcastPaymentId(paymentId)
+                setShowBroadcastPaymentModal(false)
+                setBroadcastResult({ type: 'success', text: locale === 'zh' ? '付款成功，请点击发送' : 'Payment successful, click Send to broadcast' })
+              }}
+              onError={(msg) => setBroadcastResult({ type: 'error', text: msg })}
+              onCancel={() => setShowBroadcastPaymentModal(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Mobile Fixed Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 px-4 py-3 lg:hidden safe-area-bottom z-20">

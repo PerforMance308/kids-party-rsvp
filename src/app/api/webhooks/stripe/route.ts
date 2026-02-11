@@ -54,21 +54,31 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       }
     }
     
-    // Record payment in database
-    await prisma.payment.create({
-      data: {
-        userId: paymentIntent.metadata.userId,
-        partyId: paymentIntent.metadata.partyId || null,
-        stripePaymentId: paymentIntent.id,
-        feature: paymentIntent.metadata.feature || 'unknown',
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        status: 'succeeded',
-        metadata: JSON.stringify({
-          templateId: paymentIntent.metadata.templateId,
-        }),
-      },
-    })
+    // Record payment in database (skip if userId missing or invalid)
+    const userId = paymentIntent.metadata.userId
+    if (userId) {
+      const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+      if (userExists) {
+        await prisma.payment.create({
+          data: {
+            userId,
+            partyId: paymentIntent.metadata.partyId || null,
+            stripePaymentId: paymentIntent.id,
+            feature: paymentIntent.metadata.feature || 'unknown',
+            amount: paymentIntent.amount,
+            currency: paymentIntent.currency,
+            status: 'succeeded',
+            metadata: JSON.stringify({
+              templateId: paymentIntent.metadata.templateId,
+            }),
+          },
+        })
+      } else {
+        console.warn('⚠️ Skipping payment record: user not found:', userId)
+      }
+    } else {
+      console.warn('⚠️ Skipping payment record: no userId in metadata')
+    }
 
     // Log successful payment
     const amount = paymentIntent.amount / 100
@@ -84,21 +94,29 @@ async function handlePaymentFailure(paymentIntent: Stripe.PaymentIntent) {
   try {
     console.log('❌ Payment failed:', paymentIntent.id)
 
-    // Record failed payment in database
-    await prisma.payment.create({
-      data: {
-        userId: paymentIntent.metadata.userId,
-        partyId: paymentIntent.metadata.partyId || null,
-        stripePaymentId: paymentIntent.id,
-        feature: paymentIntent.metadata.feature || 'unknown',
-        amount: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        status: 'failed',
-        metadata: JSON.stringify({
-          templateId: paymentIntent.metadata.templateId,
-        }),
-      },
-    })
+    // Record failed payment in database (skip if userId missing or invalid)
+    const userId = paymentIntent.metadata.userId
+    if (userId) {
+      const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } })
+      if (userExists) {
+        await prisma.payment.create({
+          data: {
+            userId,
+            partyId: paymentIntent.metadata.partyId || null,
+            stripePaymentId: paymentIntent.id,
+            feature: paymentIntent.metadata.feature || 'unknown',
+            amount: paymentIntent.amount,
+            currency: paymentIntent.currency,
+            status: 'failed',
+            metadata: JSON.stringify({
+              templateId: paymentIntent.metadata.templateId,
+            }),
+          },
+        })
+      } else {
+        console.warn('⚠️ Skipping failed payment record: user not found:', userId)
+      }
+    }
 
     const amount = paymentIntent.amount / 100
     console.log(`💸 Payment failed: ${paymentIntent.id} - ${paymentIntent.currency.toUpperCase()} ${amount}`)

@@ -5,9 +5,10 @@ import { prisma } from '@/lib/prisma'
 import { sanitizeInput } from '@/lib/security'
 import { sendEmail } from '@/lib/email'
 import { calculateAge } from '@/lib/utils'
+import Stripe from 'stripe'
 
-const BROADCAST_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
-const BROADCAST_DAILY_LIMIT = 3
+const BROADCAST_FREE_DAILY_LIMIT = 1
+const BROADCAST_EXTRA_PRICE_CENTS = 99
 const BROADCAST_MAX_RECIPIENTS = 200
 
 function uniqueEmails(emails: string[]) {
@@ -44,6 +45,7 @@ export async function POST(
     const body = await request.json()
     const subject = sanitizeInput(body?.subject || '')
     const message = sanitizeInput(body?.message || '')
+    const paymentId = sanitizeInput(body?.paymentId || '')
 
     if (subject.length < 3 || subject.length > 120) {
       return NextResponse.json({ error: 'Subject must be 3-120 characters' }, { status: 400 })
@@ -53,42 +55,90 @@ export async function POST(
     }
 
     const now = new Date()
-    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const dayStart = new Date(now)
+    dayStart.setHours(0, 0, 0, 0)
 
     const sentToday = await prisma.reminder.count({
       where: {
         partyId: party.id,
         type: 'HOST_BROADCAST',
         sentAt: {
-          gte: dayAgo
+          gte: dayStart
         }
       }
     })
 
-    if (sentToday >= BROADCAST_DAILY_LIMIT) {
-      return NextResponse.json(
-        { error: `Daily broadcast limit reached (${BROADCAST_DAILY_LIMIT}/day)` },
-        { status: 429 }
-      )
-    }
-
-    const lastBroadcast = await prisma.reminder.findFirst({
-      where: {
-        partyId: party.id,
-        type: 'HOST_BROADCAST',
-        sentAt: { not: null }
-      },
-      orderBy: {
-        sentAt: 'desc'
-      }
-    })
-
-    if (lastBroadcast?.sentAt) {
-      const waitMs = BROADCAST_COOLDOWN_MS - (now.getTime() - lastBroadcast.sentAt.getTime())
-      if (waitMs > 0) {
+    const extraBroadcastNeeded = sentToday >= BROADCAST_FREE_DAILY_LIMIT
+    if (extraBroadcastNeeded) {
+      if (!paymentId) {
         return NextResponse.json(
-          { error: `Please wait ${Math.ceil(waitMs / 60_000)} minutes before next broadcast` },
-          { status: 429 }
+          {
+            error: 'Payment required for additional broadcasts today',
+            code: 'PAYMENT_REQUIRED',
+            price: 0.99,
+            currency: 'USD',
+            sentToday,
+            freeLimit: BROADCAST_FREE_DAILY_LIMIT
+          },
+          { status: 402 }
+        )
+      }
+
+      const alreadyUsedPayment = await prisma.emailNotification.findFirst({
+        where: {
+          type: 'HOST_BROADCAST_PAYMENT_USAGE',
+          relatedId: paymentId
+        },
+        select: { id: true }
+      })
+      if (alreadyUsedPayment) {
+        return NextResponse.json(
+          { error: 'This payment has already been used for a broadcast' },
+          { status: 400 }
+        )
+      }
+
+      if (!process.env.STRIPE_SECRET_KEY) {
+        return NextResponse.json(
+          { error: 'Payment service is not configured' },
+          { status: 500 }
+        )
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-02-24.acacia',
+      })
+
+      let paymentIntent: Stripe.PaymentIntent
+      try {
+        paymentIntent = await stripe.paymentIntents.retrieve(paymentId)
+      } catch (verificationError) {
+        return NextResponse.json(
+          { error: 'Failed to verify payment' },
+          { status: 400 }
+        )
+      }
+
+      if (paymentIntent.status !== 'succeeded') {
+        return NextResponse.json(
+          { error: 'Payment has not been completed' },
+          { status: 400 }
+        )
+      }
+      if (paymentIntent.amount !== BROADCAST_EXTRA_PRICE_CENTS) {
+        return NextResponse.json(
+          { error: 'Payment amount verification failed' },
+          { status: 400 }
+        )
+      }
+      if (
+        paymentIntent.metadata?.feature !== 'broadcast_extra' ||
+        paymentIntent.metadata?.partyId !== party.id ||
+        paymentIntent.metadata?.userId !== session.user.id
+      ) {
+        return NextResponse.json(
+          { error: 'Payment metadata verification failed' },
+          { status: 400 }
         )
       }
     }
@@ -124,11 +174,7 @@ export async function POST(
     `
     const text = `Party update for ${party.child.name}'s ${childAge}th birthday\nWhen: ${whenText}\nWhere: ${party.location}\n\n${message}`
 
-    const results = await Promise.allSettled(
-      recipients.map(email => sendEmail({ to: email, subject, text, html }))
-    )
-    const successCount = results.filter(r => r.status === 'fulfilled').length
-
+    // Record broadcast + payment usage in DB first, then return immediately
     await prisma.reminder.create({
       data: {
         partyId: party.id,
@@ -151,16 +197,82 @@ export async function POST(
       })) as any[]
     })
 
+    if (extraBroadcastNeeded && paymentId) {
+      await prisma.emailNotification.create({
+        data: {
+          userId: session.user.id!,
+          email: session.user.email || '',
+          type: 'HOST_BROADCAST_PAYMENT_USAGE',
+          subject: 'Broadcast extra payment used',
+          content: `Payment ${paymentId} used for party ${party.id}`,
+          relatedId: paymentId,
+          status: 'sent',
+          sentAt: now
+        } as any
+      })
+    }
+
+    // Fire-and-forget: send emails in background, don't block response
+    Promise.allSettled(
+      recipients.map(email => sendEmail({ to: email, subject, text, html }))
+    ).catch(err => console.error('Background email send error:', err))
+
     return NextResponse.json({
-      message: `Broadcast sent to ${successCount} guests`,
+      message: `Sending broadcast to ${recipients.length} guests`,
       totalRecipients: recipients.length,
       sentToday: sentToday + 1,
-      dailyLimit: BROADCAST_DAILY_LIMIT
+      freeDailyLimit: BROADCAST_FREE_DAILY_LIMIT
     })
   } catch (error) {
     console.error('Broadcast send error:', error)
     return NextResponse.json(
       { error: 'Failed to send broadcast' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const party = await prisma.party.findFirst({
+      where: { id, userId: session.user.id },
+      select: { id: true }
+    })
+
+    if (!party) {
+      return NextResponse.json({ error: 'Party not found' }, { status: 404 })
+    }
+
+    const now = new Date()
+    const dayStart = new Date(now)
+    dayStart.setHours(0, 0, 0, 0)
+
+    const sentToday = await prisma.reminder.count({
+      where: {
+        partyId: party.id,
+        type: 'HOST_BROADCAST',
+        sentAt: { gte: dayStart }
+      }
+    })
+
+    return NextResponse.json({
+      sentToday,
+      freeLimit: BROADCAST_FREE_DAILY_LIMIT
+    })
+  } catch (error) {
+    console.error('Broadcast usage query error:', error)
+    return NextResponse.json(
+      { error: 'Failed to query broadcast usage' },
       { status: 500 }
     )
   }

@@ -5,8 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { isValidUUID, sanitizeInput } from '@/lib/security'
 import { sendEmail } from '@/lib/email'
 
-const MESSAGE_COOLDOWN_MS = 2 * 60 * 1000 // 2 minutes
-const MESSAGE_DAILY_LIMIT = 5
+const MESSAGE_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
+const MESSAGE_DAILY_LIMIT = 10
 
 export async function POST(
   request: NextRequest,
@@ -64,14 +64,15 @@ export async function POST(
 
     const relatedId = `${party.id}:${guest.id}`
     const now = new Date()
-    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const dayStart = new Date(now)
+    dayStart.setHours(0, 0, 0, 0)
 
     const sentToday = await prisma.emailNotification.count({
       where: {
         type: 'GUEST_MESSAGE',
         relatedId,
         createdAt: {
-          gte: dayAgo
+          gte: dayStart
         }
       }
     })
