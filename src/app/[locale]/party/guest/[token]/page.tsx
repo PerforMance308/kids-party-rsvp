@@ -62,6 +62,9 @@ export default function GuestPartyPage() {
   const [activeTab, setActiveTab] = useState<'details' | 'photos' | 'guests'>('details')
   const [showUpload, setShowUpload] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [hostMessage, setHostMessage] = useState('')
+  const [isSendingHostMessage, setIsSendingHostMessage] = useState(false)
+  const [hostMessageResult, setHostMessageResult] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   const isAuthenticated = sessionStatus === 'authenticated' && session?.user?.id
 
@@ -109,6 +112,36 @@ export default function GuestPartyPage() {
 
   const handlePhotoUploadError = (error: string) => {
     setUploadError(error)
+  }
+
+  const handleSendMessageToHost = async () => {
+    if (!hostMessage.trim()) return
+
+    setIsSendingHostMessage(true)
+    setHostMessageResult(null)
+    try {
+      const response = await fetch(`/api/party/guest/${token}/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: hostMessage
+        })
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        setHostMessage('')
+        setHostMessageResult({ type: 'success', text: 'Message sent to host' })
+      } else {
+        setHostMessageResult({ type: 'error', text: data.error || 'Failed to send message' })
+      }
+    } catch (error) {
+      setHostMessageResult({ type: 'error', text: 'Failed to send message' })
+    } finally {
+      setIsSendingHostMessage(false)
+    }
   }
 
   if (!isAuthenticated) {
@@ -309,6 +342,36 @@ export default function GuestPartyPage() {
                   <p className="text-neutral-900 mt-1">{myRSVP.message}</p>
                 </div>
               )}
+
+              <div className="mt-6 p-4 bg-white border border-neutral-200 rounded-lg">
+                <h4 className="font-semibold text-neutral-900 mb-2">Message the host</h4>
+                <p className="text-sm text-neutral-600 mb-3">
+                  Need to ask something? Send a quick message to the host.
+                </p>
+                <textarea
+                  value={hostMessage}
+                  onChange={(e) => setHostMessage(e.target.value)}
+                  className="input"
+                  rows={3}
+                  maxLength={1000}
+                  placeholder="Type your message..."
+                />
+                {hostMessageResult && (
+                  <div className={`mt-3 p-2 rounded text-sm ${hostMessageResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                    {hostMessageResult.text}
+                  </div>
+                )}
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSendMessageToHost}
+                    disabled={!hostMessage.trim() || isSendingHostMessage}
+                    className="btn btn-primary text-sm disabled:opacity-50"
+                  >
+                    {isSendingHostMessage ? 'Sending...' : 'Send to host'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -54,6 +54,15 @@ interface Party {
   }
 }
 
+interface GuestMessage {
+  id: string
+  guestId?: string | null
+  childName: string
+  guestEmail: string
+  message: string
+  createdAt: string
+}
+
 export default function PartyDashboard() {
   const { id } = useParams()
   const [party, setParty] = useState<Party | null>(null)
@@ -123,6 +132,12 @@ export default function PartyDashboard() {
   const [showInvitation, setShowInvitation] = useState(true)
   const [showAddGuest, setShowAddGuest] = useState(false)
   const [hasContacts, setHasContacts] = useState(false)
+  const [guestMessages, setGuestMessages] = useState<GuestMessage[]>([])
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [broadcastSubject, setBroadcastSubject] = useState('')
+  const [broadcastMessage, setBroadcastMessage] = useState('')
+  const [isSendingBroadcast, setIsSendingBroadcast] = useState(false)
+  const [broadcastResult, setBroadcastResult] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   // Fetch contacts count to decide whether to show Add Guests section
   useEffect(() => {
@@ -139,6 +154,26 @@ export default function PartyDashboard() {
     }
     fetchContacts()
   }, [])
+
+  useEffect(() => {
+    const fetchGuestMessages = async () => {
+      if (!id) return
+      setIsLoadingMessages(true)
+      try {
+        const response = await fetch(`/api/parties/${id}/messages`)
+        if (response.ok) {
+          const data = await response.json()
+          setGuestMessages(data.messages || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch guest messages:', error)
+      } finally {
+        setIsLoadingMessages(false)
+      }
+    }
+
+    fetchGuestMessages()
+  }, [id])
 
   const copyRsvpLink = () => {
     if (party) {
@@ -208,6 +243,41 @@ export default function PartyDashboard() {
       }
     } catch (error) {
       setError('An error occurred while updating template')
+    }
+  }
+
+  const sendBroadcast = async () => {
+    if (!broadcastSubject.trim() || !broadcastMessage.trim()) {
+      setBroadcastResult({ type: 'error', text: locale === 'zh' ? '请填写标题和内容' : 'Please enter both subject and message' })
+      return
+    }
+
+    setIsSendingBroadcast(true)
+    setBroadcastResult(null)
+    try {
+      const response = await fetch(`/api/parties/${id}/broadcast`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          subject: broadcastSubject,
+          message: broadcastMessage
+        })
+      })
+
+      const data = await response.json()
+      if (response.ok) {
+        setBroadcastResult({ type: 'success', text: data.message || (locale === 'zh' ? '通知已发送' : 'Broadcast sent') })
+        setBroadcastSubject('')
+        setBroadcastMessage('')
+      } else {
+        setBroadcastResult({ type: 'error', text: data.error || (locale === 'zh' ? '发送失败' : 'Failed to send broadcast') })
+      }
+    } catch (error) {
+      setBroadcastResult({ type: 'error', text: locale === 'zh' ? '发送失败' : 'Failed to send broadcast' })
+    } finally {
+      setIsSendingBroadcast(false)
     }
   }
 
@@ -482,6 +552,74 @@ export default function PartyDashboard() {
                 </div>
               )
             )}
+
+            <div className="card">
+              <h2 className="text-lg lg:text-xl font-semibold text-neutral-900 mb-4">
+                {locale === 'zh' ? '群发通知' : 'Broadcast Notification'}
+              </h2>
+              <p className="text-sm text-neutral-600 mb-3">
+                {locale === 'zh' ? '可给本派对所有宾客发送邮件通知（每日最多 3 次，10 分钟冷却）' : 'Send an email update to all guests (max 3/day, 10-minute cooldown).'}
+              </p>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={broadcastSubject}
+                  onChange={(e) => setBroadcastSubject(e.target.value)}
+                  className="input"
+                  maxLength={120}
+                  placeholder={locale === 'zh' ? '邮件标题（3-120字）' : 'Email subject (3-120 chars)'}
+                />
+                <textarea
+                  value={broadcastMessage}
+                  onChange={(e) => setBroadcastMessage(e.target.value)}
+                  className="input"
+                  rows={4}
+                  maxLength={1000}
+                  placeholder={locale === 'zh' ? '通知内容（3-1000字）' : 'Message content (3-1000 chars)'}
+                />
+                {broadcastResult && (
+                  <div className={`p-2 rounded text-sm ${broadcastResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                    {broadcastResult.text}
+                  </div>
+                )}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={sendBroadcast}
+                    disabled={isSendingBroadcast}
+                    className="btn btn-primary disabled:opacity-50"
+                  >
+                    {isSendingBroadcast ? (locale === 'zh' ? '发送中...' : 'Sending...') : (locale === 'zh' ? '发送通知' : 'Send Broadcast')}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <h2 className="text-lg lg:text-xl font-semibold text-neutral-900 mb-4">
+                {locale === 'zh' ? '宾客消息' : 'Guest Messages'}
+              </h2>
+              {isLoadingMessages ? (
+                <p className="text-sm text-neutral-500">{locale === 'zh' ? '加载中...' : 'Loading...'}</p>
+              ) : guestMessages.length === 0 ? (
+                <p className="text-sm text-neutral-500">{locale === 'zh' ? '暂无消息' : 'No messages yet'}</p>
+              ) : (
+                <div className="space-y-3">
+                  {guestMessages.map((item) => (
+                    <div key={item.id} className="border border-neutral-200 rounded-lg p-3">
+                      <div className="text-sm font-medium text-neutral-900">{item.childName}</div>
+                      {item.guestEmail && (
+                        <div className="text-xs text-neutral-500 mb-2">{item.guestEmail}</div>
+                      )}
+                      <p className="text-sm text-neutral-700 whitespace-pre-wrap">{item.message}</p>
+                      <div className="text-xs text-neutral-400 mt-2">
+                        {formatDate(new Date(item.createdAt), locale)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="card">
               <h2 className="text-lg lg:text-xl font-semibold text-neutral-900 mb-4">{tr('guestList')}</h2>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
@@ -12,6 +12,11 @@ export default function VerificationBanner({ email }: VerificationBannerProps) {
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'already'>('idle')
     const { t } = useLanguage()
     const { update } = useSession()
+
+    // Force session refresh on mount to catch verification done in another tab
+    useEffect(() => {
+        update()
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleResend = async () => {
         setStatus('sending')
