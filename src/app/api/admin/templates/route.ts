@@ -7,7 +7,6 @@ import type { TemplateConfig } from '@/types/invitation-template'
 import { getEffectivePrice } from '@/types/invitation-template'
 
 const TEMPLATES_DIR = path.join(process.cwd(), 'public', 'invitations')
-const TARGET_SIZE = { width: 1000, height: 1400 }
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 // GET: 获取所有模板
@@ -66,6 +65,7 @@ export async function GET() {
 }
 
 // POST: 创建新模板（上传图片+JSON）
+// Template ID is derived from the image filename (e.g. unicorn_1.png → unicorn_1)
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response!
@@ -73,48 +73,56 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const theme = formData.get('theme') as string
-    const templateId = formData.get('templateId') as string
     const imageFile = formData.get('image') as File | null
     const jsonFile = formData.get('json') as File | null
     const jsonContent = formData.get('jsonContent') as string | null
 
-    if (!theme || !templateId) {
-      return NextResponse.json({ error: 'Theme and templateId are required' }, { status: 400 })
+    if (!theme) {
+      return NextResponse.json({ error: 'Theme is required' }, { status: 400 })
     }
 
-    // 验证templateId格式
-    if (!/^[a-z0-9_]+$/.test(templateId)) {
-      return NextResponse.json({ error: 'Template ID must contain only lowercase letters, numbers, and underscores' }, { status: 400 })
+    if (!imageFile) {
+      return NextResponse.json({ error: 'Image file is required' }, { status: 400 })
+    }
+
+    if (imageFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'Image file too large (max 10MB)' }, { status: 400 })
+    }
+
+    // Derive template ID from image filename (strip extension, sanitize)
+    const originalName = imageFile.name
+    const ext = path.extname(originalName) // e.g. ".png"
+    const baseName = path.basename(originalName, ext)
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+
+    if (!baseName) {
+      return NextResponse.json({ error: 'Invalid image filename' }, { status: 400 })
     }
 
     const themePath = path.join(TEMPLATES_DIR, theme)
-
-    // 确保主题目录存在
     await fs.mkdir(themePath, { recursive: true })
 
-    const imageFileName = `${templateId}.png`
-    const jsonFileName = `${templateId}.json`
+    // Image keeps its sanitized name as PNG
+    const imageFileName = `${baseName}.png`
+    const jsonFileName = `${baseName}.json`
     const imagePath = path.join(themePath, imageFileName)
     const jsonPath = path.join(themePath, jsonFileName)
 
-    // 处理图片上传
-    if (imageFile) {
-      if (imageFile.size > MAX_FILE_SIZE) {
-        return NextResponse.json({ error: 'Image file too large (max 10MB)' }, { status: 400 })
-      }
+    // Process image with sharp (convert to PNG, read dimensions)
+    const buffer = Buffer.from(await imageFile.arrayBuffer())
+    const metadata = await sharp(buffer).metadata()
+    const imgWidth = metadata.width || 1000
+    const imgHeight = metadata.height || 1400
 
-      const buffer = Buffer.from(await imageFile.arrayBuffer())
+    const processedBuffer = await sharp(buffer)
+      .png()
+      .toBuffer()
 
-      // 使用sharp处理图片，调整尺寸
-      const processedBuffer = await sharp(buffer)
-        .resize(TARGET_SIZE.width, TARGET_SIZE.height, { fit: 'fill' })
-        .png()
-        .toBuffer()
+    await fs.writeFile(imagePath, processedBuffer)
 
-      await fs.writeFile(imagePath, processedBuffer)
-    }
-
-    // 处理JSON配置
+    // Handle JSON config
     let config: TemplateConfig
 
     if (jsonFile) {
@@ -123,10 +131,10 @@ export async function POST(request: NextRequest) {
     } else if (jsonContent) {
       config = JSON.parse(jsonContent)
     } else {
-      // 创建默认配置
+      // Default config using actual image dimensions
       config = {
         template: imageFileName,
-        canvas_size: [TARGET_SIZE.width, TARGET_SIZE.height],
+        canvas_size: [imgWidth, imgHeight],
         pricing: {
           price: 1.39,
           currency: 'USD',
@@ -136,7 +144,7 @@ export async function POST(request: NextRequest) {
           {
             name: 'child_name',
             content: '',
-            position: { x: 500, y: 400 },
+            position: { x: Math.round(imgWidth / 2), y: Math.round(imgHeight * 0.28) },
             font: 'Arial-Bold',
             font_size: 48,
             color: '#FFFFFF',
@@ -145,16 +153,25 @@ export async function POST(request: NextRequest) {
           {
             name: 'child_age',
             content: '',
-            position: { x: 500, y: 500 },
+            position: { x: Math.round(imgWidth / 2), y: Math.round(imgHeight * 0.36) },
             font: 'Arial-Bold',
             font_size: 72,
             color: '#FF6B35',
             align: 'center',
           },
           {
-            name: 'date_time',
+            name: 'date',
             content: '',
-            position: { x: 300, y: 900 },
+            position: { x: Math.round(imgWidth * 0.3), y: Math.round(imgHeight * 0.64) },
+            font: 'Arial-Bold',
+            font_size: 28,
+            color: '#333333',
+            align: 'left',
+          },
+          {
+            name: 'time',
+            content: '',
+            position: { x: Math.round(imgWidth * 0.3), y: Math.round(imgHeight * 0.68) },
             font: 'Arial-Bold',
             font_size: 28,
             color: '#333333',
@@ -163,7 +180,7 @@ export async function POST(request: NextRequest) {
           {
             name: 'location',
             content: '',
-            position: { x: 300, y: 950 },
+            position: { x: Math.round(imgWidth * 0.3), y: Math.round(imgHeight * 0.72) },
             font: 'Arial-Bold',
             font_size: 28,
             color: '#333333',
@@ -171,21 +188,20 @@ export async function POST(request: NextRequest) {
           },
         ],
         qr_code: {
-          position: { x: 800, y: 1150 },
+          position: { x: Math.round(imgWidth * 0.8), y: Math.round(imgHeight * 0.82) },
           size: 140,
         },
       }
     }
 
-    // 确保template字段正确
+    // Ensure template field points to actual image file
     config.template = imageFileName
 
-    // 保存JSON配置
     await fs.writeFile(jsonPath, JSON.stringify(config, null, 2))
 
     return NextResponse.json({
       success: true,
-      templateId,
+      templateId: baseName,
       theme,
       imageUrl: `/invitations/${theme}/${imageFileName}`,
     })

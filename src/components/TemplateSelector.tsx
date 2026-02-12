@@ -300,12 +300,12 @@ export default function TemplateSelector({
                       }`}
                     onClick={() => handleTemplateClick(template)}
                   >
-                    <div className="aspect-[5/7] overflow-hidden bg-neutral-100 border-b relative">
+                    <div className="aspect-[5/7] overflow-hidden bg-neutral-100 border-b relative flex items-center justify-center">
                       {template.imageUrl ? (
                         <img
                           src={template.imageUrl}
                           alt={template.name}
-                          className="w-full h-full object-fill"
+                          className="max-w-full max-h-full object-contain"
                           loading="lazy"
                         />
                       ) : (

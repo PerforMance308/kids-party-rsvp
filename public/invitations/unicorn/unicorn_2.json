@@ -1,0 +1,69 @@
+{
+  "template": "unicorn_2.png",
+  "canvas_size": [
+    403,
+    646
+  ],
+  "pricing": {
+    "price": 2.39,
+    "currency": "USD",
+    "isFree": false
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {
+        "x": 202,
+        "y": 59
+      },
+      "font": "Arial-Bold",
+      "font_size": 24,
+      "color": "#ec69d0",
+      "align": "center"
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": {
+        "x": 208,
+        "y": 431
+      },
+      "font": "ComicSansMS",
+      "font_size": 17,
+      "color": "#333333",
+      "align": "center"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 208,
+        "y": 453
+      },
+      "font": "ComicSansMS",
+      "font_size": 17,
+      "color": "#333333",
+      "align": "center"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {
+        "x": 142,
+        "y": 477
+      },
+      "font": "ComicSansMS",
+      "font_size": 17,
+      "color": "#333333",
+      "align": "left"
+    }
+  ],
+  "qr_code": {
+    "position": {
+      "x": 328,
+      "y": 574
+    },
+    "size": 60
+  }
+}

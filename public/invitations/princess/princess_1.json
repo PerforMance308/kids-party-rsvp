@@ -1,0 +1,83 @@
+{
+  "template": "princess_1.png",
+  "canvas_size": [
+    380,
+    589
+  ],
+  "pricing": {
+    "price": 2.39,
+    "currency": "USD",
+    "isFree": false
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {
+        "x": 190,
+        "y": 81
+      },
+      "font": "BubblegumSans",
+      "font_size": 34,
+      "color": "#ed7d97",
+      "align": "center"
+    },
+    {
+      "name": "child_age",
+      "content": "",
+      "position": {
+        "x": 190,
+        "y": 219
+      },
+      "font": "Pacifico",
+      "font_size": 38,
+      "color": "#ec7e97",
+      "align": "center"
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": {
+        "x": 209,
+        "y": 509
+      },
+      "font": "ComicSansMS",
+      "font_size": 15,
+      "color": "#474747",
+      "align": "center"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 209,
+        "y": 531
+      },
+      "font": "ComicSansMS",
+      "font_size": 15,
+      "color": "#474747",
+      "align": "center"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {
+        "x": 177,
+        "y": 556
+      },
+      "font": "ComicSansMS",
+      "font_size": 11,
+      "color": "#333333",
+      "align": "left"
+    }
+  ],
+  "qr_code": {
+    "position": {
+      "x": 311,
+      "y": 517
+    },
+    "size": 46,
+    "darkColor": "#ffffff",
+    "lightColor": "#c69b44"
+  }
+}

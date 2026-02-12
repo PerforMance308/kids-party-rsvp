@@ -1,0 +1,81 @@
+{
+  "template": "hero_2.png",
+  "canvas_size": [
+    380,
+    575
+  ],
+  "pricing": {
+    "price": 1.39,
+    "currency": "USD",
+    "isFree": false
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {
+        "x": 197,
+        "y": 69
+      },
+      "font": "Bangers",
+      "font_size": 40,
+      "color": "#b42d2f",
+      "align": "center"
+    },
+    {
+      "name": "child_age",
+      "content": "",
+      "position": {
+        "x": 190,
+        "y": 199
+      },
+      "font": "Bangers",
+      "font_size": 64,
+      "color": "#e3c047",
+      "align": "center"
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": {
+        "x": 123,
+        "y": 489
+      },
+      "font": "Arial-Bold",
+      "font_size": 18,
+      "color": "#ffffff",
+      "align": "left"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 104,
+        "y": 516
+      },
+      "font": "Arial-Bold",
+      "font_size": 18,
+      "color": "#ffffff",
+      "align": "left"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {
+        "x": 104,
+        "y": 540
+      },
+      "font": "Arial-Bold",
+      "font_size": 18,
+      "color": "#ffffff",
+      "align": "left"
+    }
+  ],
+  "qr_code": {
+    "position": {
+      "x": 320,
+      "y": 512
+    },
+    "size": 46
+  }
+}

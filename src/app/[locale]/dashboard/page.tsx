@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('')
   const [deletingParty, setDeletingParty] = useState<string | null>(null)
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; partyId: string; childName: string }>({ open: false, partyId: '', childName: '' })
+  const [showPast, setShowPast] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -250,25 +251,52 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Past Parties */}
+            {/* Past Parties (collapsed by default) */}
             {past.length > 0 && (
               <div>
-                <h2 className="font-display text-lg font-bold text-neutral-400 mb-4">
-                  {locale === 'zh' ? '已结束' : 'Past'}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-70">
-                  {past.map((party, i) => (
-                    <PartyCard
-                      key={party.id}
-                      party={party}
-                      locale={locale}
-                      t={t}
-                      deletingParty={deletingParty}
-                      onDelete={(id, name) => setDeleteDialog({ open: true, partyId: id, childName: name })}
-                      index={i}
-                    />
-                  ))}
-                </div>
+                <button
+                  onClick={() => setShowPast(!showPast)}
+                  className="flex items-center gap-2 mb-4 group"
+                >
+                  <motion.span
+                    animate={{ rotate: showPast ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-neutral-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </motion.span>
+                  <h2 className="font-display text-lg font-bold text-neutral-400 group-hover:text-neutral-500 transition-colors">
+                    {locale === 'zh' ? '已结束' : 'Past'} ({past.length})
+                  </h2>
+                </button>
+                <AnimatePresence>
+                  {showPast && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {past.map((party, i) => (
+                          <PartyCard
+                            key={party.id}
+                            party={party}
+                            locale={locale}
+                            t={t}
+                            deletingParty={deletingParty}
+                            onDelete={(id, name) => setDeleteDialog({ open: true, partyId: id, childName: name })}
+                            index={i}
+                            isPast
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </>
@@ -299,6 +327,7 @@ function PartyCard({
   deletingParty,
   onDelete,
   index,
+  isPast = false,
 }: {
   party: PartyWithStats
   locale: string
@@ -306,6 +335,7 @@ function PartyCard({
   deletingParty: string | null
   onDelete: (id: string, childName: string) => void
   index: number
+  isPast?: boolean
 }) {
   const daysUntil = getDaysUntilEvent(new Date(party.eventDatetime))
   const isUpcoming = daysUntil >= 0
@@ -333,7 +363,11 @@ function PartyCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="bg-white rounded-2xl border border-neutral-100 overflow-hidden hover:shadow-lg hover:shadow-primary-500/5 transition-all duration-300 hover:-translate-y-0.5 flex flex-col"
+      className={`rounded-2xl border overflow-hidden transition-all duration-300 flex flex-col ${
+        isPast
+          ? 'bg-neutral-50 border-neutral-200 opacity-75'
+          : 'bg-white border-neutral-100 hover:shadow-lg hover:shadow-primary-500/5 hover:-translate-y-0.5'
+      }`}
     >
       {/* Theme color bar */}
       <div className={`h-1.5 ${colorBar}`} />
@@ -356,9 +390,13 @@ function PartyCard({
             <p className="text-xs text-neutral-400 truncate">{party.location}</p>
           </div>
 
-          {isUpcoming && (
+          {isUpcoming ? (
             <span className={`self-start px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getDaysUntilColor(daysUntil)}`}>
               {daysUntil === 0 ? t('dashboard.today') : t('dashboard.daysLeft', { days: daysUntil })}
+            </span>
+          ) : (
+            <span className="self-start px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap bg-neutral-100 text-neutral-500">
+              {locale === 'zh' ? '已结束' : 'Ended'}
             </span>
           )}
         </div>
@@ -405,22 +443,38 @@ function PartyCard({
         <div className="mt-auto space-y-2">
           <Link
             href={`/${locale}/party/${party.id}/dashboard`}
-            className="w-full btn btn-primary text-center block text-sm"
+            className={`w-full text-center block text-sm ${isPast ? 'btn btn-secondary' : 'btn btn-primary'}`}
           >
-            {t('dashboard.manageParty')}
+            {isPast ? (locale === 'zh' ? '查看详情' : 'View Details') : t('dashboard.manageParty')}
           </Link>
-          <div className="flex gap-2">
-            <Link
-              href={`/${locale}/party/${party.id}/edit`}
-              className="flex-1 btn btn-secondary text-center text-sm inline-flex items-center justify-center gap-1.5"
-            >
-              <PencilIcon className="w-3.5 h-3.5" />
-              {t('dashboard.edit')}
-            </Link>
+          {!isPast && (
+            <div className="flex gap-2">
+              <Link
+                href={`/${locale}/party/${party.id}/edit`}
+                className="flex-1 btn btn-secondary text-center text-sm inline-flex items-center justify-center gap-1.5"
+              >
+                <PencilIcon className="w-3.5 h-3.5" />
+                {t('dashboard.edit')}
+              </Link>
+              <button
+                onClick={() => onDelete(party.id, party.childName)}
+                disabled={deletingParty === party.id}
+                className="flex-1 btn text-sm text-red-600 hover:bg-red-50 border border-red-200 disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+              >
+                {deletingParty === party.id ? (
+                  <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <TrashIcon className="w-3.5 h-3.5" />
+                )}
+                {deletingParty === party.id ? t('dashboard.deleting') : t('dashboard.delete')}
+              </button>
+            </div>
+          )}
+          {isPast && (
             <button
               onClick={() => onDelete(party.id, party.childName)}
               disabled={deletingParty === party.id}
-              className="flex-1 btn text-sm text-red-600 hover:bg-red-50 border border-red-200 disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+              className="w-full btn text-sm text-red-600 hover:bg-red-50 border border-red-200 disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
             >
               {deletingParty === party.id ? (
                 <ArrowPathIcon className="w-3.5 h-3.5 animate-spin" />
@@ -429,7 +483,7 @@ function PartyCard({
               )}
               {deletingParty === party.id ? t('dashboard.deleting') : t('dashboard.delete')}
             </button>
-          </div>
+          )}
         </div>
       </div>
     </motion.div>

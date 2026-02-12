@@ -8,7 +8,7 @@ import { toast } from '@/lib/toast'
 import CanvasInvitation from '@/components/CanvasInvitation'
 import type { InvitationTemplate, TemplateConfig, TemplateElement, QRCodeConfig } from '@/types/invitation-template'
 import QRCode from 'qrcode'
-import { TrashIcon, PlusIcon, ArrowPathIcon, ArrowDownTrayIcon, CodeBracketSquareIcon } from '@heroicons/react/24/outline'
+import { TrashIcon, PlusIcon, ArrowPathIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, CodeBracketSquareIcon } from '@heroicons/react/24/outline'
 
 // Available element types
 const ELEMENT_TYPES = [
@@ -25,9 +25,23 @@ const ELEMENT_TYPES = [
 
 // Available fonts
 const FONT_OPTIONS = [
+  // Cute & Playful
+  { value: 'Fredoka', label: 'Fredoka' },
+  { value: 'BubblegumSans', label: 'Bubblegum Sans' },
+  { value: 'Chewy', label: 'Chewy' },
+  { value: 'Baloo2', label: 'Baloo 2' },
+  { value: 'LilitaOne', label: 'Lilita One' },
+  { value: 'Bangers', label: 'Bangers' },
+  { value: 'PatrickHand', label: 'Patrick Hand' },
+  { value: 'LuckiestGuy-Regular', label: 'Luckiest Guy' },
+  // Handwritten
+  { value: 'Caveat', label: 'Caveat' },
+  { value: 'Pacifico', label: 'Pacifico' },
+  { value: 'DancingScript', label: 'Dancing Script' },
+  { value: 'IndieFlower', label: 'Indie Flower' },
+  // System
   { value: 'Arial-Bold', label: 'Arial Bold' },
   { value: 'Arial-Black', label: 'Arial Black' },
-  { value: 'LuckiestGuy-Regular', label: 'Luckiest Guy' },
   { value: 'ComicSansMS', label: 'Comic Sans MS' },
 ]
 
@@ -51,6 +65,7 @@ export default function EditTemplatePage() {
   const [activeTab, setActiveTab] = useState<'elements' | 'qrcode' | 'pricing' | 'preview_data'>('elements')
 
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const jsonImportRef = useRef<HTMLInputElement>(null)
 
   // Preview data
   const defaultStartTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -196,6 +211,26 @@ export default function EditTemplatePage() {
     linkElement.click()
   }
 
+  const handleImportJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !template) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const config: TemplateConfig = JSON.parse(event.target?.result as string)
+        // Keep the original template image filename
+        config.template = template.config.template
+        setTemplate({ ...template, config })
+        toast.success('JSON config imported (click Save to apply)')
+      } catch {
+        toast.error('Invalid JSON file')
+      }
+    }
+    reader.readAsText(file)
+    // Reset so same file can be re-imported
+    e.target.value = ''
+  }
 
   const updateElement = (index: number, updates: Partial<TemplateElement>) => {
     if (!template) return
@@ -358,6 +393,20 @@ export default function EditTemplatePage() {
             <ArrowDownTrayIcon className="w-5 h-5" />
           </button>
           <button
+            onClick={() => jsonImportRef.current?.click()}
+            title="Import JSON Config"
+            className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+          >
+            <ArrowUpTrayIcon className="w-5 h-5" />
+          </button>
+          <input
+            ref={jsonImportRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={handleImportJSON}
+          />
+          <button
             onClick={handleExportJSON}
             title="Export JSON Config"
             className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
@@ -408,6 +457,44 @@ export default function EditTemplatePage() {
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {activeTab === 'elements' && (
               <div className="space-y-4">
+                {/* Canvas Size */}
+                <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Canvas Size</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs text-gray-500">Width</label>
+                      <input
+                        type="number"
+                        value={template.config.canvas_size[0]}
+                        onChange={(e) => {
+                          const w = parseInt(e.target.value) || 1000
+                          setTemplate({
+                            ...template,
+                            config: { ...template.config, canvas_size: [w, template.config.canvas_size[1]] }
+                          })
+                        }}
+                        className="w-full text-sm border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-500">Height</label>
+                      <input
+                        type="number"
+                        value={template.config.canvas_size[1]}
+                        onChange={(e) => {
+                          const h = parseInt(e.target.value) || 1400
+                          setTemplate({
+                            ...template,
+                            config: { ...template.config, canvas_size: [template.config.canvas_size[0], h] }
+                          })
+                        }}
+                        className="w-full text-sm border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">Current: {template.config.canvas_size[0]} x {template.config.canvas_size[1]}px ({(template.config.canvas_size[0] / template.config.canvas_size[1]).toFixed(2)} ratio)</p>
+                </div>
+
                 <button
                   onClick={addElement}
                   className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-primary-500 hover:text-primary-500 flex items-center justify-center gap-2"
@@ -524,6 +611,19 @@ export default function EditTemplatePage() {
                           {!FONT_OPTIONS.find(f => f.value === element.font) && (
                             <option value={element.font}>{element.font}</option>
                           )}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Weight</label>
+                        <select
+                          value={element.font_weight || 400}
+                          onChange={(e) => updateElement(index, { font_weight: parseInt(e.target.value) })}
+                          className="w-full text-sm border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
+                        >
+                          <option value={400}>Regular (400)</option>
+                          <option value={600}>Semi Bold (600)</option>
+                          <option value={700}>Bold (700)</option>
+                          <option value={800}>Extra Bold (800)</option>
                         </select>
                       </div>
                       <div>
@@ -753,15 +853,10 @@ export default function EditTemplatePage() {
 
         {/* Right - Preview Canvas */}
         <div className="flex-1 bg-gray-100 p-4 h-full overflow-hidden flex items-center justify-center">
-          {/* 
-                We use a container with the same aspect ratio as the canvas (1000/1400 = 5/7).
-                max-h-full and max-w-full ensure it fits within the parent.
-                The w-auto and h-auto allow the aspect-ratio to drive the actual size.
-            */}
           <div
             className="bg-white shadow-lg rounded-lg overflow-hidden relative"
             style={{
-              aspectRatio: '1000/1400',
+              aspectRatio: `${template.config.canvas_size[0]} / ${template.config.canvas_size[1]}`,
               maxHeight: '100%',
               maxWidth: '100%',
               height: 'auto',

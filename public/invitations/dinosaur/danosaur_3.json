@@ -1,0 +1,70 @@
+{
+  "template": "danosaur_3.png",
+  "canvas_size": [
+    1000,
+    1400
+  ],
+  "pricing": {
+    "price": 2.39,
+    "currency": "USD",
+    "isFree": false
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {
+        "x": 500,
+        "y": 124
+      },
+      "font": "LilitaOne",
+      "font_size": 70,
+      "color": "#6eb8c8",
+      "align": "center",
+      "font_weight": 800
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": {
+        "x": 527,
+        "y": 894
+      },
+      "font": "ComicSansMS",
+      "font_size": 28,
+      "color": "#333333",
+      "align": "center"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 541,
+        "y": 952
+      },
+      "font": "ComicSansMS",
+      "font_size": 28,
+      "color": "#333333",
+      "align": "center"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {
+        "x": 473,
+        "y": 1014
+      },
+      "font": "ComicSansMS",
+      "font_size": 24,
+      "color": "#333333",
+      "align": "left"
+    }
+  ],
+  "qr_code": {
+    "position": {
+      "x": 734,
+      "y": 1147
+    },
+    "size": 186
+  }
+}

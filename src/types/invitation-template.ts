@@ -42,6 +42,7 @@ export interface TemplateElement {
   position: Position;
   font: string;              // 字体名称
   font_size: number;
+  font_weight?: number;      // 字重 100-900（默认根据字体名推断）
   color: string;             // 十六进制颜色
   align: TextAlign;
   stroke_color?: string;     // 描边颜色

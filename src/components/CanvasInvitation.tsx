@@ -72,10 +72,23 @@ interface CanvasInvitationProps {
 
 // 字体映射 - 将配置中的字体名映射到实际可用的字体
 const FONT_MAP: Record<string, string> = {
-  'LuckiestGuy-Regular': '"Luckiest Guy", "Comic Sans MS", cursive, sans-serif',
+  // System fonts
   'Arial-Bold': 'Arial, Helvetica, sans-serif',
   'Arial-Black': '"Arial Black", Arial, sans-serif',
   'ComicSansMS': '"Comic Sans MS", cursive, sans-serif',
+  // Google Fonts - cute & playful
+  'LuckiestGuy-Regular': '"Luckiest Guy", cursive',
+  'Fredoka': 'Fredoka, sans-serif',
+  'BubblegumSans': '"Bubblegum Sans", cursive',
+  'Chewy': 'Chewy, cursive',
+  'Baloo2': '"Baloo 2", cursive',
+  'LilitaOne': '"Lilita One", cursive',
+  'Bangers': 'Bangers, cursive',
+  'PatrickHand': '"Patrick Hand", cursive',
+  'Caveat': 'Caveat, cursive',
+  'Pacifico': 'Pacifico, cursive',
+  'DancingScript': '"Dancing Script", cursive',
+  'IndieFlower': '"Indie Flower", cursive',
 };
 
 export default function CanvasInvitation({
@@ -92,18 +105,10 @@ export default function CanvasInvitation({
   const locale = useLocale();
   const t = useTranslations('templates');
 
-  // Target dimensions (based on dinosaur template)
-  const TARGET_WIDTH = 1000;
-  const TARGET_HEIGHT = 1400;
-
   const { config } = template;
-  // Calculate stretch factors relative to original config size
-  const stretchX = TARGET_WIDTH / config.canvas_size[0];
-  const stretchY = TARGET_HEIGHT / config.canvas_size[1];
-
-  // Using strictly the target dimensions for layout
-  const canvasWidth = TARGET_WIDTH;
-  const canvasHeight = TARGET_HEIGHT;
+  // Use each template's own canvas size — no hardcoded target
+  const canvasWidth = config.canvas_size[0];
+  const canvasHeight = config.canvas_size[1];
 
   // 获取元素的实际内容（只返回动态值，不加前缀，因为图片上已有标签）
   const getElementContent = useCallback(
@@ -113,10 +118,7 @@ export default function CanvasInvitation({
 
       switch (element.name) {
         case 'child_name':
-          // 只返回名字+'s 或 的
-          return locale === 'zh'
-            ? `${party.childName}的`
-            : `${party.childName}'s`;
+          return party.childName;
         case 'child_age':
           // 只返回年龄
           return locale === 'zh'
@@ -157,37 +159,33 @@ export default function CanvasInvitation({
     setError(null);
 
     try {
-      // 设置Canvas尺寸 (Target size * scale)
-      canvas.width = TARGET_WIDTH * scale;
-      canvas.height = TARGET_HEIGHT * scale;
+      // Wait for all fonts to be loaded before drawing text
+      await document.fonts.ready;
+      // Set canvas pixel size from template config
+      canvas.width = canvasWidth * scale;
+      canvas.height = canvasHeight * scale;
 
-      // 应用缩放 (UI Scale)
       ctx.scale(scale, scale);
 
-      // 检查是否使用纯色背景
       if (config.backgroundColor) {
-        // 绘制纯色背景
         ctx.fillStyle = config.backgroundColor;
-        ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        // 绘制装饰性边框
         if (config.borderColor) {
           ctx.strokeStyle = config.borderColor;
           ctx.lineWidth = 20;
-          ctx.strokeRect(40, 40, TARGET_WIDTH - 80, TARGET_HEIGHT - 80);
+          ctx.strokeRect(40, 40, canvasWidth - 80, canvasHeight - 80);
 
-          // 内层边框
           ctx.lineWidth = 4;
-          ctx.strokeRect(60, 60, TARGET_WIDTH - 120, TARGET_HEIGHT - 120);
+          ctx.strokeRect(60, 60, canvasWidth - 120, canvasHeight - 120);
         }
 
-        // 绘制装饰圆点
         if (config.accentColor) {
           ctx.fillStyle = config.accentColor;
           const dotPositions = [
-            [100, 100], [TARGET_WIDTH - 100, 100],
-            [100, TARGET_HEIGHT - 100], [TARGET_WIDTH - 100, TARGET_HEIGHT - 100],
-            [TARGET_WIDTH / 2, 80], [TARGET_WIDTH / 2, TARGET_HEIGHT - 80]
+            [100, 100], [canvasWidth - 100, 100],
+            [100, canvasHeight - 100], [canvasWidth - 100, canvasHeight - 100],
+            [canvasWidth / 2, 80], [canvasWidth / 2, canvasHeight - 80]
           ];
           dotPositions.forEach(([x, y]) => {
             ctx.beginPath();
@@ -196,7 +194,6 @@ export default function CanvasInvitation({
           });
         }
       } else {
-        // 加载背景图片
         const bgImage = new Image();
         bgImage.crossOrigin = 'anonymous';
 
@@ -206,49 +203,37 @@ export default function CanvasInvitation({
           bgImage.src = template.imageUrl;
         });
 
-        // 绘制背景 - Stretch to fill target size
-        ctx.drawImage(bgImage, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+        ctx.drawImage(bgImage, 0, 0, canvasWidth, canvasHeight);
       }
 
-      // 绘制文字元素
+      // Draw text elements — coordinates are already in canvas_size space
       for (const element of config.elements) {
         const content = getElementContent(element);
         if (!content) continue;
 
-        // 设置字体 - Create scaled font size
-        // We use stretchY primarily to match vertical scale, but could avg
-        const scaledFontSize = element.font_size * stretchY;
-
         const fontFamily = FONT_MAP[element.font] || element.font;
-        const fontWeight =
-          element.font.includes('Bold') || element.font.includes('Black')
-            ? 'bold'
-            : 'normal';
-        ctx.font = `${fontWeight} ${scaledFontSize}px ${fontFamily}`;
+        const fontWeight = element.font_weight
+          || (element.font.includes('Bold') || element.font.includes('Black') ? 700 : 400);
+        ctx.font = `${fontWeight} ${element.font_size}px ${fontFamily}`;
 
-        // 设置对齐
         ctx.textAlign = element.align;
         ctx.textBaseline = 'top';
 
-        // 计算x,y位置 - Apply stretch factors
-        const x = element.position.x * stretchX;
-        const y = element.position.y * stretchY;
+        const x = element.position.x;
+        const y = element.position.y;
 
-        // 绘制描边（如果有）
         if (element.stroke_color && element.stroke_width) {
           ctx.strokeStyle = element.stroke_color;
-          // Scale stroke width too
-          ctx.lineWidth = element.stroke_width * stretchX * 2;
+          ctx.lineWidth = element.stroke_width * 2;
           ctx.lineJoin = 'round';
           ctx.strokeText(content, x, y);
         }
 
-        // 绘制填充
         ctx.fillStyle = element.color;
         ctx.fillText(content, x, y);
       }
 
-      // 绘制QR码（如果有配置且提供了QR码URL）
+      // Draw QR code
       if (qrCodeUrl && config.qr_code) {
         const qrImage = new Image();
         qrImage.crossOrigin = 'anonymous';
@@ -261,17 +246,10 @@ export default function CanvasInvitation({
 
         const { position, size } = config.qr_code;
 
-        // Scale QR code position and size
-        const qrX = position.x * stretchX;
-        const qrY = position.y * stretchY;
-        const qrSize = size * stretchX; // Square size usually follows X or min scale
-
-        // 绘制白色背景
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
+        ctx.fillRect(position.x - 5, position.y - 5, size + 10, size + 10);
 
-        // 绘制QR码
-        ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+        ctx.drawImage(qrImage, position.x, position.y, size, size);
       }
 
       setIsLoading(false);
@@ -284,11 +262,10 @@ export default function CanvasInvitation({
   }, [
     template,
     config,
+    canvasWidth,
+    canvasHeight,
     qrCodeUrl,
     scale,
-    // canvasWidth, canvasHeight are now constants inside
-    stretchX,
-    stretchY,
     getElementContent,
     onRenderComplete,
   ]);

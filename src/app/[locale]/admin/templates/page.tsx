@@ -29,8 +29,8 @@ export default function AdminTemplatesPage() {
 
   // Upload form state
   const [uploadTheme, setUploadTheme] = useState('')
-  const [uploadTemplateId, setUploadTemplateId] = useState('')
   const [newTheme, setNewTheme] = useState('')
+  const [previewImageName, setPreviewImageName] = useState('')
   const imageInputRef = useRef<HTMLInputElement>(null)
   const jsonInputRef = useRef<HTMLInputElement>(null)
 
@@ -77,8 +77,8 @@ export default function AdminTemplatesPage() {
     e.preventDefault()
 
     const theme = newTheme || uploadTheme
-    if (!theme || !uploadTemplateId) {
-      toast.error('Theme and Template ID are required')
+    if (!theme) {
+      toast.error('Theme is required')
       return
     }
 
@@ -95,7 +95,6 @@ export default function AdminTemplatesPage() {
     try {
       const formData = new FormData()
       formData.append('theme', theme)
-      formData.append('templateId', uploadTemplateId)
       formData.append('image', imageFile)
       if (jsonFile) {
         formData.append('json', jsonFile)
@@ -110,8 +109,8 @@ export default function AdminTemplatesPage() {
         toast.success('Template uploaded successfully')
         setShowUpload(false)
         setUploadTheme('')
-        setUploadTemplateId('')
         setNewTheme('')
+        setPreviewImageName('')
         if (imageInputRef.current) imageInputRef.current.value = ''
         if (jsonInputRef.current) jsonInputRef.current.value = ''
         fetchTemplates()
@@ -183,21 +182,6 @@ export default function AdminTemplatesPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Template ID</label>
-              <input
-                type="text"
-                value={uploadTemplateId}
-                onChange={(e) => setUploadTemplateId(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
-                placeholder="e.g. 1 (will become theme_1)"
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Final ID: {(newTheme || uploadTheme) && uploadTemplateId ? `${newTheme || uploadTheme}_${uploadTemplateId}` : '...'}
-              </p>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Image (PNG/JPG) *</label>
@@ -207,8 +191,21 @@ export default function AdminTemplatesPage() {
                   accept="image/png,image/jpeg,image/webp"
                   className="w-full px-3 py-2 border rounded-lg"
                   required
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const name = file.name.replace(/\.[^.]+$/, '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+                      setPreviewImageName(name)
+                    } else {
+                      setPreviewImageName('')
+                    }
+                  }}
                 />
-                <p className="text-xs text-gray-500 mt-1">Will be resized to 1000x1400</p>
+                {previewImageName && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Template name: <span className="font-medium text-primary-600">{previewImageName}</span>
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">JSON Config (optional)</label>

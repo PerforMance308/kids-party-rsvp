@@ -1,0 +1,82 @@
+{
+  "template": "unicorn_4.png",
+  "canvas_size": [
+    353,
+    506
+  ],
+  "pricing": {
+    "price": 2.39,
+    "currency": "USD",
+    "isFree": false
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {
+        "x": 265,
+        "y": 51
+      },
+      "font": "PatrickHand",
+      "font_size": 39,
+      "color": "#59b5c1",
+      "align": "right",
+      "font_weight": 700
+    },
+    {
+      "name": "child_age",
+      "content": "",
+      "position": {
+        "x": 205,
+        "y": 373
+      },
+      "font": "BubblegumSans",
+      "font_size": 36,
+      "color": "#FF6B35",
+      "align": "center"
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": {
+        "x": 157,
+        "y": 411
+      },
+      "font": "Arial-Bold",
+      "font_size": 16,
+      "color": "#333333",
+      "align": "left"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 155,
+        "y": 435
+      },
+      "font": "Arial-Bold",
+      "font_size": 16,
+      "color": "#333333",
+      "align": "left"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {
+        "x": 186,
+        "y": 458
+      },
+      "font": "Arial-Bold",
+      "font_size": 16,
+      "color": "#333333",
+      "align": "left"
+    }
+  ],
+  "qr_code": {
+    "position": {
+      "x": 15,
+      "y": 415
+    },
+    "size": 70
+  }
+}
