@@ -178,9 +178,17 @@ export default function InvitationsPage() {
                     </div>
 
                     <div className="flex gap-2">
+                      {invitation.rsvp && invitation.rsvp.status !== 'NO' && (
+                        <Link
+                          href={`/${locale}/party/guest/${invitation.party.publicRsvpToken}` as any}
+                          className="btn btn-primary"
+                        >
+                          {tr('goToParty')}
+                        </Link>
+                      )}
                       <Link
                         href={`/rsvp/${invitation.party.publicRsvpToken}` as any}
-                        className="btn btn-primary"
+                        className={invitation.rsvp && invitation.rsvp.status !== 'NO' ? 'btn btn-secondary' : 'btn btn-primary'}
                       >
                         {invitation.rsvp ? tr('updateRSVP') : tr('rsvpNow')}
                       </Link>

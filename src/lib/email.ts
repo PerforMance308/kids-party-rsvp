@@ -289,11 +289,10 @@ export function generateHostRSVPNotificationEmail(
     parentStaying: boolean
     allergies?: string
     message?: string
-  },
-  locale: 'en' | 'zh' = 'zh'
+  }
 ) {
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
+    return new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -309,130 +308,74 @@ export function generateHostRSVPNotificationEmail(
     'MAYBE': '🤔'
   }
 
-  const content = {
-    zh: {
-      statusText: { 'YES': '接受邀请', 'NO': '无法参加', 'MAYBE': '可能参加' },
-      subject: `新的RSVP回复：${guestData.childName} ${{'YES': '接受邀请', 'NO': '无法参加', 'MAYBE': '可能参加'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}的生日派对`,
-      greeting: '您好！',
-      received: '您收到了一个新的RSVP回复：',
-      guest: '客人：',
-      response: '回复：',
-      details: '参加详情',
-      numChildren: '参加人数：',
-      children: '名儿童',
-      parent: '家长：',
-      willStay: '会留下陪同',
-      dropOff: '只是接送，不留下',
-      allergies: '过敏/饮食限制：',
-      maybeText: '表示可能参加，请后续确认。',
-      sorryText: '很遗憾',
-      cannotAttend: '无法参加这次派对。',
-      guestMessage: '客人留言：',
-      partyInfo: '派对信息',
-      event: '活动：',
-      birthdayOf: '的',
-      birthday: '岁生日派对',
-      when: '时间：',
-      where: '地点：',
-      viewDashboard: '查看仪表板',
-      footer: 'KidParty RSVP 系统'
-    },
-    en: {
-      statusText: { 'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe' },
-      subject: `New RSVP: ${guestData.childName} ${{'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe'}[guestData.status as keyof typeof statusEmoji]} - ${partyData.childName}'s Birthday`,
-      greeting: 'Hello!',
-      received: 'You received a new RSVP response:',
-      guest: 'Guest:',
-      response: 'Response:',
-      details: 'Attendance Details',
-      numChildren: 'Number of children:',
-      children: 'children',
-      parent: 'Parent:',
-      willStay: 'will stay with children',
-      dropOff: 'drop-off only',
-      allergies: 'Allergies/Dietary Restrictions:',
-      maybeText: 'indicated they might attend. Please confirm later.',
-      sorryText: 'Unfortunately',
-      cannotAttend: 'cannot attend this party.',
-      guestMessage: 'Guest Message:',
-      partyInfo: 'Party Information',
-      event: 'Event:',
-      birthdayOf: '',
-      birthday: `'s ${partyData.childAge}th Birthday Party`,
-      when: 'When:',
-      where: 'Where:',
-      viewDashboard: 'View Dashboard',
-      footer: 'KidParty RSVP System'
-    }
-  }
+  const statusText: Record<string, string> = { 'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe' }
 
-  const t = content[locale]
-  const subject = t.subject
+  const subject = `New RSVP: ${guestData.childName} ${statusText[guestData.status] || guestData.status} - ${partyData.childName}'s Birthday`
 
-  const plainText = `${t.greeting}
+  const plainText = `Hello!
 
-${t.received}
+You received a new RSVP response:
 
-👥 ${t.guest} ${guestData.childName}
-📝 ${t.response} ${statusEmoji[guestData.status as keyof typeof statusEmoji]} ${t.statusText[guestData.status as keyof typeof statusEmoji]}
+👥 Guest: ${guestData.childName}
+📝 Response: ${statusEmoji[guestData.status as keyof typeof statusEmoji]} ${statusText[guestData.status] || guestData.status}
 
 ${guestData.status === 'YES' ? `
-✅ ${t.details}：
-• ${t.numChildren} ${guestData.numChildren} ${t.children}
-• ${t.parent} ${guestData.parentStaying ? t.willStay : t.dropOff}
-${guestData.allergies ? `• ⚠️ ${t.allergies} ${guestData.allergies}` : ''}
+✅ Attendance Details:
+• Number of children: ${guestData.numChildren} children
+• Parent: ${guestData.parentStaying ? 'will stay with children' : 'drop-off only'}
+${guestData.allergies ? `• ⚠️ Allergies/Dietary Restrictions: ${guestData.allergies}` : ''}
 ` : guestData.status === 'MAYBE' ? `
-🤔 ${guestData.childName} ${t.maybeText}
+🤔 ${guestData.childName} indicated they might attend. Please confirm later.
 ` : `
-😢 ${t.sorryText} ${guestData.childName} ${t.cannotAttend}
+😢 Unfortunately ${guestData.childName} cannot attend this party.
 `}${guestData.message ? `
-💬 ${t.guestMessage} "${guestData.message}"
+💬 Guest Message: "${guestData.message}"
 ` : ''}
-🎂 ${t.partyInfo}：
-• ${t.event} ${partyData.childName}${t.birthdayOf} ${partyData.childAge} ${t.birthday}
-• ${t.when} ${formatDate(partyData.eventDatetime)}
-• ${t.where} ${partyData.location}
+🎂 Party Information:
+• Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party
+• When: ${formatDate(partyData.eventDatetime)}
+• Where: ${partyData.location}
 
-${t.footer}`
+KidParty RSVP System`
 
   const htmlContent = `
-    <p class="greeting">${t.greeting}</p>
-    <p>${t.received}</p>
+    <p class="greeting">Hello!</p>
+    <p>You received a new RSVP response:</p>
 
     <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0; font-size: 1.1em;">
-        <strong>👥 ${t.guest}</strong> ${guestData.childName}<br>
-        <strong>📝 ${t.response}</strong> ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <span style="color: ${guestData.status === 'YES' ? '#059669' : guestData.status === 'NO' ? '#dc2626' : '#d97706'};">${t.statusText[guestData.status as keyof typeof statusEmoji]}</span>
+        <strong>👥 Guest:</strong> ${guestData.childName}<br>
+        <strong>📝 Response:</strong> ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <span style="color: ${guestData.status === 'YES' ? '#059669' : guestData.status === 'NO' ? '#dc2626' : '#d97706'};">${statusText[guestData.status] || guestData.status}</span>
       </p>
     </div>
 
     ${guestData.status === 'YES' ? `
       <div style="border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h4 style="margin-top: 0; color: #059669;">✅ ${t.details}</h4>
-        <p style="margin: 5px 0;">• ${t.numChildren} <strong>${guestData.numChildren}</strong> ${t.children}</p>
-        <p style="margin: 5px 0;">• ${t.parent} ${guestData.parentStaying ? t.willStay : t.dropOff}</p>
-        ${guestData.allergies ? `<p style="margin: 5px 0; color: #dc2626;">• ⚠️ ${t.allergies} ${guestData.allergies}</p>` : ''}
+        <h4 style="margin-top: 0; color: #059669;">✅ Attendance Details</h4>
+        <p style="margin: 5px 0;">• Number of children: <strong>${guestData.numChildren}</strong> children</p>
+        <p style="margin: 5px 0;">• Parent: ${guestData.parentStaying ? 'will stay with children' : 'drop-off only'}</p>
+        ${guestData.allergies ? `<p style="margin: 5px 0; color: #dc2626;">• ⚠️ Allergies/Dietary Restrictions: ${guestData.allergies}</p>` : ''}
       </div>
     ` : ''}
 
     ${guestData.message ? `
       <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; font-style: italic;">
-        <strong>💬 ${t.guestMessage}</strong> "${guestData.message}"
+        <strong>💬 Guest Message:</strong> "${guestData.message}"
       </div>
     ` : ''}
 
     <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
-      <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 ${t.partyInfo}</h4>
-      <div class="details-item">• ${t.event} ${partyData.childName}${t.birthdayOf} ${partyData.childAge} ${t.birthday}</div>
-      <div class="details-item">• ${t.when} ${formatDate(partyData.eventDatetime)}</div>
-      <div class="details-item">• ${t.where} ${partyData.location}</div>
+      <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 Party Information</h4>
+      <div class="details-item">• Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party</div>
+      <div class="details-item">• When: ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item">• Where: ${partyData.location}</div>
     </div>
   `
 
   return {
     subject,
     text: plainText,
-    html: wrapHtmlEmail(subject, htmlContent, `${getBaseUrl()}/${locale}/dashboard`, t.viewDashboard)
+    html: wrapHtmlEmail(subject, htmlContent, `${getBaseUrl()}/en/dashboard`, 'View Dashboard')
   }
 }
 
@@ -873,82 +816,172 @@ P.S. Early planning means less stress and more fun for everyone! 🎈`
 
 export function generateVerificationEmail(
   email: string,
-  token: string,
-  locale: 'en' | 'zh' = 'en'
+  token: string
 ) {
   const verifyUrl = `${getBaseUrl()}/api/auth/verify?token=${token}`
 
-  const content = {
-    en: {
-      subject: 'Verify your email for Kid Party RSVP',
-      greeting: 'Welcome to Kid Party RSVP!',
-      body: 'Please verify your email address to enable automatic reminders and notifications for your parties.',
-      button: 'Verify Email',
-      footer: 'If you did not create this account, you can safely ignore this email.'
-    },
-    zh: {
-      subject: '验证您的 Kid Party RSVP 邮箱',
-      greeting: '欢迎来到 Kid Party RSVP！',
-      body: '请验证您的电子邮箱地址，以开启派对自动提醒和通知功能。',
-      button: '验证邮箱',
-      footer: '如果您没有创建过此账号，请忽略此邮件。'
-    }
-  }
-
-  const t = content[locale]
-
-  const plainText = `${t.greeting}\n\n${t.body}\n\n${t.button}: ${verifyUrl}\n\n${t.footer}`
+  const subject = 'Verify your email for Kid Party RSVP'
+  const plainText = `Welcome to Kid Party RSVP!\n\nPlease verify your email address to enable automatic reminders and notifications for your parties.\n\nVerify Email: ${verifyUrl}\n\nIf you did not create this account, you can safely ignore this email.`
 
   const htmlContent = `
-    <p class="greeting">${t.greeting}</p>
-    <p>${t.body}</p>
-    <p style="margin-top: 20px; font-size: 0.9em; color: #6b7280;">${t.footer}</p>
+    <p class="greeting">Welcome to Kid Party RSVP!</p>
+    <p>Please verify your email address to enable automatic reminders and notifications for your parties.</p>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #6b7280;">If you did not create this account, you can safely ignore this email.</p>
   `
 
   return {
-    subject: t.subject,
+    subject,
     text: plainText,
-    html: wrapHtmlEmail(t.subject, htmlContent, verifyUrl, t.button)
+    html: wrapHtmlEmail(subject, htmlContent, verifyUrl, 'Verify Email')
   }
 }
 
 export function generatePasswordResetEmail(
   email: string,
-  token: string,
-  locale: 'en' | 'zh' = 'en'
+  token: string
 ) {
-  const resetUrl = `${getBaseUrl()}/${locale}/login/reset-password?token=${token}`
+  const resetUrl = `${getBaseUrl()}/en/login/reset-password?token=${token}`
 
-  const content = {
-    en: {
-      subject: 'Reset your password for Kid Party RSVP',
-      greeting: 'Password Reset Request',
-      body: 'You requested to reset your password. Click the button below to set a new password. This link will expire in 1 hour.',
-      button: 'Reset Password',
-      footer: 'If you did not request this, please ignore this email.'
-    },
-    zh: {
-      subject: '重置您的 Kid Party RSVP 密码',
-      greeting: '重置密码请求',
-      body: '您申请了重置密码。点击下方按钮设置新密码。此链接将在 1 小时内失效。',
-      button: '重置密码',
-      footer: '如果您没有提交此请求，请忽略此邮件。'
-    }
-  }
-
-  const t = content[locale]
-
-  const plainText = `${t.greeting}\n\n${t.body}\n\n${t.button}: ${resetUrl}\n\n${t.footer}`
+  const subject = 'Reset your password for Kid Party RSVP'
+  const plainText = `Password Reset Request\n\nYou requested to reset your password. Click the button below to set a new password. This link will expire in 1 hour.\n\nReset Password: ${resetUrl}\n\nIf you did not request this, please ignore this email.`
 
   const htmlContent = `
-    <p class="greeting">${t.greeting}</p>
-    <p>${t.body}</p>
-    <p style="margin-top: 20px; font-size: 0.9em; color: #6b7280;">${t.footer}</p>
+    <p class="greeting">Password Reset Request</p>
+    <p>You requested to reset your password. Click the button below to set a new password. This link will expire in 1 hour.</p>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #6b7280;">If you did not request this, please ignore this email.</p>
   `
 
   return {
-    subject: t.subject,
+    subject,
     text: plainText,
-    html: wrapHtmlEmail(t.subject, htmlContent, resetUrl, t.button)
+    html: wrapHtmlEmail(subject, htmlContent, resetUrl, 'Reset Password')
+  }
+}
+
+export function generateGuestMessageEmail(
+  partyData: {
+    childName: string
+    childAge: number
+    eventDatetime: Date
+    location: string
+    dashboardUrl: string
+  },
+  guestData: {
+    childName: string
+    email: string
+    message: string
+  }
+) {
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date)
+  }
+
+  const subject = `New message from ${guestData.childName}'s parent - ${partyData.childName}'s Party`
+
+  const plainText = `You received a new message from a guest!
+
+From: ${guestData.childName}'s parent (${guestData.email})
+
+Message:
+"${guestData.message}"
+
+Party: ${partyData.childName}'s ${partyData.childAge}th Birthday Party
+When: ${formatDate(partyData.eventDatetime)}
+Where: ${partyData.location}
+
+KidParty RSVP System`
+
+  const safeMessage = guestData.message.replace(/\n/g, '<br>')
+
+  const htmlContent = `
+    <p class="greeting">New Guest Message</p>
+    <p>You received a new message from a guest for <strong>${partyData.childName}'s</strong> party:</p>
+
+    <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="margin: 0 0 12px 0; font-size: 0.85em; color: #92400e;">
+        <strong>💬 ${guestData.childName}'s parent</strong> &middot; ${guestData.email}
+      </p>
+      <p style="margin: 0; font-size: 1.05em; line-height: 1.7; color: #1f2937;">${safeMessage}</p>
+    </div>
+
+    <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
+      <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 Party Information</h4>
+      <div class="details-item">• Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party</div>
+      <div class="details-item">• When: ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item">• Where: ${partyData.location}</div>
+    </div>
+  `
+
+  return {
+    subject,
+    text: plainText,
+    html: wrapHtmlEmail(subject, htmlContent, partyData.dashboardUrl, 'View Party Dashboard')
+  }
+}
+
+export function generateBroadcastEmail(
+  partyData: {
+    childName: string
+    childAge: number
+    eventDatetime: Date
+    location: string
+    rsvpUrl: string
+  },
+  broadcastSubject: string,
+  broadcastMessage: string,
+  hostName: string
+) {
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date)
+  }
+
+  const subject = broadcastSubject
+
+  const plainText = `Message from ${hostName} about ${partyData.childName}'s ${partyData.childAge}th Birthday Party
+
+${broadcastMessage}
+
+Party Details:
+When: ${formatDate(partyData.eventDatetime)}
+Where: ${partyData.location}
+
+KidParty RSVP System`
+
+  const safeMessage = broadcastMessage.replace(/\n/g, '<br>')
+
+  const htmlContent = `
+    <p class="greeting">📢 Message from the Host</p>
+    <p><strong>${hostName}</strong> sent you an update about <strong>${partyData.childName}'s ${partyData.childAge}th Birthday Party</strong>:</p>
+
+    <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+      <p style="margin: 0; font-size: 1.05em; line-height: 1.7; color: #1f2937;">${safeMessage}</p>
+    </div>
+
+    <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
+      <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 Party Details</h4>
+      <div class="details-item">• Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party</div>
+      <div class="details-item">• When: ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item">• Where: ${partyData.location}</div>
+    </div>
+  `
+
+  return {
+    subject,
+    text: plainText,
+    html: wrapHtmlEmail(subject, htmlContent, partyData.rsvpUrl, 'View Party Details')
   }
 }

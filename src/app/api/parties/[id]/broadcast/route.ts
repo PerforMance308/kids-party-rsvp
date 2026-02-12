@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
 import { sanitizeInput } from '@/lib/security'
-import { sendEmail } from '@/lib/email'
-import { calculateAge } from '@/lib/utils'
+import { sendEmail, generateBroadcastEmail } from '@/lib/email'
+import { calculateAge, getBaseUrl } from '@/lib/utils'
 import Stripe from 'stripe'
 
 const BROADCAST_FREE_DAILY_LIMIT = 1
@@ -154,24 +154,24 @@ export async function POST(
     }
 
     const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
-    const whenText = new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit'
-    }).format(new Date(party.eventDatetime))
+    const hostName = session.user.name || 'The Host'
+    const rsvpUrl = party.publicRsvpToken ? `${getBaseUrl()}/rsvp/${party.publicRsvpToken}` : getBaseUrl()
 
-    const safeMessage = message.replace(/\n/g, '<br>')
-    const html = `
-      <p><strong>Party update for ${party.child.name}'s ${childAge}th birthday</strong></p>
-      <p><strong>When:</strong> ${whenText}</p>
-      <p><strong>Where:</strong> ${party.location}</p>
-      <hr />
-      <p>${safeMessage}</p>
-    `
-    const text = `Party update for ${party.child.name}'s ${childAge}th birthday\nWhen: ${whenText}\nWhere: ${party.location}\n\n${message}`
+    const emailContent = generateBroadcastEmail(
+      {
+        childName: party.child.name,
+        childAge,
+        eventDatetime: party.eventDatetime,
+        location: party.location,
+        rsvpUrl,
+      },
+      subject,
+      message,
+      hostName
+    )
+
+    const html = emailContent.html
+    const text = emailContent.text
 
     // Record broadcast + payment usage in DB first, then return immediately
     await prisma.reminder.create({

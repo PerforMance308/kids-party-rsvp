@@ -167,6 +167,9 @@ export async function POST(
 
     console.log('Verifying template payment:', paymentId)
 
+    let verifiedAmount = 0
+    let verifiedCurrency = 'usd'
+
     try {
       const paymentIntent = await stripe.paymentIntents.retrieve(paymentId)
 
@@ -209,6 +212,9 @@ export async function POST(
         )
       }
 
+      verifiedAmount = paymentIntent.amount
+      verifiedCurrency = paymentIntent.currency
+
       console.log('Payment verified successfully')
     } catch (verificationError) {
       console.error('Payment verification error:', verificationError)
@@ -221,6 +227,30 @@ export async function POST(
       }
 
       return NextResponse.json({ error: 'Failed to verify payment' }, { status: 500 })
+    }
+
+    // Record payment in database (in case webhook doesn't fire)
+    try {
+      const existingPayment = await prisma.payment.findUnique({
+        where: { stripePaymentId: paymentId }
+      })
+      if (!existingPayment) {
+        await prisma.payment.create({
+          data: {
+            userId: session.user.id,
+            partyId: id,
+            stripePaymentId: paymentId,
+            feature: 'template',
+            amount: verifiedAmount,
+            currency: verifiedCurrency,
+            status: 'succeeded',
+            metadata: JSON.stringify({ templateId: template }),
+          },
+        })
+        console.log('💾 Payment recorded in database')
+      }
+    } catch (paymentRecordError) {
+      console.error('Failed to record payment (may already exist):', paymentRecordError)
     }
 
     // 更新party：添加到已购买列表并切换模板

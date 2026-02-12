@@ -648,6 +648,7 @@ export default function PartyDashboard() {
                         </div>
                         <div className="text-xs text-neutral-500 space-y-0.5">
                           <div>{guest.email}</div>
+                          {guest.phone && <div>{formatPhoneDisplay(guest.phone)}</div>}
                           {guest.rsvp && (
                             <div className="flex flex-wrap gap-2 mt-1">
                               <span className="bg-neutral-100 px-1.5 py-0.5 rounded">{guest.rsvp.numChildren} {locale === 'zh' ? '个孩子' : 'child'}</span>

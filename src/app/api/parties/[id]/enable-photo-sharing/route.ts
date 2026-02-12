@@ -98,6 +98,30 @@ export async function POST(
       )
     }
 
+    // Record payment in database (in case webhook doesn't fire)
+    try {
+      const existingPayment = await prisma.payment.findUnique({
+        where: { stripePaymentId: paymentId }
+      })
+      if (!existingPayment) {
+        await prisma.payment.create({
+          data: {
+            userId: session.user.id,
+            partyId: id,
+            stripePaymentId: paymentId,
+            feature: 'photo_sharing',
+            amount: 299, // $2.99 in cents
+            currency: 'usd',
+            status: 'succeeded',
+            metadata: JSON.stringify({}),
+          },
+        })
+        console.log('💾 Payment recorded in database')
+      }
+    } catch (paymentRecordError) {
+      console.error('Failed to record payment (may already exist):', paymentRecordError)
+    }
+
     // Update party to enable photo sharing
     const updatedParty = await prisma.party.update({
       where: { id },

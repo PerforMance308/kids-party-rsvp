@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         expires
       }
     }).then(() => {
-      const emailContent = generateVerificationEmail(email, token, 'en')
+      const emailContent = generateVerificationEmail(email, token)
       return sendEmail({
         to: email,
         subject: emailContent.subject,

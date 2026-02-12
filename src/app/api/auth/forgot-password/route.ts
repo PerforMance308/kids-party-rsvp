@@ -5,7 +5,7 @@ import { sendEmail, generatePasswordResetEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
     try {
-        const { email, locale = 'en' } = await request.json()
+        const { email } = await request.json()
 
         if (!email) {
             return NextResponse.json({ error: 'Email is required' }, { status: 400 })
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Send email
-        const emailContent = generatePasswordResetEmail(email, token, locale as 'en' | 'zh')
+        const emailContent = generatePasswordResetEmail(email, token)
         await sendEmail({
             to: email,
             subject: emailContent.subject,

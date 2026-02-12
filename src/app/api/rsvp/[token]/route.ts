@@ -247,8 +247,6 @@ export async function POST(
         const today = new Date()
         const birthDate = new Date(party.child.birthDate)
         const childAge = Math.floor((today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-        const hostLanguage = (party.user.language === 'en' || party.user.language?.startsWith('en')) ? 'en' : 'zh'
-
         const hostNotificationEmail = generateHostRSVPNotificationEmail(
           {
             childName: party.child.name,
@@ -263,8 +261,7 @@ export async function POST(
             parentStaying,
             allergies: allergies || undefined,
             message: message || undefined
-          },
-          hostLanguage as 'en' | 'zh'
+          }
         )
 
         await sendEmail({

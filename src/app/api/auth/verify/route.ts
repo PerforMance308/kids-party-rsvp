@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Send email
-        const emailContent = generateVerificationEmail(email, token, 'en') // Default to en for now
+        const emailContent = generateVerificationEmail(email, token)
         await sendEmail({
             to: email,
             subject: emailContent.subject,

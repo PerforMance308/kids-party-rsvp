@@ -3,7 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
 import { isValidUUID, sanitizeInput } from '@/lib/security'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, generateGuestMessageEmail } from '@/lib/email'
+import { calculateAge, getBaseUrl } from '@/lib/utils'
 
 const MESSAGE_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutes
 const MESSAGE_DAILY_LIMIT = 10
@@ -109,20 +110,27 @@ export async function POST(
       }
     }
 
-    const subject = `Guest message for ${party.child.name}'s party`
-    const text = `Guest child: ${guest.childName}\nGuest email: ${guest.email}\n\nMessage:\n${message}`
-    const html = `
-      <p><strong>Guest child:</strong> ${guest.childName}</p>
-      <p><strong>Guest email:</strong> ${guest.email}</p>
-      <p><strong>Message:</strong></p>
-      <p>${message.replace(/\n/g, '<br>')}</p>
-    `
+    const childAge = calculateAge(party.child.birthDate)
+    const emailContent = generateGuestMessageEmail(
+      {
+        childName: party.child.name,
+        childAge,
+        eventDatetime: party.eventDatetime,
+        location: party.location,
+        dashboardUrl: `${getBaseUrl()}/en/dashboard`,
+      },
+      {
+        childName: guest.childName,
+        email: guest.email,
+        message,
+      }
+    )
 
     await sendEmail({
       to: party.user.email,
-      subject,
-      text,
-      html
+      subject: emailContent.subject,
+      text: emailContent.text,
+      html: emailContent.html
     })
 
     await prisma.emailNotification.create({
@@ -130,9 +138,9 @@ export async function POST(
         userId: party.userId,
         email: party.user.email,
         type: 'GUEST_MESSAGE',
-        subject,
+        subject: emailContent.subject,
         content: message,
-        htmlContent: html,
+        htmlContent: emailContent.html,
         relatedId,
         status: 'sent',
         sentAt: now
