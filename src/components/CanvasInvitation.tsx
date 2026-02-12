@@ -222,15 +222,65 @@ export default function CanvasInvitation({
         const x = element.position.x;
         const y = element.position.y;
 
-        if (element.stroke_color && element.stroke_width) {
-          ctx.strokeStyle = element.stroke_color;
-          ctx.lineWidth = element.stroke_width * 2;
-          ctx.lineJoin = 'round';
-          ctx.strokeText(content, x, y);
-        }
+        // Determine max width for text wrapping
+        // For location: use "123 Party Street, City77" as the reference max length
+        const LOCATION_REF = '123 Party Street, City77';
+        const maxWidth = element.max_width
+          || (element.name === 'location'
+            ? ctx.measureText(LOCATION_REF).width
+            : canvasWidth);
 
-        ctx.fillStyle = element.color;
-        ctx.fillText(content, x, y);
+        const lineHeight = element.font_size * (element.line_height || 1.3);
+
+        // Wrap text into lines that fit within maxWidth
+        const wrapText = (text: string): string[] => {
+          if (ctx.measureText(text).width <= maxWidth) return [text];
+          const words = text.split(/(\s+)/);
+          const lines: string[] = [];
+          let currentLine = '';
+          for (const word of words) {
+            const testLine = currentLine + word;
+            if (ctx.measureText(testLine).width > maxWidth && currentLine.trim()) {
+              lines.push(currentLine.trim());
+              currentLine = word.trimStart();
+            } else {
+              currentLine = testLine;
+            }
+          }
+          if (currentLine.trim()) lines.push(currentLine.trim());
+          // If a single "word" is still too wide, force-break by character
+          return lines.flatMap(line => {
+            if (ctx.measureText(line).width <= maxWidth) return [line];
+            const chars: string[] = [];
+            let cur = '';
+            for (const ch of line) {
+              if (ctx.measureText(cur + ch).width > maxWidth && cur) {
+                chars.push(cur);
+                cur = ch;
+              } else {
+                cur += ch;
+              }
+            }
+            if (cur) chars.push(cur);
+            return chars;
+          });
+        };
+
+        const lines = wrapText(content);
+
+        for (let i = 0; i < lines.length; i++) {
+          const ly = y + i * lineHeight;
+
+          if (element.stroke_color && element.stroke_width) {
+            ctx.strokeStyle = element.stroke_color;
+            ctx.lineWidth = element.stroke_width * 2;
+            ctx.lineJoin = 'round';
+            ctx.strokeText(lines[i], x, ly);
+          }
+
+          ctx.fillStyle = element.color;
+          ctx.fillText(lines[i], x, ly);
+        }
       }
 
       // Draw QR code

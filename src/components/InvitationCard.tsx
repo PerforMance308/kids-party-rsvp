@@ -154,9 +154,17 @@ export default function InvitationCard({ party, qrCodeUrl, rsvpUrl }: Invitation
             }
             .detail-item {
               display: flex;
-              align-items: center;
+              align-items: flex-start;
               margin-bottom: 12px;
               font-weight: 500;
+            }
+            .detail-item .location-text {
+              word-break: break-word;
+              overflow-wrap: break-word;
+              display: -webkit-box;
+              -webkit-line-clamp: 3;
+              -webkit-box-orient: vertical;
+              overflow: hidden;
             }
             .emoji {
               font-size: 20px;
@@ -347,14 +355,19 @@ export default function InvitationCard({ party, qrCodeUrl, rsvpUrl }: Invitation
                   </div>
                 </div>
                 
-                <div className="detail-item flex items-center" style={{ marginBottom: 'clamp(0.3rem, 1.5vw, 0.8rem)' }}>
-                  <span className="emoji" style={{ 
+                <div className="detail-item flex items-start" style={{ marginBottom: 'clamp(0.3rem, 1.5vw, 0.8rem)' }}>
+                  <span className="emoji flex-shrink-0" style={{
                     fontSize: 'clamp(0.8rem, 3vw, 1.5rem)',
                     marginRight: 'clamp(0.3rem, 1.5vw, 0.8rem)'
                   }}>📍</span>
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-semibold" style={{ fontSize: 'clamp(0.6rem, 2.5vw, 1rem)' }}>Where</div>
-                    <div className="break-words" style={{ fontSize: 'clamp(0.5rem, 2vw, 0.9rem)' }}>{party.location}</div>
+                    <div className="break-words overflow-hidden" style={{
+                      fontSize: 'clamp(0.5rem, 2vw, 0.9rem)',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical' as const,
+                    }}>{party.location}</div>
                   </div>
                 </div>
 
