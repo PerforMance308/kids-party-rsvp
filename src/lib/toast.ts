@@ -19,11 +19,19 @@ interface ToastStore {
   clearToasts: () => void
 }
 
+function generateToastId(): string {
+  const c = globalThis.crypto
+  if (c && typeof c.randomUUID === 'function') {
+    return c.randomUUID()
+  }
+  return `toast_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+}
+
 export const useToastStore = create<ToastStore>((set, get) => ({
   toasts: [],
   
   addToast: (toast) => {
-    const id = crypto.randomUUID()
+    const id = generateToastId()
     const newToast = { ...toast, id }
     
     set({ toasts: [...get().toasts, newToast] })

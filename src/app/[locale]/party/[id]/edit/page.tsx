@@ -325,7 +325,7 @@ export default function EditPartyPage() {
               className="input"
               placeholder="e.g., 5"
               min="1"
-              max="18"
+              max="99"
             />
             <p className="mt-1 text-xs text-neutral-500">
               If left blank, it will be calculated from birth date. Fill this if the party is held before the actual birthday.

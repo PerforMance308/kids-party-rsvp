@@ -76,6 +76,9 @@ const translations = {
     'dashboard.delete': '删除',
     'dashboard.deleting': '删除中...',
     'dashboard.deleteConfirm': '确定要删除{childName}的派对吗？此操作无法撤销。',
+    'dashboard.currentTemplate': '当前邀请卡模板',
+    'dashboard.changeTemplate': '更换模板',
+    'dashboard.templateChanged': '模板已更换',
 
     // 模板相关
     'templates.title': '选择邀请卡样式',
@@ -128,6 +131,19 @@ const translations = {
     'newParty.creating': '创建中...',
     'newParty.createParty': '创建派对',
     'newParty.selectChildRequired': '请选择一个孩子',
+    'newParty.step1Title': '第一步：填写派对信息',
+    'newParty.step2Title': '第二步：选择邀请卡模板',
+    'newParty.nextStep': '下一步：选择模板',
+    'newParty.backStep': '上一步',
+    'newParty.selectTemplateRequired': '请选择一个模板',
+    'newParty.payAndCreate': '支付并创建派对',
+    'newParty.createWithTemplate': '创建派对',
+    'newParty.templateStepHint': '选择一个邀请卡模板',
+    'newParty.stepIndicator': '第{step}步，共2步',
+    'newParty.templateFree': '免费',
+    'newParty.templatePremium': '高级',
+    'newParty.templateAll': '全部',
+    'newParty.templateSelected': '已选择',
 
     // 登录页面
     'login.title': '登录',
@@ -392,6 +408,9 @@ const translations = {
     'dashboard.delete': 'Delete',
     'dashboard.deleting': 'Deleting...',
     'dashboard.deleteConfirm': 'Are you sure you want to delete {childName}\'s party? This action cannot be undone.',
+    'dashboard.currentTemplate': 'Current Invitation Template',
+    'dashboard.changeTemplate': 'Change Template',
+    'dashboard.templateChanged': 'Template Changed',
 
     // 模板相关
     'templates.title': 'Choose Invitation Template',
@@ -444,6 +463,19 @@ const translations = {
     'newParty.creating': 'Creating...',
     'newParty.createParty': 'Create Party',
     'newParty.selectChildRequired': 'Please select a child',
+    'newParty.step1Title': 'Step 1: Party Details',
+    'newParty.step2Title': 'Step 2: Choose Template',
+    'newParty.nextStep': 'Next: Choose Template',
+    'newParty.backStep': 'Back',
+    'newParty.selectTemplateRequired': 'Please select a template',
+    'newParty.payAndCreate': 'Pay & Create Party',
+    'newParty.createWithTemplate': 'Create Party',
+    'newParty.templateStepHint': 'Choose an invitation template',
+    'newParty.stepIndicator': 'Step {step} of 2',
+    'newParty.templateFree': 'Free',
+    'newParty.templatePremium': 'Premium',
+    'newParty.templateAll': 'All',
+    'newParty.templateSelected': 'Selected',
 
     // 登录页面
     'login.title': 'Sign In',

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { 
   initializeStripe, 
   createPaymentIntent, 
@@ -35,6 +35,10 @@ export default function PaymentForm({
   const [elements, setElements] = useState<StripeElements | null>(null)
   const [clientSecret, setClientSecret] = useState('')
 
+  // Memoize metadata to prevent infinite re-renders from object reference changes
+  const metadataKey = JSON.stringify(metadata)
+  const stableMetadata = useMemo(() => metadata, [metadataKey])
+
   // Initialize Stripe
   useEffect(() => {
     const initPayment = async () => {
@@ -64,7 +68,7 @@ export default function PaymentForm({
           amount,
           currency,
           description,
-          metadata,
+          metadata: stableMetadata,
         })
 
         setClientSecret(paymentIntent.client_secret)
@@ -100,28 +104,20 @@ export default function PaymentForm({
     }
 
     setupPayment()
-  }, [stripe, amount, currency, description, metadata, onError])
+  }, [stripe, amount, currency, description, stableMetadata, onError])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
-    console.log('🔵 支付提交开始')
-
     if (!stripe || !elements || !clientSecret) {
-      console.error('❌ 支付系统未准备好', { stripe: !!stripe, elements: !!elements, clientSecret: !!clientSecret })
       setError('Payment system not ready')
       return
     }
-
-    console.log('✅ 支付系统已准备好')
-    console.log('📋 Client Secret:', clientSecret.substring(0, 30) + '...')
 
     setIsLoading(true)
     setError('')
 
     try {
-      console.log('🔄 正在调用 confirmPayment...')
-
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
@@ -130,30 +126,19 @@ export default function PaymentForm({
         redirect: 'if_required',
       })
 
-      console.log('📊 confirmPayment 结果:', {
-        hasError: !!confirmError,
-        hasPaymentIntent: !!paymentIntent,
-        status: paymentIntent?.status
-      })
-
       if (confirmError) {
-        console.error('❌ 支付错误:', confirmError)
         setError(confirmError.message || 'Payment failed')
         onError?.(confirmError.message || 'Payment failed')
       } else if (paymentIntent?.status === 'succeeded') {
-        console.log('✅ 支付成功!', paymentIntent.id)
         onSuccess?.(paymentIntent.id)
       } else {
-        console.warn('⚠️ 支付状态未知:', paymentIntent?.status)
         setError(`Unexpected payment status: ${paymentIntent?.status}`)
       }
     } catch (error) {
-      console.error('💥 支付确认异常:', error)
       setError('Payment failed')
       onError?.(error instanceof Error ? error.message : 'Payment failed')
     } finally {
       setIsLoading(false)
-      console.log('🔵 支付提交结束')
     }
   }
 

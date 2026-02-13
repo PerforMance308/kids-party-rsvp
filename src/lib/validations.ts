@@ -19,13 +19,15 @@ export const partySchema = z.object({
   location: z.string().min(1, 'Location is required'),
   theme: z.string().optional(),
   notes: z.string().optional(),
-  targetAge: z.number().min(0).max(18).optional(),
+  targetAge: z.number().min(0).max(99).optional(),
+  templateId: z.string().min(1, 'Template selection is required'),
+  paymentId: z.string().optional(),
 })
 
 // Legacy schema for backward compatibility
 export const legacyPartySchema = z.object({
   childName: z.string().min(1, 'Child name is required'),
-  childAge: z.number().min(1, 'Age must be at least 1').max(18, 'Age must be under 18'),
+  childAge: z.number().min(1, 'Age must be at least 1').max(99, 'Invalid age'),
   eventDatetime: z.date().refine(
     date => date > new Date(),
     'Event must be in the future'
@@ -33,7 +35,9 @@ export const legacyPartySchema = z.object({
   location: z.string().min(1, 'Location is required'),
   theme: z.string().optional(),
   notes: z.string().optional(),
-  targetAge: z.number().min(0).max(18).optional(),
+  targetAge: z.number().min(0).max(99).optional(),
+  templateId: z.string().min(1, 'Template selection is required'),
+  paymentId: z.string().optional(),
 })
 
 export const rsvpSchema = z.object({

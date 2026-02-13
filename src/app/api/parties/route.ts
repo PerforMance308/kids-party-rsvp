@@ -5,16 +5,8 @@ import { authOptions } from '@/lib/auth-config'
 import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { createReminderSchedule } from '@/lib/scheduler'
 import { calculateAge } from '@/lib/utils'
-
-// Get default template based on child gender
-function getDefaultTemplate(childGender?: string | null): string {
-  if (childGender === 'boy') {
-    return 'default_boy'
-  } else if (childGender === 'girl') {
-    return 'default_girl'
-  }
-  return 'default_boy' // Default fallback
-}
+import { getTemplateConfig, getEffectivePrice } from '@/lib/template-utils'
+import Stripe from 'stripe'
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,8 +17,80 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
-    // Determine default template based on gender
-    const defaultTemplate = getDefaultTemplate(body.childGender)
+    // Validate and resolve template
+    const templateId: string = body.templateId
+    if (!templateId) {
+      return NextResponse.json({ error: 'Template selection is required' }, { status: 400 })
+    }
+
+    const templateConfig = getTemplateConfig(templateId)
+    if (!templateConfig) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    }
+
+    const effectivePrice = getEffectivePrice(templateConfig.pricing)
+
+    // For paid templates, verify payment
+    let verifiedAmount = 0
+    let verifiedCurrency = 'usd'
+    const isPaid = !effectivePrice.isFree
+
+    if (isPaid) {
+      const { paymentId } = body
+      if (!paymentId) {
+        return NextResponse.json(
+          { error: 'Payment ID is required for premium templates' },
+          { status: 400 }
+        )
+      }
+
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+        apiVersion: '2025-02-24.acacia',
+      })
+
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentId)
+
+        if (paymentIntent.status !== 'succeeded') {
+          return NextResponse.json(
+            { error: 'Payment has not been completed', status: paymentIntent.status },
+            { status: 400 }
+          )
+        }
+
+        if (paymentIntent.amount <= 0) {
+          return NextResponse.json(
+            { error: 'Payment amount verification failed' },
+            { status: 400 }
+          )
+        }
+
+        if (
+          paymentIntent.metadata?.feature !== 'template' ||
+          paymentIntent.metadata?.templateId !== templateId ||
+          paymentIntent.metadata?.userId !== session.user.id
+        ) {
+          return NextResponse.json(
+            { error: 'Payment metadata verification failed' },
+            { status: 400 }
+          )
+        }
+
+        verifiedAmount = paymentIntent.amount
+        verifiedCurrency = paymentIntent.currency
+      } catch (verificationError) {
+        console.error('Payment verification error:', verificationError)
+
+        if (verificationError instanceof Stripe.errors.StripeError) {
+          return NextResponse.json(
+            { error: 'Payment verification failed', details: verificationError.message },
+            { status: 400 }
+          )
+        }
+
+        return NextResponse.json({ error: 'Failed to verify payment' }, { status: 500 })
+      }
+    }
 
     let party
 
@@ -65,7 +129,8 @@ export async function POST(request: NextRequest) {
           notes: validatedData.notes || null,
           targetAge: validatedData.targetAge || null,
           childGender: body.childGender || null,
-          template: defaultTemplate,
+          template: templateId,
+          ...(isPaid ? { paidTemplates: [templateId] } : {}),
         },
         include: {
           child: true
@@ -104,12 +169,38 @@ export async function POST(request: NextRequest) {
           notes: validatedData.notes || null,
           targetAge: validatedData.targetAge || null,
           childGender: body.childGender || null,
-          template: defaultTemplate,
+          template: templateId,
+          ...(isPaid ? { paidTemplates: [templateId] } : {}),
         },
         include: {
           child: true
         }
       })
+    }
+
+    // Record payment in database after party creation (partyId is now available)
+    if (isPaid && body.paymentId) {
+      try {
+        const existingPayment = await prisma.payment.findUnique({
+          where: { stripePaymentId: body.paymentId }
+        })
+        if (!existingPayment) {
+          await prisma.payment.create({
+            data: {
+              userId: session.user.id,
+              partyId: party.id,
+              stripePaymentId: body.paymentId,
+              feature: 'template',
+              amount: verifiedAmount,
+              currency: verifiedCurrency,
+              status: 'succeeded',
+              metadata: JSON.stringify({ templateId }),
+            },
+          })
+        }
+      } catch (paymentRecordError) {
+        console.error('Failed to record payment (may already exist):', paymentRecordError)
+      }
     }
 
     // Create reminder schedule in the background (Non-blocking)
