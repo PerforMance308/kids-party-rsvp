@@ -154,13 +154,16 @@ export default function ChildrenPage() {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-neutral-900">{t('children.title')}</h1>
             <p className="text-neutral-500 mt-1">{t('children.subtitle')}</p>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn btn-primary inline-flex items-center gap-2"
-          >
-            <PlusIcon className="w-5 h-5" />
-            {t('children.addChild')}
-          </button>
+          {children.length > 0 && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-primary-300 bg-primary-100 px-3 py-2 text-sm font-semibold text-primary-800 shadow-sm hover:bg-primary-200 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('children.addChild')}</span>
+              <span className="sm:hidden">{locale === 'zh' ? '添加' : 'Add'}</span>
+            </button>
+          )}
         </div>
 
         {/* Add/Edit Form */}
@@ -278,8 +281,11 @@ export default function ChildrenPage() {
             <p className="text-neutral-500 mb-6 max-w-sm mx-auto">
               {t('children.noChildrenDesc')}
             </p>
-            <button onClick={() => setShowForm(true)} className="btn btn-primary inline-flex items-center gap-2">
-              <PlusIcon className="w-5 h-5" />
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-primary-300 bg-primary-100 px-3 py-2 text-sm font-semibold text-primary-800 shadow-sm hover:bg-primary-200 transition-colors"
+            >
+              <PlusIcon className="w-4 h-4" />
               {locale === 'zh' ? '添加您的第一个宝贝' : 'Add Your First Child'}
             </button>
           </motion.div>

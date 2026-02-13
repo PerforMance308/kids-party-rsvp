@@ -6,7 +6,6 @@ import Link from 'next/link'
 import { formatDate, formatPhoneDisplay } from '@/lib/utils'
 import { useLanguage, useTranslations, useLocale } from '@/contexts/LanguageContext'
 import InvitationCard from '@/components/InvitationCard'
-import TemplateSelector from '@/components/TemplateSelector'
 import InvitationTemplate from '@/components/InvitationTemplates'
 import InviteGuests from '@/components/InviteGuests'
 import PaymentForm from '@/components/PaymentForm'
@@ -212,38 +211,6 @@ export default function PartyDashboard() {
     window.URL.revokeObjectURL(url)
   }
 
-  const handleTemplateSelect = async (template: string) => {
-    try {
-      const response = await fetch(`/api/parties/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          ...party,
-          template,
-          eventDatetime: party?.eventDatetime,
-          location: party?.location,
-          theme: party?.theme || undefined,
-          notes: party?.notes || undefined,
-          targetAge: party?.targetAge || undefined,
-        }),
-      })
-
-      if (response.ok) {
-        const updatedParty = await response.json()
-        setParty(updatedParty)
-        // Regenerate QR code for new template
-        await loadQRCode()
-      } else {
-        setError('Failed to update template')
-      }
-    } catch (error) {
-      setError('An error occurred while updating template')
-    }
-  }
-
   const needsBroadcastPayment = broadcastSentToday >= 1 && !broadcastPaymentId
 
   const sendBroadcast = async () => {
@@ -318,7 +285,7 @@ export default function PartyDashboard() {
 
 
   return (
-    <main className="flex-1 px-4 py-4 lg:py-8 pb-24 lg:pb-8">
+    <main className="flex-1 px-4 py-4 lg:py-8 pb-8 lg:pb-8">
       <div className="max-w-7xl mx-auto">
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
@@ -385,9 +352,9 @@ export default function PartyDashboard() {
         </div>
 
         {/* Desktop: Two Column Layout / Mobile: Single Column */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
+        <div className="flex flex-col lg:flex-row gap-3 lg:items-start">
           {/* Left Column: Invitation Preview + Quick Actions - Sticky on desktop */}
-          <div className="lg:w-[420px] xl:w-[480px] flex-shrink-0 space-y-4 lg:space-y-6 lg:sticky lg:top-4">
+          <div className="lg:w-[420px] xl:w-[480px] flex-shrink-0 space-y-3 lg:sticky lg:top-4">
             {/* Current Invitation Card - Collapsible on mobile */}
             <div className="card overflow-hidden">
               <button
@@ -416,23 +383,15 @@ export default function PartyDashboard() {
               {/* Invitation content - always visible on desktop, collapsible on mobile */}
               <div className={`mt-4 ${showInvitation ? 'block' : 'hidden'} lg:block`}>
                 {/* Change Template Button */}
-                <button
-                  onClick={() => {
-                    const templateSection = document.getElementById('template-selector')
-                    if (templateSection) {
-                      templateSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    }
-                  }}
-                  className="w-full mb-4 py-2.5 px-4 bg-gradient-to-r from-primary-50 to-primary-100 hover:from-primary-100 hover:to-primary-200 border border-primary-200 rounded-lg text-primary-700 font-medium text-sm flex items-center justify-center gap-2 transition-all"
+                <Link
+                  href={`/${locale}/party/${party.id}/template`}
+                  className="w-full mb-4 py-2.5 px-4 rounded-xl border border-primary-300 bg-primary-100 hover:bg-primary-200 text-primary-800 font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  {locale === 'zh' ? '更换邀请卡样式' : 'Change Invitation Style'}
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                  {t('dashboard.changeTemplate')}
+                </Link>
 
                 {qrCode && party ? (
                   <InvitationTemplate
@@ -487,7 +446,7 @@ export default function PartyDashboard() {
           </div>
 
           {/* Right Column: Stats + Guest List + Templates */}
-          <div className="flex-1 min-w-0 space-y-4 lg:space-y-6">
+          <div className="flex-1 min-w-0 space-y-3">
             {/* Stats Cards - Desktop - 4 colored cards */}
             <div className="hidden lg:grid grid-cols-4 gap-4">
               <div className="bg-gradient-to-br from-primary-50 to-purple-50 rounded-2xl p-5 text-center border border-primary-100">
@@ -508,28 +467,6 @@ export default function PartyDashboard() {
                 </div>
                 <h3 className="text-sm text-amber-600 mt-1">{tr('responseRate')}</h3>
               </div>
-            </div>
-
-            {/* Template Gallery */}
-            <div id="template-selector">
-              <TemplateSelector
-                party={{
-                  childName: party.childName,
-                  childAge: party.childAge,
-                  eventDatetime: party.eventDatetime,
-                  eventEndDatetime: party.eventEndDatetime,
-                  location: party.location,
-                  theme: party.theme,
-                  notes: party.notes
-                }}
-                qrCodeUrl={qrCode}
-                rsvpUrl={party.rsvpUrl}
-                onTemplateSelect={handleTemplateSelect}
-                partyId={party.id}
-                currentTemplate={party.template || 'free'}
-                paidTemplates={party.paidTemplates || []}
-                onPaymentSuccess={refreshParty}
-              />
             </div>
 
             {/* Add Guest Section - Only show when contacts exist */}
@@ -774,12 +711,12 @@ export default function PartyDashboard() {
         </div>
       )}
 
-      {/* Mobile Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 px-4 py-3 lg:hidden safe-area-bottom z-20">
+      {/* Mobile Action Bar: sticky at page bottom section, not overlaying footer */}
+      <div className="sticky bottom-0 bg-white border border-neutral-200 rounded-xl px-3 py-2 lg:hidden safe-area-bottom z-10 mt-3">
         <div className="flex gap-3 max-w-lg mx-auto">
           <button
             onClick={copyRsvpLink}
-            className="flex-1 btn btn-primary text-sm py-2.5 flex items-center justify-center gap-2"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-primary-600 bg-primary-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -788,7 +725,7 @@ export default function PartyDashboard() {
           </button>
           <Link
             href={`/${locale}/party/${party.id}/edit`}
-            className="flex-1 btn btn-secondary text-sm py-2.5 flex items-center justify-center gap-2"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm font-semibold text-neutral-800 shadow-sm hover:bg-neutral-50 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -797,7 +734,7 @@ export default function PartyDashboard() {
           </Link>
           <button
             onClick={exportToCSV}
-            className="btn btn-secondary text-sm py-2.5 px-3"
+            className="inline-flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-800 shadow-sm hover:bg-neutral-50 transition-colors"
             title={locale === 'zh' ? '导出名单' : 'Export'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

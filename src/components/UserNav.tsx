@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 
 export default function UserNav() {
@@ -15,6 +15,26 @@ export default function UserNav() {
     const { t } = useLanguage()
     const isLoading = status === 'loading'
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const mobileMenuRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!isMobileMenuOpen) return
+
+        const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+            const target = event.target as Node | null
+            if (mobileMenuRef.current && target && !mobileMenuRef.current.contains(target)) {
+                setIsMobileMenuOpen(false)
+            }
+        }
+
+        document.addEventListener('mousedown', handlePointerDown)
+        document.addEventListener('touchstart', handlePointerDown, { passive: true })
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown)
+            document.removeEventListener('touchstart', handlePointerDown)
+        }
+    }, [isMobileMenuOpen])
 
     if (isLoading) {
         return (
@@ -32,7 +52,7 @@ export default function UserNav() {
 
     if (session?.user) {
         return (
-            <div className="relative">
+            <div ref={mobileMenuRef} className="relative">
                 <nav className="flex items-center space-x-2 md:space-x-4">
                     {/* Desktop Navigation */}
                     {session.user.role === 'ADMIN' && (
