@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
@@ -130,16 +130,54 @@ export async function PUT(
       eventDatetime,
       eventEndDatetime,
       location: body.location,
+      locationFull: body.locationFull || body.location,
       theme: body.theme || null,
       notes: body.notes || null,
       template: body.template !== undefined ? body.template : existingParty.template,
       targetAge: body.targetAge != null ? parseInt(body.targetAge) : null,
     }
+    const existingLocationFull =
+      ('locationFull' in existingParty ? (existingParty as { locationFull?: string | null }).locationFull : null)
+      || existingParty.location
 
-    // Check if any important details changed (date, time, location)
-    const importantChanges = {
-      date: existingParty.eventDatetime.getTime() !== validatedData.eventDatetime.getTime(),
+    const changes = {
+      eventDatetime: existingParty.eventDatetime.getTime() !== validatedData.eventDatetime.getTime(),
+      eventEndDatetime: (existingParty.eventEndDatetime?.getTime() ?? null) !== (validatedData.eventEndDatetime?.getTime() ?? null),
       location: existingParty.location !== validatedData.location,
+      locationFull: existingLocationFull !== validatedData.locationFull,
+      theme: existingParty.theme !== validatedData.theme,
+      notes: existingParty.notes !== validatedData.notes,
+      template: existingParty.template !== validatedData.template,
+      targetAge: existingParty.targetAge !== validatedData.targetAge,
+    }
+
+    const hasAnyChanges = Object.values(changes).some(Boolean)
+
+    // No-op save: avoid unnecessary DB update and skip notifications.
+    if (!hasAnyChanges) {
+      const rsvps = existingParty.guests.map(g => g.rsvp).filter(Boolean)
+      const stats = {
+        total: existingParty.guests.length,
+        attending: rsvps.filter(r => r?.status === 'YES').length,
+        notAttending: rsvps.filter(r => r?.status === 'NO').length,
+        maybe: rsvps.filter(r => r?.status === 'MAYBE').length,
+      }
+      const childAge = existingParty.targetAge ?? calculateAge(existingParty.child.birthDate)
+
+      return NextResponse.json({
+        ...existingParty,
+        childName: existingParty.child.name,
+        childAge,
+        eventEndDatetime: existingParty.eventEndDatetime,
+        stats,
+        rsvpUrl: `${getBaseUrl()}/rsvp/${existingParty.publicRsvpToken}`
+      })
+    }
+
+    // Check if any important details changed (date/time/location)
+    const importantChanges = {
+      date: changes.eventDatetime || changes.eventEndDatetime,
+      location: changes.location,
     }
 
     const hasImportantChanges = Object.values(importantChanges).some(Boolean)
@@ -151,6 +189,7 @@ export async function PUT(
         eventDatetime: validatedData.eventDatetime,
         eventEndDatetime: validatedData.eventEndDatetime,
         location: validatedData.location,
+        locationFull: validatedData.locationFull,
         theme: validatedData.theme,
         notes: validatedData.notes,
         template: validatedData.template,
@@ -171,20 +210,31 @@ export async function PUT(
       const notifiableGuests = existingParty.guests.filter(guest =>
         guest.rsvp && ['YES', 'MAYBE'].includes(guest.rsvp.status)
       )
-
-      for (const guest of notifiableGuests) {
-        if (guest.email) {
-          try {
-            await sendPartyUpdateEmail(
-              guest.email,
-              updatedParty,
-              importantChanges
-            )
-          } catch (error) {
-            console.error(`Failed to send update email to ${guest.email}:`, error)
-          }
-        }
+      const emailPartyData = {
+        id: updatedParty.id,
+        childName: updatedParty.child.name,
+        childAge: updatedParty.targetAge ?? calculateAge(updatedParty.child.birthDate),
+        eventDatetime: updatedParty.eventDatetime,
+        location: updatedParty.location,
+        theme: updatedParty.theme || undefined,
+        notes: updatedParty.notes || undefined,
+        publicRsvpToken: updatedParty.publicRsvpToken,
       }
+
+      // Do not block the save response on SMTP latency.
+      after(async () => {
+        await Promise.allSettled(
+          notifiableGuests
+            .filter((guest) => Boolean(guest.email))
+            .map((guest) =>
+              sendPartyUpdateEmail(
+                guest.email!,
+                emailPartyData,
+                importantChanges
+              )
+            )
+        )
+      })
     }
 
     const rsvps = updatedParty.guests.map(g => g.rsvp).filter(Boolean)

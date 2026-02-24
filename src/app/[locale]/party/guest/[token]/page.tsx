@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { useLocale } from '@/contexts/LanguageContext'
 import PhotoUpload from '@/components/PhotoUpload'
+import PartyMapCard from '@/components/PartyMapCard'
 
 interface Party {
   id: string
@@ -14,8 +15,14 @@ interface Party {
   childAge: number
   eventDatetime: string
   location: string
+  locationFull?: string
   theme?: string
   notes?: string
+  owner?: {
+    name?: string | null
+    email?: string | null
+    phone?: string | null
+  }
   allowPhotoSharing: boolean
   photoSharingPaid: boolean
   guestCanSeeOthers: boolean
@@ -216,6 +223,23 @@ export default function GuestPartyPage() {
                 <strong>Special Notes:</strong> {party.notes}
               </div>
             )}
+            <PartyMapCard address={party.locationFull || party.location} title="Party location map" />
+            {(party.owner?.email || party.owner?.phone) && (
+              <div className="mt-4 p-3 rounded-lg border border-neutral-200 bg-white text-sm text-neutral-700 text-left">
+                <p className="font-semibold mb-1">Host contact</p>
+                {party.owner?.name && <p>{party.owner.name}</p>}
+                {party.owner?.email && (
+                  <a className="text-primary-700 hover:underline block" href={`mailto:${party.owner.email}`}>
+                    {party.owner.email}
+                  </a>
+                )}
+                {party.owner?.phone && (
+                  <a className="text-primary-700 hover:underline block" href={`tel:${party.owner.phone}`}>
+                    {party.owner.phone}
+                  </a>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Your RSVP Status */}
@@ -340,6 +364,27 @@ export default function GuestPartyPage() {
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <span className="font-medium text-neutral-700">Your Message:</span>
                   <p className="text-neutral-900 mt-1">{myRSVP.message}</p>
+                </div>
+              )}
+
+              <PartyMapCard address={party.locationFull || party.location} title="Party location map" />
+
+              {(party.owner?.email || party.owner?.phone) && (
+                <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
+                  <span className="font-medium text-neutral-700">Host contact:</span>
+                  {party.owner?.name && (
+                    <p className="text-neutral-900 mt-1">{party.owner.name}</p>
+                  )}
+                  {party.owner?.email && (
+                    <a className="text-primary-700 hover:underline block mt-1" href={`mailto:${party.owner.email}`}>
+                      {party.owner.email}
+                    </a>
+                  )}
+                  {party.owner?.phone && (
+                    <a className="text-primary-700 hover:underline block mt-1" href={`tel:${party.owner.phone}`}>
+                      {party.owner.phone}
+                    </a>
+                  )}
                 </div>
               )}
 

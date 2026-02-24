@@ -30,7 +30,12 @@ export async function POST(request: NextRequest) {
       where: { email }
     })
 
-    if (!user || !user.passwordHash || !(await comparePassword(password, user.passwordHash))) {
+    // Always run bcrypt to prevent timing attacks that reveal whether an email exists
+    const dummyHash = '$2a$12$000000000000000000000000000000000000000000000000000000'
+    const hashToCompare = user?.passwordHash || dummyHash
+    const isValidPassword = await comparePassword(password, hashToCompare)
+
+    if (!user || !user.passwordHash || !isValidPassword) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 400 }

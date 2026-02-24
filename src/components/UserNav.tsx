@@ -101,7 +101,7 @@ export default function UserNav() {
                     {/* Logout button - hidden on mobile (available in mobile menu) */}
                     <button
                         onClick={() => signOut({ callbackUrl: `/${locale}` })}
-                        className="hidden md:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
+                        className="hidden sm:block px-3 py-2 text-neutral-600 hover:text-neutral-900 rounded-lg hover:bg-neutral-100 transition-colors"
                     >
                         {t('nav.logout')}
                     </button>

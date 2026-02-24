@@ -12,6 +12,9 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // Required: users who registered via email/password can also sign in with
+      // Google using the same address. Safe for Google because Google verifies
+      // email ownership — only the real account holder can authenticate.
       allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({

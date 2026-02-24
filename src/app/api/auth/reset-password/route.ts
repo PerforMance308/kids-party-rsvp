@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth'
+import { hashPassword, validatePassword } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
     try {
@@ -8,6 +8,11 @@ export async function POST(request: NextRequest) {
 
         if (!token || !password) {
             return NextResponse.json({ error: 'Missing token or password' }, { status: 400 })
+        }
+
+        const { isValid, errors } = validatePassword(password)
+        if (!isValid) {
+            return NextResponse.json({ error: errors[0] || 'Password does not meet requirements' }, { status: 400 })
         }
 
         const verificationToken = await prisma.verificationToken.findUnique({

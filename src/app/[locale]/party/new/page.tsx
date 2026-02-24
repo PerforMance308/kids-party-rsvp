@@ -6,12 +6,19 @@ import { useSession } from 'next-auth/react'
 import ContactReuse from '@/components/ContactReuse'
 import TemplateSelectionLayout from '@/components/TemplateSelectionLayout'
 import PaymentForm from '@/components/PaymentForm'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
 import type { TemplatesApiResponse, InvitationTemplate as InvitationTemplateType } from '@/types/invitation-template'
 
 interface Contact {
   id: string
   name: string
+  childName: string
+  email: string
+  phone?: string
+}
+
+interface SelectedContactPayload {
   childName: string
   email: string
   phone?: string
@@ -52,6 +59,7 @@ export default function NewPartyPage() {
   const [eventTime, setEventTime] = useState('')
   const [eventEndTime, setEventEndTime] = useState('')
   const [location, setLocation] = useState('')
+  const [locationFull, setLocationFull] = useState('')
   const [theme, setTheme] = useState('')
   const [notes, setNotes] = useState('')
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
@@ -151,6 +159,12 @@ export default function NewPartyPage() {
 
   // Build the request body from Step 1 form state
   const buildRequestBody = (templateId: string, paymentId?: string) => {
+    const selectedGuests: SelectedContactPayload[] = selectedContacts.map((contact) => ({
+      childName: contact.childName || contact.name,
+      email: contact.email,
+      phone: contact.phone,
+    }))
+
     const eventDatetime = new Date(`${eventDate}T${eventTime}`)
     let eventEndDatetime: Date | null = null
     if (eventEndTime) {
@@ -167,11 +181,13 @@ export default function NewPartyPage() {
         eventDatetime: eventDatetime.toISOString(),
         eventEndDatetime: eventEndDatetime?.toISOString(),
         location,
+        locationFull: locationFull || location,
         theme: theme || undefined,
         notes: notes || undefined,
         childGender: childGender || undefined,
         templateId,
         paymentId,
+        selectedGuests,
       }
     }
 
@@ -180,12 +196,14 @@ export default function NewPartyPage() {
       eventDatetime: eventDatetime.toISOString(),
       eventEndDatetime: eventEndDatetime?.toISOString(),
       location,
+      locationFull: locationFull || location,
       theme: theme || undefined,
       notes: notes || undefined,
       targetAge: targetAge ? parseInt(targetAge) : undefined,
       childGender: childGender || undefined,
       templateId,
       paymentId,
+      selectedGuests,
     }
   }
 
@@ -205,28 +223,6 @@ export default function NewPartyPage() {
 
       if (response.ok) {
         const party = await response.json()
-
-        // Add selected contacts as guests
-        if (selectedContacts.length > 0) {
-          try {
-            await Promise.all(
-              selectedContacts.map(contact =>
-                fetch('/api/guests', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    partyId: party.id,
-                    childName: contact.childName || contact.name,
-                    email: contact.email,
-                    phone: contact.phone,
-                  }),
-                })
-              )
-            )
-          } catch (error) {
-            console.error('Failed to add some contacts:', error)
-          }
-        }
 
         router.push(`/${locale}/party/${party.id}/dashboard`)
       } else {
@@ -645,13 +641,19 @@ export default function NewPartyPage() {
                   <label htmlFor="location" className="block text-sm font-medium text-neutral-700 mb-1">
                     {t('newParty.location')} *
                   </label>
-                  <input
-                    type="text"
+                  <AddressAutocomplete
                     id="location"
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="input"
+                    onChange={(value) => {
+                      setLocation(value)
+                      setLocationFull('')
+                    }}
+                    onSelect={(selection) => {
+                      setLocation(selection.displayAddress)
+                      setLocationFull(selection.fullAddress)
+                    }}
                     placeholder={t('newParty.locationPlaceholder')}
+                    locale={locale}
                     required
                   />
                 </div>

@@ -77,8 +77,14 @@ export async function GET(
       childAge,
       eventDatetime: party.eventDatetime,
       location: party.location,
+      locationFull: (party as any).locationFull || party.location,
       theme: party.theme,
       notes: party.notes,
+      owner: {
+        name: party.user.name,
+        email: party.user.email,
+        phone: null
+      },
       allowPhotoSharing: party.allowPhotoSharing,
       photoSharingPaid: party.photoSharingPaid,
       guestCanSeeOthers: party.guestCanSeeOthers
@@ -131,8 +137,14 @@ export async function GET(
         childAge,
         eventDatetime: party.eventDatetime,
         location: party.location,
+        locationFull: (party as any).locationFull || party.location,
         theme: party.theme,
         notes: party.notes,
+        owner: {
+          name: party.user.name,
+          email: party.user.email,
+          phone: null
+        },
         allowPhotoSharing: party.allowPhotoSharing,
         photoSharingPaid: party.photoSharingPaid,
         guestCanSeeOthers: party.guestCanSeeOthers

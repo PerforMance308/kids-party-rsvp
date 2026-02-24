@@ -519,7 +519,7 @@ const translations = {
     // 儿童管理页面
     'children.title': 'My Children',
     'children.subtitle': 'Manage your children\'s information for easy party planning',
-    'children.addChild': '+ Add Child',
+    'children.addChild': 'Add Child',
     'children.noChildren': 'No children yet',
     'children.noChildrenDesc': 'Add your children\'s information to quickly create party invitations',
     'children.name': 'Name',

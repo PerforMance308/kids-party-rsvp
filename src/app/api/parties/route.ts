@@ -8,6 +8,36 @@ import { calculateAge } from '@/lib/utils'
 import { getTemplateConfig, getEffectivePrice } from '@/lib/template-utils'
 import Stripe from 'stripe'
 
+interface SelectedGuestInput {
+  childName?: string
+  email?: string
+  phone?: string
+}
+
+function normalizeSelectedGuests(input: unknown): Array<{ childName: string; email: string; phone: string | null }> {
+  if (!Array.isArray(input)) return []
+
+  const emailSeen = new Set<string>()
+  const guests: Array<{ childName: string; email: string; phone: string | null }> = []
+
+  for (const raw of input as SelectedGuestInput[]) {
+    const email = (raw?.email || '').trim().toLowerCase()
+    if (!email || emailSeen.has(email)) continue
+
+    const childName = (raw?.childName || '').trim()
+    if (!childName) continue
+
+    guests.push({
+      childName,
+      email,
+      phone: raw?.phone?.trim() || null,
+    })
+    emailSeen.add(email)
+  }
+
+  return guests
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -93,6 +123,7 @@ export async function POST(request: NextRequest) {
     }
 
     let party
+    const selectedGuests = normalizeSelectedGuests(body.selectedGuests)
 
     // Try new schema first (with childId)
     if (body.childId) {
@@ -125,6 +156,7 @@ export async function POST(request: NextRequest) {
           eventDatetime: validatedData.eventDatetime,
           eventEndDatetime,
           location: validatedData.location,
+          locationFull: validatedData.locationFull || validatedData.location,
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
           targetAge: validatedData.targetAge || null,
@@ -165,6 +197,7 @@ export async function POST(request: NextRequest) {
           eventDatetime: validatedData.eventDatetime,
           eventEndDatetime: legacyEventEndDatetime,
           location: validatedData.location,
+          locationFull: validatedData.locationFull || validatedData.location,
           theme: validatedData.theme || null,
           notes: validatedData.notes || null,
           targetAge: validatedData.targetAge || null,
@@ -206,6 +239,17 @@ export async function POST(request: NextRequest) {
     // Create reminder schedule in the background (Non-blocking)
     after(async () => {
       try {
+        if (selectedGuests.length > 0) {
+          await prisma.guest.createMany({
+            data: selectedGuests.map((guest) => ({
+              partyId: party.id,
+              childName: guest.childName,
+              email: guest.email,
+              phone: guest.phone,
+            })),
+            skipDuplicates: true,
+          })
+        }
         await createReminderSchedule(party.id)
       } catch (error) {
         console.error('Failed to create reminder schedule in background:', error)
@@ -295,6 +339,7 @@ export async function GET(request: NextRequest) {
         eventDatetime: party.eventDatetime,
         eventEndDatetime: party.eventEndDatetime,
         location: party.location,
+        locationFull: party.locationFull,
         theme: party.theme,
         notes: party.notes,
         targetAge: party.targetAge,

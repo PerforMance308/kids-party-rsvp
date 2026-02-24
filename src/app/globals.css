@@ -1,8 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@400;600;700&family=Bubblegum+Sans&family=Chewy&family=Baloo+2:wght@400;600;700;800&family=Lilita+One&family=Bangers&family=Patrick+Hand&family=Caveat:wght@400;600;700&family=Pacifico&family=Dancing+Script:wght@400;600;700&family=Indie+Flower&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Google Places Autocomplete dropdown ──────────────────────────────────── */
+.pac-container {
+  border: 1px solid #e5e7eb; /* neutral-200 */
+  border-radius: 0.75rem;    /* rounded-xl */
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 4px 10px -6px rgba(0,0,0,0.05);
+  font-family: inherit;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  overflow: hidden;
+  z-index: 9999;
+  /* Override Google's default background-color override */
+  background-color: #ffffff !important;
+}
+
+.pac-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  color: #374151; /* neutral-700 */
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pac-item:first-child { border-top: none; }
+.pac-item:hover,
+.pac-item-selected { background-color: #fdf4ff; } /* primary-50 */
+
+.pac-item-query {
+  color: #111827; /* neutral-900 */
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.pac-matched { color: #7c3aed; } /* primary-600 */
+
+/* Hide the default Google "powered by" logo for a cleaner look */
+.pac-logo::after { display: none; }
 
 @layer base {
   * {

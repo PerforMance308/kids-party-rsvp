@@ -9,7 +9,7 @@ export function ToastContainer() {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full">
+    <div className="fixed top-16 md:top-24 right-4 z-50 space-y-2 max-w-sm w-full">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
       ))}
@@ -66,6 +66,7 @@ function ToastItem({ toast, onClose }: { toast: Toast, onClose: () => void }) {
         
         <button
           onClick={onClose}
+          aria-label="Dismiss notification"
           className="ml-4 flex-shrink-0 opacity-70 hover:opacity-100 focus:outline-none focus:opacity-100"
         >
           <XMarkIcon className="h-4 w-4" />

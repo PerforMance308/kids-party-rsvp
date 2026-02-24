@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useLocale } from '@/contexts/LanguageContext'
 import Link from 'next/link'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 interface Party {
   id: string
@@ -13,9 +14,17 @@ interface Party {
   eventDatetime: string
   eventEndDatetime?: string
   location: string
+  locationFull?: string
   theme?: string
   notes?: string
   targetAge?: number
+}
+
+function toLocalDateInputValue(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 export default function EditPartyPage() {
@@ -27,13 +36,13 @@ export default function EditPartyPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
 
   // Form state - removed childName and childAge as they are managed through child management
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [eventEndTime, setEventEndTime] = useState('')
   const [location, setLocation] = useState('')
+  const [locationFull, setLocationFull] = useState('')
   const [theme, setTheme] = useState('')
   const [notes, setNotes] = useState('')
   const [targetAge, setTargetAge] = useState('')
@@ -74,7 +83,7 @@ export default function EditPartyPage() {
 
           // Populate form - 分别设置日期和时间
           const startDateTime = new Date(partyData.eventDatetime)
-          setEventDate(startDateTime.toISOString().split('T')[0])
+          setEventDate(toLocalDateInputValue(startDateTime))
           setEventTime(`${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`)
 
           if (partyData.eventEndDatetime) {
@@ -87,6 +96,7 @@ export default function EditPartyPage() {
           }
 
           setLocation(partyData.location)
+          setLocationFull(partyData.locationFull || partyData.location)
           setTheme(partyData.theme || '')
           setNotes(partyData.notes || '')
           setTargetAge(partyData.targetAge != null ? partyData.targetAge.toString() : '')
@@ -110,7 +120,6 @@ export default function EditPartyPage() {
 
     setIsSaving(true)
     setError('')
-    setSuccess('')
 
     try {
       // 组合日期和时间
@@ -134,6 +143,7 @@ export default function EditPartyPage() {
           eventDatetime: eventDatetime.toISOString(),
           eventEndDatetime: eventEndDatetime?.toISOString(),
           location,
+          locationFull: locationFull || location,
           theme: theme || undefined,
           notes: notes || undefined,
           targetAge: targetAge ? parseInt(targetAge) : undefined,
@@ -141,12 +151,7 @@ export default function EditPartyPage() {
       })
 
       if (response.ok) {
-        setSuccess('Party updated successfully! Notification emails have been sent to guests if there were important changes.')
-
-        // Redirect to party dashboard after a short delay
-        setTimeout(() => {
-          router.push(`/${locale}/party/${id}/dashboard`)
-        }, 2000)
+        router.push(`/${locale}/party/${id}/dashboard`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to update party')
@@ -196,12 +201,6 @@ export default function EditPartyPage() {
         {error && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 mb-6">
             {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 mb-6">
-            {success}
           </div>
         )}
 
@@ -274,13 +273,19 @@ export default function EditPartyPage() {
             <label htmlFor="location" className="block text-sm font-medium text-neutral-700 mb-1">
               Location *
             </label>
-            <input
-              type="text"
+            <AddressAutocomplete
               id="location"
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="input"
-              placeholder="e.g., 123 Main St, City, State or Our backyard"
+              onChange={(value) => {
+                setLocation(value)
+                setLocationFull('')
+              }}
+              onSelect={(selection) => {
+                setLocation(selection.displayAddress)
+                setLocationFull(selection.fullAddress)
+              }}
+              placeholder="e.g., Springfield, IL or New York, NY"
+              locale={locale}
               required
             />
           </div>

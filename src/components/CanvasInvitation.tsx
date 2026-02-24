@@ -91,6 +91,23 @@ const FONT_MAP: Record<string, string> = {
   'IndieFlower': '"Indie Flower", cursive',
 };
 
+// Lazy-load decorative fonts only when the canvas invitation component is mounted
+const CANVAS_FONTS_URL =
+  'https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@400;600;700&family=Bubblegum+Sans&family=Chewy&family=Baloo+2:wght@400;600;700;800&family=Lilita+One&family=Bangers&family=Patrick+Hand&family=Caveat:wght@400;600;700&family=Pacifico&family=Dancing+Script:wght@400;600;700&family=Indie+Flower&display=swap'
+
+function useCanvasFonts() {
+  useEffect(() => {
+    const linkId = 'canvas-invitation-fonts'
+    if (!document.getElementById(linkId)) {
+      const link = document.createElement('link')
+      link.id = linkId
+      link.rel = 'stylesheet'
+      link.href = CANVAS_FONTS_URL
+      document.head.appendChild(link)
+    }
+  }, [])
+}
+
 export default function CanvasInvitation({
   template,
   party,
@@ -103,6 +120,7 @@ export default function CanvasInvitation({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const locale = useLocale();
+  useCanvasFonts();
   const t = useTranslations('templates');
 
   const { config } = template;

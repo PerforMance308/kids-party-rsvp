@@ -7,6 +7,7 @@ import { formatDate, formatPhoneInput } from '@/lib/utils'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageContext'
+import PartyMapCard from '@/components/PartyMapCard'
 
 interface ExistingRsvp {
   childName: string
@@ -25,14 +26,21 @@ interface Party {
   childAge: number
   eventDatetime: string
   location: string
+  locationFull?: string
   theme?: string
   notes?: string
+  owner?: {
+    name?: string | null
+    email?: string | null
+    phone?: string | null
+  }
   existingRsvp?: ExistingRsvp
 }
 
 export default function RSVPPage() {
   const { token } = useParams()
   const router = useRouter()
+  const tokenValue = Array.isArray(token) ? token[0] : String(token || '')
   const { data: session, status: sessionStatus } = useSession()
   const [party, setParty] = useState<Party | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -72,10 +80,24 @@ export default function RSVPPage() {
   const [parentStaying, setParentStaying] = useState(true)
   const [allergies, setAllergies] = useState('')
   const [message, setMessage] = useState('')
+  const [shouldAutoScrollIntent, setShouldAutoScrollIntent] = useState(false)
 
   // Refs for auto-scrolling
   const authSectionRef = useRef<HTMLDivElement>(null)
   const notAttendingFormRef = useRef<HTMLDivElement>(null)
+  const intentSectionRef = useRef<HTMLDivElement>(null)
+
+  const rsvpFlowStorageKey = tokenValue ? `rsvp:flow:${tokenValue}` : ''
+
+  const saveFlowState = (nextAuthMode?: 'register' | 'login') => {
+    if (!rsvpFlowStorageKey || typeof window === 'undefined') return
+    const state = {
+      intent: rsvpIntent || 'ATTENDING',
+      authMode: nextAuthMode || authMode,
+      savedAt: Date.now(),
+    }
+    window.sessionStorage.setItem(rsvpFlowStorageKey, JSON.stringify(state))
+  }
 
   useEffect(() => {
     const loadParty = async () => {
@@ -113,6 +135,34 @@ export default function RSVPPage() {
 
     loadParty()
   }, [token, sessionStatus])
+
+  useEffect(() => {
+    if (!rsvpFlowStorageKey || typeof window === 'undefined') return
+
+    const raw = window.sessionStorage.getItem(rsvpFlowStorageKey)
+    if (!raw) return
+
+    try {
+      const state = JSON.parse(raw) as {
+        intent?: 'ATTENDING' | 'NOT_ATTENDING'
+        authMode?: 'register' | 'login'
+        savedAt?: number
+      }
+
+      if (state.savedAt && Date.now() - state.savedAt > 30 * 60 * 1000) {
+        window.sessionStorage.removeItem(rsvpFlowStorageKey)
+        return
+      }
+
+      if (state.intent) setRsvpIntent(state.intent)
+      if (state.authMode) setAuthMode(state.authMode)
+      setShouldAutoScrollIntent(false)
+    } catch {
+      // ignore invalid cached state
+    } finally {
+      window.sessionStorage.removeItem(rsvpFlowStorageKey)
+    }
+  }, [rsvpFlowStorageKey])
 
   // Get authentication status from NextAuth session
   const isAuthenticated = sessionStatus === 'authenticated' && session?.user?.id
@@ -213,6 +263,7 @@ export default function RSVPPage() {
 
       if (response.ok) {
         // Registration successful, auto sign in
+        saveFlowState('register')
         const result = await signIn('credentials', {
           email: regEmail,
           password: regPassword,
@@ -220,8 +271,10 @@ export default function RSVPPage() {
         })
 
         if (result?.ok) {
-          // Reload page to update session
-          window.location.reload()
+          setShowRegistration(false)
+          setRsvpIntent('ATTENDING')
+          setShouldAutoScrollIntent(false)
+          setIsSubmitting(false)
         } else {
           setError('Registration successful but auto-login failed. Please try signing in.')
         }
@@ -242,6 +295,7 @@ export default function RSVPPage() {
     setError('')
 
     try {
+      saveFlowState('login')
       const result = await signIn('credentials', {
         email: regEmail,
         password: regPassword,
@@ -249,8 +303,10 @@ export default function RSVPPage() {
       })
 
       if (result?.ok) {
-        // Reload page to update session
-        window.location.reload()
+        setShowRegistration(false)
+        setRsvpIntent('ATTENDING')
+        setShouldAutoScrollIntent(false)
+        setIsSubmitting(false)
       } else {
         setError(t('login.invalidCredentials') || 'Invalid email or password')
         setIsSubmitting(false)
@@ -259,6 +315,11 @@ export default function RSVPPage() {
       setError('An error occurred during login.')
       setIsSubmitting(false)
     }
+  }
+
+  const handleGoogleSignIn = () => {
+    saveFlowState(authMode)
+    signIn('google', { callbackUrl: `/${locale}/rsvp/${tokenValue}` })
   }
 
   // Auto-fill allergies when child is selected
@@ -398,6 +459,52 @@ export default function RSVPPage() {
     return () => cancelAnimationFrame(animFrame)
   }, [submitted, rsvpStatus])
 
+  useEffect(() => {
+    if (isAuthenticated || !shouldAutoScrollIntent) return
+
+    const timer = setTimeout(() => {
+      if (rsvpIntent === 'ATTENDING') {
+        smoothScrollToElement(intentSectionRef.current, 150, 800)
+      } else if (rsvpIntent === 'NOT_ATTENDING') {
+        smoothScrollToElement(intentSectionRef.current, 150, 800)
+      }
+      setShouldAutoScrollIntent(false)
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [isAuthenticated, rsvpIntent, shouldAutoScrollIntent])
+
+function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durationMs = 520) {
+  if (!el || typeof window === 'undefined') return
+
+  const startY = window.scrollY
+  const rectTop = el.getBoundingClientRect().top
+  const targetY = Math.max(0, startY + rectTop - topOffset)
+  const distance = targetY - startY
+  if (Math.abs(distance) < 8) return
+
+  const startTs = performance.now()
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3)
+
+  const step = (now: number) => {
+    const elapsed = now - startTs
+    const p = Math.min(1, elapsed / durationMs)
+    const eased = easeOutCubic(p)
+    window.scrollTo(0, startY + distance * eased)
+    if (p < 1) requestAnimationFrame(step)
+  }
+
+  requestAnimationFrame(step)
+}
+
+  const handleIntentSelect = (intent: 'ATTENDING' | 'NOT_ATTENDING') => {
+    setShouldAutoScrollIntent(true)
+    setRsvpIntent(intent)
+    if (intent === 'NOT_ATTENDING') {
+      setRsvpStatus('NO')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -476,6 +583,11 @@ export default function RSVPPage() {
               </p>
             </div>
 
+            <PartyMapCard
+              address={party.locationFull || party.location}
+              title={locale === 'zh' ? '派对地点地图' : 'Party location map'}
+            />
+
             {!isDeclined && (
               <Link
                 href={`/${locale}/party/guest/${token}`}
@@ -491,19 +603,19 @@ export default function RSVPPage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-4 md:py-8 px-4 pb-24 md:pb-8">
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl border border-neutral-100 p-6 md:p-8 shadow-sm mb-6"
+          className="bg-white rounded-2xl border border-neutral-100 p-4 md:p-8 shadow-sm mb-4 md:mb-6"
         >
-          <div className="text-center mb-6">
+          <div className="text-center mb-4 md:mb-6">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', delay: 0.1, stiffness: 200 }}
-              className="text-5xl mb-3"
+              className="text-4xl md:text-5xl mb-2 md:mb-3"
             >
               🎈
             </motion.div>
@@ -534,12 +646,16 @@ export default function RSVPPage() {
                   <strong>{tr('specialNotes')}</strong> {party.notes}
                 </div>
               )}
+              <PartyMapCard
+                address={party.locationFull || party.location}
+                title={locale === 'zh' ? '派对地点地图' : 'Party location map'}
+              />
             </div>
           </div>
 
           {/* RSVP Intent Selection - Inline expandable design */}
           {!isAuthenticated && (
-            <div className="border-t border-neutral-100 pt-6">
+            <div ref={intentSectionRef} className="border-t border-neutral-100 pt-6">
               {/* Step indicator - only show after selection */}
               {rsvpIntent === 'ATTENDING' && (
                 <motion.div
@@ -564,7 +680,7 @@ export default function RSVPPage() {
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => setRsvpIntent('ATTENDING')}
+                  onClick={() => handleIntentSelect('ATTENDING')}
                   className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 text-base ${
                     rsvpIntent === 'ATTENDING'
                       ? 'bg-green-500 text-white ring-2 ring-green-500 ring-offset-2 shadow-lg shadow-green-500/20'
@@ -577,10 +693,7 @@ export default function RSVPPage() {
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    setRsvpIntent('NOT_ATTENDING')
-                    setRsvpStatus('NO')
-                  }}
+                  onClick={() => handleIntentSelect('NOT_ATTENDING')}
                   className={`px-8 py-3.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 text-base ${
                     rsvpIntent === 'NOT_ATTENDING'
                       ? 'bg-neutral-600 text-white ring-2 ring-neutral-500 ring-offset-2'
@@ -815,7 +928,7 @@ export default function RSVPPage() {
 
                   <button
                     type="button"
-                    onClick={() => signIn('google', { callbackUrl: `/${locale}/rsvp/${token}` })}
+                    onClick={handleGoogleSignIn}
                     className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-neutral-300 rounded-lg bg-white hover:bg-neutral-50 transition-colors"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -1219,10 +1332,60 @@ export default function RSVPPage() {
           </motion.div>
         )}
 
+        {(party.owner?.email || party.owner?.phone) && (
+          <div className="bg-white rounded-2xl border border-neutral-100 p-4 md:p-5 shadow-sm mb-4">
+            <p className="text-sm font-semibold text-neutral-800 mb-2">
+              {locale === 'zh' ? '联系主办方（注册或访问问题可联系）' : 'Contact host (for sign-in/access issues)'}
+            </p>
+            {party.owner?.name && (
+              <p className="text-sm text-neutral-700">{party.owner.name}</p>
+            )}
+            {party.owner?.email && (
+              <a className="text-sm text-primary-700 hover:underline block" href={`mailto:${party.owner.email}`}>
+                {party.owner.email}
+              </a>
+            )}
+            {party.owner?.phone && (
+              <a className="text-sm text-primary-700 hover:underline block" href={`tel:${party.owner.phone}`}>
+                {party.owner.phone}
+              </a>
+            )}
+          </div>
+        )}
+
         <div className="text-center mt-8 text-sm text-neutral-400">
           Powered by {t('home.title')}
         </div>
       </div>
+
+      {!isAuthenticated && (
+        <div className="fixed bottom-0 left-0 right-0 md:hidden border-t border-neutral-200 bg-white/95 backdrop-blur px-4 py-3 z-40">
+          <div className="max-w-2xl mx-auto grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleIntentSelect('ATTENDING')}
+              className={`rounded-xl px-3 py-3 text-sm font-semibold transition-all ${
+                rsvpIntent === 'ATTENDING'
+                  ? 'bg-green-500 text-white'
+                  : 'bg-green-500/90 text-white'
+              }`}
+            >
+              🎉 {tr('attendingButton')}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleIntentSelect('NOT_ATTENDING')}
+              className={`rounded-xl px-3 py-3 text-sm font-semibold transition-all ${
+                rsvpIntent === 'NOT_ATTENDING'
+                  ? 'bg-neutral-700 text-white'
+                  : 'bg-neutral-100 text-neutral-700'
+              }`}
+            >
+              {tr('notAttendingButton')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

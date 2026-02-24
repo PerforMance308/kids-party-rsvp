@@ -94,7 +94,7 @@
     {
       "name": "location",
       "content": "",
-      "position": { "x": 200, "y": 970 },
+      "position": { "x": 350, "y": 920 },
       "font": "ComicSansMS",
       "font_size": 26,
       "color": "#C2185B",

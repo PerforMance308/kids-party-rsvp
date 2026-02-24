@@ -105,8 +105,8 @@ export default function InviteGuests({ partyId, onInvitesSent, onContactsLoaded 
                 </div>
             )}
 
-            <div className="max-h-60 overflow-y-auto border border-neutral-200 rounded-md">
-                <table className="w-full text-sm text-left">
+            <div className="max-h-60 overflow-x-auto overflow-y-auto border border-neutral-200 rounded-md">
+                <table className="w-full text-sm text-left min-w-[320px]">
                     <thead className="bg-neutral-50 sticky top-0">
                         <tr>
                             <th className="px-4 py-2 font-medium text-neutral-700 w-10">

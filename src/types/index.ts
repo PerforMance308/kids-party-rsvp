@@ -6,6 +6,7 @@ export interface CreatePartyInput {
   childAge: number
   eventDatetime: Date
   location: string
+  locationFull?: string
   theme?: string
   notes?: string
 }
@@ -32,6 +33,7 @@ export interface PartyWithStats {
   childAge: number
   eventDatetime: Date
   location: string
+  locationFull?: string
   theme?: string
   notes?: string
   template?: string

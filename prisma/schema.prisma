@@ -101,6 +101,7 @@ model Party {
   eventDatetime         DateTime   @map("event_datetime")
   eventEndDatetime      DateTime?  @map("event_end_datetime")
   location              String
+  locationFull          String?    @map("location_full")
   theme                 String?
   notes                 String?
   template              String     @default("free")

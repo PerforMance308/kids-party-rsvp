@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { verifyTokenEdge } from '@/lib/jwt-edge'
 import { getToken } from 'next-auth/jwt'
 import { rateLimit, getClientIP } from '@/lib/security'
 
@@ -46,18 +45,18 @@ export async function middleware(request: NextRequest) {
   response.headers.set(
     'Content-Security-Policy',
     "default-src 'self'; " +
-    // Scripts: Stripe + payment providers (Google Pay, Apple Pay)
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://pay.google.com https://applepay.cdn-apple.com; " +
-    // Styles: Stripe + Google Fonts
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-    // Images: Stripe + payment providers
-    "img-src 'self' data: blob: https://*.stripe.com; " +
-    // Fonts: Google Fonts
+    // Scripts: Stripe + payment providers (Google Pay, Apple Pay) + Google Maps Places
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://pay.google.com https://applepay.cdn-apple.com https://maps.googleapis.com; " +
+    // Styles: Stripe + Google Fonts + Google Maps UI
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com; " +
+    // Images: Stripe + payment providers + Google Maps tiles/icons
+    "img-src 'self' data: blob: https://*.stripe.com https://maps.gstatic.com https://maps.googleapis.com; " +
+    // Fonts: Google Fonts + Google Maps
     "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com; " +
-    // Connections: Stripe + payment providers
-    "connect-src 'self' https://api.stripe.com https://pay.google.com; " +
-    // Frames: Stripe
-    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com;"
+    // Connections: Stripe + payment providers + Google Maps Places API
+    "connect-src 'self' https://api.stripe.com https://pay.google.com https://maps.googleapis.com; " +
+    // Frames: Stripe + Google Maps embeds
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com https://maps.google.com;"
   )
 
   // Rate limiting for API routes
@@ -65,10 +64,21 @@ export async function middleware(request: NextRequest) {
     const clientIP = getClientIP(request)
     const rateLimitKey = `${clientIP}:${pathname}`
 
-    // More restrictive rate limiting for auth endpoints
-    const isAuthEndpoint = pathname.startsWith('/api/auth/')
-    const maxRequests = isAuthEndpoint ? 50 : 100
-    const windowMs = isAuthEndpoint ? 60000 : 60000 // 1 minute
+    // Passive auth endpoints (session check, csrf, providers) are called
+    // frequently by NextAuth client — use a higher limit so normal usage
+    // (HMR, window focus, multiple tabs) never triggers 429.
+    // Sensitive write endpoints (sign-in, sign-out, callback) get stricter limits.
+    const isPassiveAuthEndpoint =
+      pathname === '/api/auth/session' ||
+      pathname === '/api/auth/csrf' ||
+      pathname === '/api/auth/providers'
+    const isSensitiveAuthEndpoint =
+      pathname.startsWith('/api/auth/signin') ||
+      pathname.startsWith('/api/auth/signout') ||
+      pathname.startsWith('/api/auth/callback')
+
+    const maxRequests = isSensitiveAuthEndpoint ? 10 : isPassiveAuthEndpoint ? 120 : 100
+    const windowMs = 60000 // 1 minute
 
     if (!rateLimit(rateLimitKey, maxRequests, windowMs)) {
       return NextResponse.json(
@@ -83,16 +93,30 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protected routes that require authentication
-  const protectedRoutes = ['/party/new', '/dashboard']
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  const protectedRoutes = [
+    '/party/new',
+    '/dashboard',
+    '/children',
+    '/invitations',
+    '/party/',
+  ]
+  const isProtectedRoute = protectedRoutes.some(route => {
+    // Match locale-prefixed paths: /en/dashboard, /zh/dashboard, etc.
+    const localePattern = new RegExp(`^/(en|zh)${route}`)
+    return localePattern.test(pathname) || pathname.startsWith(route)
+  })
 
   // Public routes that should redirect if authenticated
   const publicRoutes = ['/login', '/register']
-  const isPublicRoute = publicRoutes.includes(pathname)
+  const isPublicRoute = publicRoutes.some(route => pathname.endsWith(route))
 
-  // Check for NextAuth session token
-  const token = await getToken({ req: request })
-  const user = token ? { userId: token.userId as string, email: token.email as string } : null
+  // Only call getToken() when necessary (PERF-05: avoid overhead on every public page)
+  let token = null
+  let user = null
+  if (isProtectedRoute || isPublicRoute) {
+    token = await getToken({ req: request })
+    user = token ? { userId: token.userId as string, email: token.email as string } : null
+  }
 
   // Use locale already detected above
 

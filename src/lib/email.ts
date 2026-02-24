@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { getEmailProvider } from './email-providers'
+import { getEmailProvider, EmailAttachment } from './email-providers'
 import { getBaseUrl } from './utils'
 
 interface EmailData {
@@ -7,6 +7,80 @@ interface EmailData {
   subject: string
   text: string
   html?: string
+  attachments?: EmailAttachment[]
+}
+
+// ── ICS (iCalendar) generator ─────────────────────────────────────────────────
+
+function formatICSDate(date: Date): string {
+  // UTC format: YYYYMMDDTHHMMSSZ
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+}
+
+function escapeICSText(text: string): string {
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '')
+}
+
+export function generateICS(params: {
+  uid: string
+  title: string
+  description: string
+  location: string
+  startDatetime: Date
+  endDatetime: Date
+  /** Organizer email — should match the From address so Gmail trusts the invite */
+  organizerEmail?: string
+  /** Attendee email — required for Gmail to show the "Add to Calendar" button */
+  attendeeEmail?: string
+}): string {
+  const fromEmail =
+    params.organizerEmail ||
+    process.env.RESEND_FROM_EMAIL ||
+    process.env.SMTP_FROM ||
+    'noreply@kidspartyrsvp.com'
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Kids Party RSVP//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    `UID:${params.uid}@kidspartyrsvp.com`,
+    `DTSTAMP:${formatICSDate(new Date())}`,
+    `DTSTART:${formatICSDate(params.startDatetime)}`,
+    `DTEND:${formatICSDate(params.endDatetime)}`,
+    `SUMMARY:${escapeICSText(params.title)}`,
+    `DESCRIPTION:${escapeICSText(params.description)}`,
+    `LOCATION:${escapeICSText(params.location)}`,
+    `ORGANIZER;CN="Kids Party RSVP":mailto:${fromEmail}`,
+    ...(params.attendeeEmail
+      ? [
+          `ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE;CN=${params.attendeeEmail}:mailto:${params.attendeeEmail}`,
+        ]
+      : []),
+    'STATUS:CONFIRMED',
+    'SEQUENCE:0',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ]
+  return lines.join('\r\n')
+}
+
+/** Escape user-supplied strings before inserting into HTML email templates */
+function esc(str: string | undefined | null): string {
+  if (!str) return ''
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
 }
 
 const PRIMARY_COLOR = '#f43f5e'
@@ -157,7 +231,7 @@ export const createTransporter = () => {
 export async function sendEmail(emailData: EmailData) {
   try {
     const provider = await getEmailProvider()
-    await provider.send(emailData.to, emailData.subject, emailData.text, emailData.html)
+    await provider.send(emailData.to, emailData.subject, emailData.text, emailData.html, emailData.attachments)
     console.log(`✅ Email sent via ${provider.name} to ${emailData.to}`)
     return Promise.resolve()
   } catch (error) {
@@ -169,6 +243,9 @@ export async function sendEmail(emailData: EmailData) {
     console.log(`Subject: ${emailData.subject}`)
     console.log('Content (HTML if available):')
     console.log(emailData.html || emailData.text)
+    if (emailData.attachments?.length) {
+      console.log(`Attachments: ${emailData.attachments.map(a => a.filename).join(', ')}`)
+    }
     console.log('=====================================\n')
 
     // Don't throw error - just log and continue
@@ -219,12 +296,20 @@ export function generateRSVPConfirmationEmail(
 
   const subject = `RSVP Confirmed: ${partyData.childName}'s Birthday Party`
 
+  const safePartyChildName = esc(partyData.childName)
+  const safeGuestChildName = esc(guestData.childName)
+  const safeLocation = esc(partyData.location)
+  const safeTheme = esc(partyData.theme)
+  const safeNotes = esc(partyData.notes)
+  const safeAllergies = esc(guestData.allergies)
+  const safeMessage = esc(guestData.message)
+
   const guestConfirmText = guestData.status === 'YES'
-    ? `<p>Great! We're excited to celebrate with <strong>${guestData.childName}</strong> and ${guestData.numChildren} child${guestData.numChildren !== 1 ? 'ren' : ''}.</p>
+    ? `<p>Great! We're excited to celebrate with <strong>${safeGuestChildName}</strong> and ${guestData.numChildren} child${guestData.numChildren !== 1 ? 'ren' : ''}.</p>
        <p>${guestData.parentStaying ? '🏠 A parent/guardian will be staying for the party.' : '🚗 This will be a drop-off party for us.'}</p>`
     : guestData.status === 'MAYBE'
-      ? `<p>Thank you for letting us know you might be able to make it. We hope to see <strong>${guestData.childName}</strong> there!</p>`
-      : `<p>Thank you for letting us know. We'll miss <strong>${guestData.childName}</strong> but hope to celebrate together next time!</p>`
+      ? `<p>Thank you for letting us know you might be able to make it. We hope to see <strong>${safeGuestChildName}</strong> there!</p>`
+      : `<p>Thank you for letting us know. We'll miss <strong>${safeGuestChildName}</strong> but hope to celebrate together next time!</p>`
 
   const plainText = `Hi,
 
@@ -246,8 +331,8 @@ Kid Party RSVP Team`
 
   const htmlContent = `
     <p class="greeting">Hi,</p>
-    <p>Thank you for your RSVP to <strong>${partyData.childName}'s ${partyData.childAge}th birthday party</strong>!</p>
-    
+    <p>Thank you for your RSVP to <strong>${safePartyChildName}'s ${partyData.childAge}th birthday party</strong>!</p>
+
     <div style="font-size: 1.2em; padding: 15px; background: #fefce8; border-radius: 8px; text-align: center; margin: 20px 0;">
       ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <strong>${statusText[guestData.status as keyof typeof statusText]}</strong>
     </div>
@@ -256,15 +341,15 @@ Kid Party RSVP Team`
 
     <div class="details-card">
       <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party Details</h3>
-      <div class="details-item"><span class="emoji">🎂</span> ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (<em>${partyData.theme} theme</em>)` : ''}</div>
+      <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
       <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
-      <div class="details-item"><span class="emoji">📍</span> ${partyData.location}</div>
+      <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
     </div>
 
-    ${partyData.notes ? `<p><strong>Special Notes:</strong> ${partyData.notes}</p>` : ''}
-    ${guestData.allergies ? `<p style="color: #dc2626;"><strong>⚠️ Allergies/Dietary Restrictions:</strong> ${guestData.allergies}</p>` : ''}
-    ${guestData.message ? `<p style="font-style: italic;"><strong>💬 Your Message:</strong> "${guestData.message}"</p>` : ''}
-    
+    ${safeNotes ? `<p><strong>Special Notes:</strong> ${safeNotes}</p>` : ''}
+    ${safeAllergies ? `<p style="color: #dc2626;"><strong>⚠️ Allergies/Dietary Restrictions:</strong> ${safeAllergies}</p>` : ''}
+    ${safeMessage ? `<p style="font-style: italic;"><strong>💬 Your Message:</strong> &quot;${safeMessage}&quot;</p>` : ''}
+
     <p>Looking forward to celebrating together!</p>
   `
 
@@ -310,6 +395,12 @@ export function generateHostRSVPNotificationEmail(
 
   const statusText: Record<string, string> = { 'YES': 'Accepted', 'NO': 'Declined', 'MAYBE': 'Maybe' }
 
+  const safePartyChildName = esc(partyData.childName)
+  const safeGuestChildName = esc(guestData.childName)
+  const safeLocation = esc(partyData.location)
+  const safeAllergies = esc(guestData.allergies)
+  const safeMessage = esc(guestData.message)
+
   const subject = `New RSVP: ${guestData.childName} ${statusText[guestData.status] || guestData.status} - ${partyData.childName}'s Birthday`
 
   const plainText = `Hello!
@@ -344,8 +435,8 @@ KidParty RSVP System`
 
     <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <p style="margin: 0; font-size: 1.1em;">
-        <strong>👥 Guest:</strong> ${guestData.childName}<br>
-        <strong>📝 Response:</strong> ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <span style="color: ${guestData.status === 'YES' ? '#059669' : guestData.status === 'NO' ? '#dc2626' : '#d97706'};">${statusText[guestData.status] || guestData.status}</span>
+        <strong>👥 Guest:</strong> ${safeGuestChildName}<br>
+        <strong>📝 Response:</strong> ${statusEmoji[guestData.status as keyof typeof statusEmoji]} <span style="color: ${guestData.status === 'YES' ? '#059669' : guestData.status === 'NO' ? '#dc2626' : '#d97706'};">${statusText[guestData.status] || esc(guestData.status)}</span>
       </p>
     </div>
 
@@ -354,21 +445,21 @@ KidParty RSVP System`
         <h4 style="margin-top: 0; color: #059669;">✅ Attendance Details</h4>
         <p style="margin: 5px 0;">• Number of children: <strong>${guestData.numChildren}</strong> children</p>
         <p style="margin: 5px 0;">• Parent: ${guestData.parentStaying ? 'will stay with children' : 'drop-off only'}</p>
-        ${guestData.allergies ? `<p style="margin: 5px 0; color: #dc2626;">• ⚠️ Allergies/Dietary Restrictions: ${guestData.allergies}</p>` : ''}
+        ${safeAllergies ? `<p style="margin: 5px 0; color: #dc2626;">• ⚠️ Allergies/Dietary Restrictions: ${safeAllergies}</p>` : ''}
       </div>
     ` : ''}
 
-    ${guestData.message ? `
+    ${safeMessage ? `
       <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; font-style: italic;">
-        <strong>💬 Guest Message:</strong> "${guestData.message}"
+        <strong>💬 Guest Message:</strong> &quot;${safeMessage}&quot;
       </div>
     ` : ''}
 
     <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
       <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 Party Information</h4>
-      <div class="details-item">• Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party</div>
+      <div class="details-item">• Event: ${safePartyChildName}'s ${partyData.childAge}th Birthday Party</div>
       <div class="details-item">• When: ${formatDate(partyData.eventDatetime)}</div>
-      <div class="details-item">• Where: ${partyData.location}</div>
+      <div class="details-item">• Where: ${safeLocation}</div>
     </div>
   `
 
@@ -411,6 +502,12 @@ export function generateReminderEmail(
     SAME_DAY: 'today'
   }
 
+  const safePartyChildName = esc(partyData.childName)
+  const safeGuestChildName = esc(guestData.childName)
+  const safeLocation = esc(partyData.location)
+  const safeTheme = esc(partyData.theme)
+  const safeNotes = esc(partyData.notes)
+
   const subject = reminderType === 'SAME_DAY'
     ? `Today: ${partyData.childName}'s Birthday Party!`
     : `Reminder: ${partyData.childName}'s Party in ${timeMap[reminderType]}`
@@ -433,19 +530,19 @@ Kid Party RSVP Team`
 
   const htmlContent = `
     <p class="greeting">Hi,</p>
-    <p>This is a friendly reminder about <strong>${partyData.childName}'s ${partyData.childAge}th birthday party</strong>!</p>
-    
+    <p>This is a friendly reminder about <strong>${safePartyChildName}'s ${partyData.childAge}th birthday party</strong>!</p>
+
     <div class="details-card">
       <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party reminder</h3>
-      <div class="details-item"><span class="emoji">🎂</span> ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (<em>${partyData.theme} theme</em>)` : ''}</div>
+      <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
       <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
-      <div class="details-item"><span class="emoji">📍</span> ${partyData.location}</div>
+      <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
     </div>
 
-    ${partyData.notes ? `<p><strong>Special Notes:</strong> ${partyData.notes}</p>` : ''}
-    
-    <p>We're looking forward to celebrating with <strong>${guestData.childName}</strong>!</p>
-    
+    ${safeNotes ? `<p><strong>Special Notes:</strong> ${safeNotes}</p>` : ''}
+
+    <p>We're looking forward to celebrating with <strong>${safeGuestChildName}</strong>!</p>
+
     <p style="margin-top: 30px; text-align: center;">
       <em>Haven't RSVP'd yet? Please let us know so we can prepare!</em>
     </p>
@@ -490,6 +587,12 @@ export function generatePartyUpdateEmail(
     }).format(date)
   }
 
+  const safePartyChildName = esc(partyData.childName)
+  const safeGuestChildName = esc(guestData.childName)
+  const safeLocation = esc(partyData.location)
+  const safeTheme = esc(partyData.theme)
+  const safeNotes = esc(partyData.notes)
+
   const subject = `Party Update: ${partyData.childName}'s Birthday Party`
 
   const changesList = []
@@ -520,8 +623,8 @@ Kid Party RSVP Team`
 
   const htmlContent = `
     <p class="greeting">Hi,</p>
-    <p>We have some <strong>important updates</strong> for ${partyData.childName}'s ${partyData.childAge}th birthday party!</p>
-    
+    <p>We have some <strong>important updates</strong> for ${safePartyChildName}'s ${partyData.childAge}th birthday party!</p>
+
     <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 20px; margin: 20px 0;">
       <h4 style="margin-top: 0; color: #ea580c;">What's Changed:</h4>
       <ul style="margin: 0; padding-left: 20px;">
@@ -531,16 +634,16 @@ Kid Party RSVP Team`
 
     <div class="details-card">
       <h4 style="margin-top: 0; color: ${PRIMARY_COLOR};">Updated Party Details</h4>
-      <div class="details-item"><span class="emoji">🎂</span> ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (<em>${partyData.theme} theme</em>)` : ''}</div>
+      <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
       <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
-      <div class="details-item"><span class="emoji">📍</span> ${partyData.location}</div>
+      <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
     </div>
 
-    ${partyData.notes ? `<p><strong>Special Notes:</strong> ${partyData.notes}</p>` : ''}
-    
+    ${safeNotes ? `<p><strong>Special Notes:</strong> ${safeNotes}</p>` : ''}
+
     <p>Please note these changes and let us know if they affect your ability to attend. Your current RSVP is still valid, but you can update it if needed.</p>
-    
-    <p>We apologize for any inconvenience and look forward to celebrating together!</p>
+
+    <p>We apologize for any inconvenience and look forward to celebrating with ${safeGuestChildName}!</p>
   `
 
   return {
@@ -983,5 +1086,146 @@ KidParty RSVP System`
     subject,
     text: plainText,
     html: wrapHtmlEmail(subject, htmlContent, partyData.rsvpUrl, 'View Party Details')
+  }
+}
+
+// ── Guest RSVP Confirmation Email (with ICS attachment) ───────────────────────
+
+export function generateGuestRSVPConfirmationEmail(
+  partyData: {
+    partyId: string
+    childName: string
+    childAge: number
+    eventDatetime: Date
+    eventEndDatetime?: Date | null
+    location: string
+    theme?: string | null
+    notes?: string | null
+  },
+  guestData: {
+    guestName: string
+    guestEmail: string
+    status: 'YES' | 'MAYBE'
+    numChildren: number
+    parentStaying: boolean
+    allergies?: string | null
+    message?: string | null
+  }
+): { subject: string; text: string; html: string; icsAttachment: EmailAttachment } {
+  const formatDate = (date: Date) =>
+    new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(date)
+
+  const safePartyChildName = esc(partyData.childName)
+  const safeGuestName = esc(guestData.guestName)
+  const safeLocation = esc(partyData.location)
+  const safeTheme = esc(partyData.theme)
+  const safeNotes = esc(partyData.notes)
+  const safeAllergies = esc(guestData.allergies)
+
+  const isMaybe = guestData.status === 'MAYBE'
+  const statusLabel = isMaybe ? 'Maybe' : 'Attending'
+  const statusEmoji = isMaybe ? '🤔' : '🎉'
+
+  const subject = `${statusEmoji} You're ${isMaybe ? 'maybe attending' : 'going to'} ${partyData.childName}'s Birthday Party!`
+
+  // End time: use explicit end if available, otherwise +2 hours
+  const endDatetime =
+    partyData.eventEndDatetime
+      ? new Date(partyData.eventEndDatetime)
+      : new Date(partyData.eventDatetime.getTime() + 2 * 60 * 60 * 1000)
+
+  // ICS description
+  const icsDescLines = [
+    `${partyData.childName}'s ${partyData.childAge}th Birthday Party`,
+    partyData.theme ? `Theme: ${partyData.theme}` : '',
+    partyData.notes ? `Notes: ${partyData.notes}` : '',
+    '',
+    `RSVP Status: ${statusLabel}`,
+    guestData.status === 'YES'
+      ? `Attending children: ${guestData.numChildren} | Parent staying: ${guestData.parentStaying ? 'Yes' : 'No'}`
+      : '',
+    guestData.allergies ? `Allergies: ${guestData.allergies}` : '',
+  ].filter(Boolean).join('\n')
+
+  const icsContent = generateICS({
+    uid: partyData.partyId,
+    title: `${partyData.childName}'s ${partyData.childAge}th Birthday Party`,
+    description: icsDescLines,
+    location: partyData.location,
+    startDatetime: new Date(partyData.eventDatetime),
+    endDatetime,
+    attendeeEmail: guestData.guestEmail,
+  })
+
+  const plainText = `Hi ${guestData.guestName},
+
+${isMaybe ? "You've indicated you might be able to attend" : "Great news! You're confirmed as attending"} ${partyData.childName}'s ${partyData.childAge}th birthday party.
+
+Party Details:
+🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
+📅 ${formatDate(partyData.eventDatetime)}
+📍 ${partyData.location}
+${partyData.notes ? `\nSpecial Notes: ${partyData.notes}` : ''}
+${guestData.status === 'YES' ? `\nYour details:
+• Attending children: ${guestData.numChildren}
+• Parent staying: ${guestData.parentStaying ? 'Yes' : 'No'}` : ''}
+${guestData.allergies ? `• Allergies/Dietary Restrictions: ${guestData.allergies}` : ''}
+
+A calendar invite (.ics) is attached — add it to your calendar so you don't forget!
+
+See you there!
+Kid Party RSVP Team`
+
+  const htmlContent = `
+    <p class="greeting">Hi ${safeGuestName}!</p>
+    <p>${isMaybe ? "You've indicated you <strong>might be able to attend</strong>" : "You're <strong>confirmed as attending</strong>"} ${safePartyChildName}'s ${partyData.childAge}th birthday party.</p>
+
+    <div style="font-size: 1.15em; padding: 16px; background: ${isMaybe ? '#fffbeb' : '#f0fdf4'}; border-radius: 10px; text-align: center; margin: 20px 0; border: 1px solid ${isMaybe ? '#fde68a' : '#bbf7d0'};">
+      ${statusEmoji} <strong style="color: ${isMaybe ? '#92400e' : '#166534'};">RSVP: ${statusLabel}</strong>
+    </div>
+
+    <div class="details-card">
+      <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party Details</h3>
+      <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
+    </div>
+
+    ${safeNotes ? `<p><strong>Special Notes:</strong> ${safeNotes}</p>` : ''}
+
+    ${guestData.status === 'YES' ? `
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 18px; margin: 16px 0;">
+      <p style="margin: 0 0 6px; font-weight: 600; color: #374151;">Your Details</p>
+      <p style="margin: 4px 0; color: #4b5563;">👧 Attending children: <strong>${guestData.numChildren}</strong></p>
+      <p style="margin: 4px 0; color: #4b5563;">🏠 Parent staying: <strong>${guestData.parentStaying ? 'Yes' : 'No'}</strong></p>
+      ${safeAllergies ? `<p style="margin: 4px 0; color: #dc2626;">⚠️ Allergies/Dietary Restrictions: <strong>${safeAllergies}</strong></p>` : ''}
+    </div>` : ''}
+
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 18px; margin: 20px 0;">
+      <p style="margin: 0; color: #1e40af; font-size: 0.95em;">
+        📅 <strong>Calendar invite attached!</strong> Open the <code>.ics</code> file to add this event to Google Calendar, Apple Calendar, Outlook, or any other calendar app.
+      </p>
+    </div>
+  `
+
+  return {
+    subject,
+    text: plainText,
+    html: wrapHtmlEmail(subject, htmlContent),
+    icsAttachment: {
+      filename: `${partyData.childName.replace(/\s+/g, '_')}_birthday_party.ics`,
+      content: icsContent,
+      contentType: 'text/calendar; charset=utf-8; method=REQUEST',
+      // inline=true → nodemailer adds this as a text/calendar MIME alternative
+      // so Gmail detects it and shows the "Add to Calendar" button at the top.
+      inline: true,
+    },
   }
 }

@@ -1,24 +1,24 @@
-// Edge Runtime兼容的JWT验证
+import { jwtVerify } from 'jose'
+
+// Edge Runtime 兼容的 JWT 验证（使用 jose，支持签名校验）
 export async function verifyTokenEdge(token: string): Promise<{ userId: string; email: string } | null> {
   try {
-    // JWT结构: header.payload.signature
-    const parts = token.split('.')
-    if (parts.length !== 3) {
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      console.error('JWT_SECRET is not set')
       return null
     }
 
-    // 解码payload (不验证签名，因为Edge Runtime限制)
-    const payload = JSON.parse(atob(parts[1]))
-    
-    // 检查过期时间
-    const now = Math.floor(Date.now() / 1000)
-    if (payload.exp && payload.exp < now) {
+    const key = new TextEncoder().encode(secret)
+    const { payload } = await jwtVerify(token, key)
+
+    if (!payload.userId || !payload.email) {
       return null
     }
 
     return {
-      userId: payload.userId,
-      email: payload.email
+      userId: payload.userId as string,
+      email: payload.email as string,
     }
   } catch {
     return null

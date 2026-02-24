@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth-config'
 import { prisma } from '@/lib/prisma'
 import { sanitizeInput, isValidEmail, isValidUUID } from '@/lib/security'
 import { rsvpSchema } from '@/lib/validations'
-import { sendEmail, generateRSVPConfirmationEmail, generateHostRSVPNotificationEmail } from '@/lib/email'
+import { sendEmail, generateHostRSVPNotificationEmail, generateGuestRSVPConfirmationEmail } from '@/lib/email'
 
 export async function GET(
   request: NextRequest,
@@ -21,7 +21,13 @@ export async function GET(
     const party = await prisma.party.findUnique({
       where: { publicRsvpToken: token },
       include: {
-        child: true
+        child: true,
+        user: {
+          select: {
+            name: true,
+            email: true,
+          }
+        }
       }
     })
 
@@ -69,8 +75,14 @@ export async function GET(
       childAge,
       eventDatetime: party.eventDatetime,
       location: party.location,
+      locationFull: (party as any).locationFull || party.location,
       theme: party.theme,
       notes: party.notes,
+      owner: {
+        name: party.user.name,
+        email: party.user.email,
+        phone: null
+      },
       existingRsvp,
     }
 
@@ -277,6 +289,55 @@ export async function POST(
     }
     // Fire and forget - don't await
     sendHostNotification()
+
+    // Send confirmation email to the guest (only for YES/MAYBE, only if real email)
+    if (
+      (status === 'YES' || status === 'MAYBE') &&
+      user?.email &&
+      !user.email.endsWith('@no-email.com')
+    ) {
+      const sendGuestConfirmation = async () => {
+        try {
+          const today = new Date()
+          const birthDate = new Date(party.child.birthDate)
+          const childAge = Math.floor(
+            (today.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+          )
+          const { subject, text, html, icsAttachment } = generateGuestRSVPConfirmationEmail(
+            {
+              partyId: party.id,
+              childName: party.child.name,
+              childAge,
+              eventDatetime: party.eventDatetime,
+              eventEndDatetime: (party as any).eventEndDatetime ?? null,
+              location: party.location,
+              theme: party.theme ?? null,
+              notes: party.notes ?? null,
+            },
+            {
+              guestName: childName || user.email,
+              guestEmail: user.email,
+              status: status as 'YES' | 'MAYBE',
+              numChildren,
+              parentStaying,
+              allergies: allergies ?? null,
+              message: message ?? null,
+            }
+          )
+          await sendEmail({
+            to: user.email,
+            subject,
+            text,
+            html,
+            attachments: [icsAttachment],
+          })
+          console.log(`📧 Confirmation email sent to guest: ${user.email}`)
+        } catch (emailError) {
+          console.error('Failed to send guest confirmation email:', emailError)
+        }
+      }
+      sendGuestConfirmation()
+    }
 
     // Auto-save guest as a contact for the host (async, don't wait)
     if (user?.email) {

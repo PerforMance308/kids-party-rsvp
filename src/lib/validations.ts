@@ -17,6 +17,7 @@ export const partySchema = z.object({
     'Event must be in the future'
   ),
   location: z.string().min(1, 'Location is required'),
+  locationFull: z.string().optional(),
   theme: z.string().optional(),
   notes: z.string().optional(),
   targetAge: z.number().min(0).max(99).optional(),
@@ -33,6 +34,7 @@ export const legacyPartySchema = z.object({
     'Event must be in the future'
   ),
   location: z.string().min(1, 'Location is required'),
+  locationFull: z.string().optional(),
   theme: z.string().optional(),
   notes: z.string().optional(),
   targetAge: z.number().min(0).max(99).optional(),
