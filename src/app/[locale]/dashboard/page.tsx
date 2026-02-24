@@ -63,6 +63,16 @@ export default function DashboardPage() {
     fetchParties()
   }, [status, session, locale])
 
+  // If all parties are in the past, expand the past section by default to avoid "empty dashboard" confusion.
+  useEffect(() => {
+    if (parties.length === 0) return
+    const hasUpcoming = parties.some(p => getDaysUntilEvent(new Date(p.eventDatetime)) >= 0)
+    const hasPast = parties.some(p => getDaysUntilEvent(new Date(p.eventDatetime)) < 0)
+    if (!hasUpcoming && hasPast) {
+      setShowPast(true)
+    }
+  }, [parties])
+
   const handleDeleteParty = async (partyId: string) => {
     setDeletingParty(partyId)
     setDeleteDialog({ open: false, partyId: '', childName: '' })

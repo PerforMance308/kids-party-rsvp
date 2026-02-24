@@ -341,7 +341,7 @@ export default function RSVPPage() {
     if (phone) {
       const digits = phone.replace(/\D/g, '')
       if (digits.length > 0 && digits.length < 10) {
-        setError(locale === 'zh' ? '请输入完整的10位电话号码' : 'Please enter a complete 10-digit phone number')
+        setError(locale === 'zh' ? 'Ã¨Â¯Â·Ã¨Â¾â€œÃ¥â€¦Â¥Ã¥Â®Å’Ã¦â€¢Â´Ã§Å¡â€ž10Ã¤Â½ÂÃ§â€ÂµÃ¨Â¯ÂÃ¥ÂÂ·Ã§Â Â' : 'Please enter a complete 10-digit phone number')
         setIsSubmitting(false)
         return
       }
@@ -524,7 +524,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <div className="text-5xl mb-4">😢</div>
+          <div className="text-5xl mb-4">Ã°Å¸ËœÂ¢</div>
           <h1 className="font-display text-2xl font-bold text-neutral-900 mb-2">
             {tr('invitationNotFound')}
           </h1>
@@ -561,7 +561,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                 transition={{ type: 'spring', delay: 0.2, stiffness: 200 }}
                 className={`text-6xl mb-4`}
               >
-                {isDeclined ? '✓' : '🎉'}
+                {isDeclined ? 'Ã¢Å“â€œ' : 'Ã°Å¸Å½â€°'}
               </motion.div>
               <h1 className="font-display text-2xl font-bold text-neutral-900 mb-2">
                 {tr('submittedTitle')}
@@ -585,7 +585,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
 
             <PartyMapCard
               address={party.locationFull || party.location}
-              title={locale === 'zh' ? '派对地点地图' : 'Party location map'}
+              title={locale === 'zh' ? 'Ã¦Â´Â¾Ã¥Â¯Â¹Ã¥Å“Â°Ã§â€šÂ¹Ã¥Å“Â°Ã¥â€ºÂ¾' : 'Party location map'}
             />
 
             {!isDeclined && (
@@ -617,7 +617,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
               transition={{ type: 'spring', delay: 0.1, stiffness: 200 }}
               className="text-4xl md:text-5xl mb-2 md:mb-3"
             >
-              🎈
+              Ã°Å¸Å½Ë†
             </motion.div>
             <h1 className="font-display text-2xl md:text-3xl font-bold text-neutral-900 mb-2">
               {tr('title')}
@@ -633,11 +633,11 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
               )}
               <div className="space-y-2 text-sm text-primary-800 mt-2">
                 <p className="flex items-center justify-center gap-2">
-                  <span>📅</span>
+                  <span>Ã°Å¸â€œâ€¦</span>
                   <strong>{tr('when')}</strong> {formatDate(new Date(party.eventDatetime), t('locale') || 'zh')}
                 </p>
                 <p className="flex items-center justify-center gap-2">
-                  <span>📍</span>
+                  <span>Ã°Å¸â€œÂ</span>
                   <strong>{tr('where')}</strong> {party.location}
                 </p>
               </div>
@@ -648,7 +648,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
               )}
               <PartyMapCard
                 address={party.locationFull || party.location}
-                title={locale === 'zh' ? '派对地点地图' : 'Party location map'}
+                title={locale === 'zh' ? 'Ã¦Â´Â¾Ã¥Â¯Â¹Ã¥Å“Â°Ã§â€šÂ¹Ã¥Å“Â°Ã¥â€ºÂ¾' : 'Party location map'}
               />
             </div>
           </div>
@@ -670,39 +670,11 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                   <div className="w-2.5 h-2.5 rounded-full bg-neutral-300" />
                 </motion.div>
               )}
-
-              <p className="text-center text-neutral-600 mb-4 font-medium">
-                {locale === 'zh' ? '能来参加吗？' : 'Can you make it?'}
-              </p>
-
-              {/* Selection buttons - bigger and more prominent */}
-              <div className="flex gap-3 justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleIntentSelect('ATTENDING')}
-                  className={`px-8 py-3.5 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 text-base ${
-                    rsvpIntent === 'ATTENDING'
-                      ? 'bg-green-500 text-white ring-2 ring-green-500 ring-offset-2 shadow-lg shadow-green-500/20'
-                      : 'bg-green-500 text-white hover:bg-green-600 shadow-md shadow-green-500/20'
-                  }`}
-                >
-                  <span>🎉</span>
-                  {tr('attendingButton')}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleIntentSelect('NOT_ATTENDING')}
-                  className={`px-8 py-3.5 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 text-base ${
-                    rsvpIntent === 'NOT_ATTENDING'
-                      ? 'bg-neutral-600 text-white ring-2 ring-neutral-500 ring-offset-2'
-                      : 'bg-white border-2 border-neutral-200 text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50'
-                  }`}
-                >
-                  {tr('notAttendingButton')}
-                </motion.button>
-              </div>
+              {!rsvpIntent && (
+                <p className="text-center text-neutral-600 mb-4 font-medium">
+                  {'Use the bottom buttons to choose your RSVP'}
+                </p>
+              )}
 
               {/* Inline expanded auth form - smooth transition */}
               <AnimatePresence>
@@ -744,7 +716,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                             value={regPassword}
                             onChange={(e) => setRegPassword(e.target.value)}
                             className="input pr-10"
-                            placeholder="••••••••"
+                            placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
                             minLength={8}
                             required
                           />
@@ -853,7 +825,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                             value={regPassword}
                             onChange={(e) => setRegPassword(e.target.value)}
                             className="input pr-10"
-                            placeholder="••••••••"
+                            placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
                             required
                           />
                           <button
@@ -1022,7 +994,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                 onClick={() => setShowAddChild(false)}
                 className="text-neutral-600 hover:text-neutral-800"
               >
-                ✕
+                Ã¢Å“â€¢
               </button>
             </div>
 
@@ -1200,7 +1172,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                 />
                 {phone && phone.replace(/\D/g, '').length > 0 && phone.replace(/\D/g, '').length < 10 && (
                   <p className="text-xs text-red-500 mt-1">
-                    {locale === 'zh' ? `请输入10位电话号码（已输入 ${phone.replace(/\D/g, '').length} 位）` : `Please enter a 10-digit phone number (${phone.replace(/\D/g, '').length} digits entered)`}
+                    {locale === 'zh' ? `Ã¨Â¯Â·Ã¨Â¾â€œÃ¥â€¦Â¥10Ã¤Â½ÂÃ§â€ÂµÃ¨Â¯ÂÃ¥ÂÂ·Ã§Â ÂÃ¯Â¼Ë†Ã¥Â·Â²Ã¨Â¾â€œÃ¥â€¦Â¥ ${phone.replace(/\D/g, '').length} Ã¤Â½ÂÃ¯Â¼â€°` : `Please enter a 10-digit phone number (${phone.replace(/\D/g, '').length} digits entered)`}
                   </p>
                 )}
               </div>
@@ -1224,7 +1196,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                         : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
                         }`}
                     >
-                      <span className="text-lg block mb-0.5">{option === 'YES' ? '🎉' : option === 'NO' ? '😢' : '🤔'}</span>
+                      <span className="text-lg block mb-0.5">{option === 'YES' ? 'Ã°Å¸Å½â€°' : option === 'NO' ? 'Ã°Å¸ËœÂ¢' : 'Ã°Å¸Â¤â€'}</span>
                       {option === 'YES' ? tr('yes') : option === 'NO' ? tr('no') : tr('maybe')}
                     </button>
                   ))}
@@ -1335,7 +1307,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
         {(party.owner?.email || party.owner?.phone) && (
           <div className="bg-white rounded-2xl border border-neutral-100 p-4 md:p-5 shadow-sm mb-4">
             <p className="text-sm font-semibold text-neutral-800 mb-2">
-              {locale === 'zh' ? '联系主办方（注册或访问问题可联系）' : 'Contact host (for sign-in/access issues)'}
+              {locale === 'zh' ? 'Ã¨Ââ€Ã§Â³Â»Ã¤Â¸Â»Ã¥Å Å¾Ã¦â€“Â¹Ã¯Â¼Ë†Ã¦Â³Â¨Ã¥â€ Å’Ã¦Ë†â€“Ã¨Â®Â¿Ã©â€”Â®Ã©â€”Â®Ã©Â¢ËœÃ¥ÂÂ¯Ã¨Ââ€Ã§Â³Â»Ã¯Â¼â€°' : 'Contact host (for sign-in/access issues)'}
             </p>
             {party.owner?.name && (
               <p className="text-sm text-neutral-700">{party.owner.name}</p>
@@ -1353,13 +1325,13 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
           </div>
         )}
 
-        <div className="text-center mt-8 text-sm text-neutral-400">
+        <div className={`text-center mt-8 text-sm text-neutral-400 ${!isAuthenticated ? 'mb-24 md:mb-28' : ''}`}>
           Powered by {t('home.title')}
         </div>
       </div>
 
       {!isAuthenticated && (
-        <div className="fixed bottom-0 left-0 right-0 md:hidden border-t border-neutral-200 bg-white/95 backdrop-blur px-4 py-3 z-40">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-neutral-200 bg-white/95 backdrop-blur px-4 py-3 z-40">
           <div className="max-w-2xl mx-auto grid grid-cols-2 gap-3">
             <button
               type="button"
@@ -1370,7 +1342,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                   : 'bg-green-500/90 text-white'
               }`}
             >
-              🎉 {tr('attendingButton')}
+              {tr('attendingButton')}
             </button>
             <button
               type="button"
