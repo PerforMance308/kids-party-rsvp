@@ -1,13 +1,16 @@
-FROM node:20-bookworm-slim AS deps
+FROM node:20-bookworm-slim AS base
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+FROM base AS deps
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY package*.json ./
 COPY .npmrc ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
-FROM node:20-bookworm-slim AS builder
+FROM base AS builder
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -15,9 +18,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+RUN npm run postinstall
 RUN npm run build
 
-FROM node:20-bookworm-slim AS runner
+FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
