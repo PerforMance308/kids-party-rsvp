@@ -114,7 +114,11 @@ export async function middleware(request: NextRequest) {
   let token = null
   let user = null
   if (isProtectedRoute || isPublicRoute) {
-    token = await getToken({ req: request })
+    token = await getToken({
+      req: request,
+      cookieName: 'next-auth.session-token',
+      secret: process.env.NEXTAUTH_SECRET,
+    })
     user = token ? { userId: token.userId as string, email: token.email as string } : null
   }
 
