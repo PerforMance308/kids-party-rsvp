@@ -119,6 +119,13 @@ export async function middleware(request: NextRequest) {
       cookieName: 'next-auth.session-token',
       secret: process.env.NEXTAUTH_SECRET,
     })
+    if (!token) {
+      token = await getToken({
+        req: request,
+        cookieName: '__Secure-next-auth.session-token',
+        secret: process.env.NEXTAUTH_SECRET,
+      })
+    }
     user = token ? { userId: token.userId as string, email: token.email as string } : null
   }
 
