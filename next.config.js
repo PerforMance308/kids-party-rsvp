@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typedRoutes: true,
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 
   // Performance optimizations
   compress: true, // Enable gzip compression
