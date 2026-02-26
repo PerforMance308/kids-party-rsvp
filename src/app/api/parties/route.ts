@@ -236,6 +236,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Sync host phone to user profile if provided
+    const hostPhone: string | undefined = typeof body.hostPhone === 'string' ? body.hostPhone.trim() : undefined
+    if (hostPhone) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { phone: hostPhone }
+      })
+    }
+
     // Create reminder schedule in the background (Non-blocking)
     after(async () => {
       try {

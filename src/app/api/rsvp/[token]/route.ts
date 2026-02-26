@@ -26,6 +26,7 @@ export async function GET(
           select: {
             name: true,
             email: true,
+            phone: true,
           }
         }
       }
@@ -81,7 +82,7 @@ export async function GET(
       owner: {
         name: party.user.name,
         email: party.user.email,
-        phone: null
+        phone: party.user.phone,
       },
       existingRsvp,
     }

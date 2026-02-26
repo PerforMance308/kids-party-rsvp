@@ -8,6 +8,7 @@ import TemplateSelectionLayout from '@/components/TemplateSelectionLayout'
 import PaymentForm from '@/components/PaymentForm'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
+import { formatPhoneInput } from '@/lib/utils'
 import type { TemplatesApiResponse, InvitationTemplate as InvitationTemplateType } from '@/types/invitation-template'
 
 interface Contact {
@@ -75,6 +76,9 @@ export default function NewPartyPage() {
   const [selectedTemplateMeta, setSelectedTemplateMeta] = useState<TemplateMeta | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
 
+  // Host phone (synced to user profile)
+  const [hostPhone, setHostPhone] = useState('')
+
   // Shared state
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -107,6 +111,10 @@ export default function NewPartyPage() {
 
     if (status === 'authenticated') {
       loadChildren()
+      fetch('/api/profile')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data?.phone) setHostPhone(formatPhoneInput(data.phone)) })
+        .catch(() => {})
     }
   }, [status, router])
 
@@ -188,6 +196,7 @@ export default function NewPartyPage() {
         templateId,
         paymentId,
         selectedGuests,
+        hostPhone: hostPhone || undefined,
       }
     }
 
@@ -204,6 +213,7 @@ export default function NewPartyPage() {
       templateId,
       paymentId,
       selectedGuests,
+      hostPhone: hostPhone || undefined,
     }
   }
 
@@ -684,6 +694,24 @@ export default function NewPartyPage() {
                     rows={3}
                     placeholder={t('newParty.notesPlaceholder')}
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="hostPhone" className="block text-sm font-medium text-neutral-700 mb-1">
+                    {locale === 'zh' ? '您的联系电话' : 'Your contact phone'}
+                  </label>
+                  <input
+                    type="tel"
+                    id="hostPhone"
+                    value={hostPhone}
+                    onChange={(e) => setHostPhone(formatPhoneInput(e.target.value))}
+                    className="input"
+                    placeholder="(123) 456-7890"
+                    maxLength={14}
+                  />
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {locale === 'zh' ? '会显示在客人的邀请页面，并保存到您的账号' : 'Shown on guests\' invitation page, saved to your account'}
+                  </p>
                 </div>
 
                 {error && (

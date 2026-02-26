@@ -341,7 +341,7 @@ export default function RSVPPage() {
     if (phone) {
       const digits = phone.replace(/\D/g, '')
       if (digits.length > 0 && digits.length < 10) {
-        setError(locale === 'zh' ? 'Ã¨Â¯Â·Ã¨Â¾â€œÃ¥â€¦Â¥Ã¥Â®Å’Ã¦â€¢Â´Ã§Å¡â€ž10Ã¤Â½ÂÃ§â€ÂµÃ¨Â¯ÂÃ¥ÂÂ·Ã§Â Â' : 'Please enter a complete 10-digit phone number')
+        setError(locale === 'zh' ? '请输入完整的10位电话号码' : 'Please enter a complete 10-digit phone number')
         setIsSubmitting(false)
         return
       }
@@ -524,7 +524,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <div className="text-5xl mb-4">Ã°Å¸ËœÂ¢</div>
+          <div className="text-5xl mb-4">😢</div>
           <h1 className="font-display text-2xl font-bold text-neutral-900 mb-2">
             {tr('invitationNotFound')}
           </h1>
@@ -561,7 +561,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                 transition={{ type: 'spring', delay: 0.2, stiffness: 200 }}
                 className={`text-6xl mb-4`}
               >
-                {isDeclined ? 'Ã¢Å“â€œ' : 'Ã°Å¸Å½â€°'}
+                {isDeclined ? '✓' : '🎉'}
               </motion.div>
               <h1 className="font-display text-2xl font-bold text-neutral-900 mb-2">
                 {tr('submittedTitle')}
@@ -585,7 +585,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
 
             <PartyMapCard
               address={party.locationFull || party.location}
-              title={locale === 'zh' ? 'Ã¦Â´Â¾Ã¥Â¯Â¹Ã¥Å“Â°Ã§â€šÂ¹Ã¥Å“Â°Ã¥â€ºÂ¾' : 'Party location map'}
+              title={locale === 'zh' ? '派对地点地图' : 'Party location map'}
             />
 
             {!isDeclined && (
@@ -617,7 +617,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
               transition={{ type: 'spring', delay: 0.1, stiffness: 200 }}
               className="text-4xl md:text-5xl mb-2 md:mb-3"
             >
-              Ã°Å¸Å½Ë†
+              🎊
             </motion.div>
             <h1 className="font-display text-2xl md:text-3xl font-bold text-neutral-900 mb-2">
               {tr('title')}
@@ -633,11 +633,11 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
               )}
               <div className="space-y-2 text-sm text-primary-800 mt-2">
                 <p className="flex items-center justify-center gap-2">
-                  <span>Ã°Å¸â€œâ€¦</span>
+                  <span>📅</span>
                   <strong>{tr('when')}</strong> {formatDate(new Date(party.eventDatetime), t('locale') || 'zh')}
                 </p>
                 <p className="flex items-center justify-center gap-2">
-                  <span>Ã°Å¸â€œÂ</span>
+                  <span>📍</span>
                   <strong>{tr('where')}</strong> {party.location}
                 </p>
               </div>
@@ -648,7 +648,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
               )}
               <PartyMapCard
                 address={party.locationFull || party.location}
-                title={locale === 'zh' ? 'Ã¦Â´Â¾Ã¥Â¯Â¹Ã¥Å“Â°Ã§â€šÂ¹Ã¥Å“Â°Ã¥â€ºÂ¾' : 'Party location map'}
+                title={locale === 'zh' ? '派对地点地图' : 'Party location map'}
               />
             </div>
           </div>
@@ -716,7 +716,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                             value={regPassword}
                             onChange={(e) => setRegPassword(e.target.value)}
                             className="input pr-10"
-                            placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
+                            placeholder="••••••••"
                             minLength={8}
                             required
                           />
@@ -825,7 +825,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                             value={regPassword}
                             onChange={(e) => setRegPassword(e.target.value)}
                             className="input pr-10"
-                            placeholder="Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
+                            placeholder="••••••••"
                             required
                           />
                           <button
@@ -994,7 +994,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                 onClick={() => setShowAddChild(false)}
                 className="text-neutral-600 hover:text-neutral-800"
               >
-                Ã¢Å“â€¢
+                ✕
               </button>
             </div>
 
@@ -1172,7 +1172,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                 />
                 {phone && phone.replace(/\D/g, '').length > 0 && phone.replace(/\D/g, '').length < 10 && (
                   <p className="text-xs text-red-500 mt-1">
-                    {locale === 'zh' ? `Ã¨Â¯Â·Ã¨Â¾â€œÃ¥â€¦Â¥10Ã¤Â½ÂÃ§â€ÂµÃ¨Â¯ÂÃ¥ÂÂ·Ã§Â ÂÃ¯Â¼Ë†Ã¥Â·Â²Ã¨Â¾â€œÃ¥â€¦Â¥ ${phone.replace(/\D/g, '').length} Ã¤Â½ÂÃ¯Â¼â€°` : `Please enter a 10-digit phone number (${phone.replace(/\D/g, '').length} digits entered)`}
+                    {locale === 'zh' ? `请输入10位电话号码（已输入 ${phone.replace(/\D/g, '').length} 位）` : `Please enter a 10-digit phone number (${phone.replace(/\D/g, '').length} digits entered)`}
                   </p>
                 )}
               </div>
@@ -1196,7 +1196,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                         : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
                         }`}
                     >
-                      <span className="text-lg block mb-0.5">{option === 'YES' ? 'Ã°Å¸Å½â€°' : option === 'NO' ? 'Ã°Å¸ËœÂ¢' : 'Ã°Å¸Â¤â€'}</span>
+                      <span className="text-lg block mb-0.5">{option === 'YES' ? '🎉' : option === 'NO' ? '😢' : '🤔'}</span>
                       {option === 'YES' ? tr('yes') : option === 'NO' ? tr('no') : tr('maybe')}
                     </button>
                   ))}
@@ -1307,7 +1307,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
         {(party.owner?.email || party.owner?.phone) && (
           <div className="bg-white rounded-2xl border border-neutral-100 p-4 md:p-5 shadow-sm mb-4">
             <p className="text-sm font-semibold text-neutral-800 mb-2">
-              {locale === 'zh' ? 'Ã¨Ââ€Ã§Â³Â»Ã¤Â¸Â»Ã¥Å Å¾Ã¦â€“Â¹Ã¯Â¼Ë†Ã¦Â³Â¨Ã¥â€ Å’Ã¦Ë†â€“Ã¨Â®Â¿Ã©â€”Â®Ã©â€”Â®Ã©Â¢ËœÃ¥ÂÂ¯Ã¨Ââ€Ã§Â³Â»Ã¯Â¼â€°' : 'Contact host (for sign-in/access issues)'}
+              {locale === 'zh' ? '联系主办方（登录或访问问题可联系）' : 'Contact host (for sign-in/access issues)'}
             </p>
             {party.owner?.name && (
               <p className="text-sm text-neutral-700">{party.owner.name}</p>

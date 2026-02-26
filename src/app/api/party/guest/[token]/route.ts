@@ -83,7 +83,7 @@ export async function GET(
       owner: {
         name: party.user.name,
         email: party.user.email,
-        phone: null
+        phone: party.user.phone
       },
       allowPhotoSharing: party.allowPhotoSharing,
       photoSharingPaid: party.photoSharingPaid,
@@ -143,7 +143,7 @@ export async function GET(
         owner: {
           name: party.user.name,
           email: party.user.email,
-          phone: null
+          phone: party.user.phone
         },
         allowPhotoSharing: party.allowPhotoSharing,
         photoSharingPaid: party.photoSharingPaid,
