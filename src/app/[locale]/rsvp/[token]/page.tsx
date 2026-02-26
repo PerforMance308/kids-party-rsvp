@@ -1116,7 +1116,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                         onClick={() => setShowAddChild(true)}
                         className="text-sm text-primary-600 hover:text-primary-700"
                       >
-                        {tr('createAccountBtn')}
+                        {tr('createChildBtn')}
                       </button>
                       <button
                         type="button"
