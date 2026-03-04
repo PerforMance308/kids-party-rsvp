@@ -1,0 +1,82 @@
+{
+  "template": "pastel_boy.png",
+  "canvas_size": [
+    382,
+    628
+  ],
+  "pricing": {
+    "price": 1.39,
+    "currency": "USD",
+    "isFree": true
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {
+        "x": 191,
+        "y": 62
+      },
+      "font": "Arial-Bold",
+      "font_size": 63,
+      "color": "#d6bb73",
+      "align": "center"
+    },
+    {
+      "name": "child_age",
+      "content": "",
+      "position": {
+        "x": 191,
+        "y": 194
+      },
+      "font": "Arial-Bold",
+      "font_size": 87,
+      "color": "#d6bb73",
+      "align": "center"
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": {
+        "x": 108,
+        "y": 347
+      },
+      "font": "ComicSansMS",
+      "font_size": 20,
+      "color": "#ffffff",
+      "align": "left"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 108,
+        "y": 389
+      },
+      "font": "ComicSansMS",
+      "font_size": 20,
+      "color": "#ffffff",
+      "align": "left"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {
+        "x": 148,
+        "y": 431
+      },
+      "font": "ComicSansMS",
+      "font_size": 19,
+      "color": "#ffffff",
+      "align": "left"
+    }
+  ],
+  "qr_code": {
+    "position": {
+      "x": 152,
+      "y": 484
+    },
+    "size": 76,
+    "darkColor": "#2991db"
+  }
+}
