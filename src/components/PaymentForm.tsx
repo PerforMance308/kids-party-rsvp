@@ -127,8 +127,24 @@ export default function PaymentForm({
       })
 
       if (confirmError) {
-        setError(confirmError.message || 'Payment failed')
-        onError?.(confirmError.message || 'Payment failed')
+        const detail = [
+          confirmError.type,
+          (confirmError as any).code,
+          (confirmError as any).decline_code,
+        ].filter(Boolean).join(' / ')
+        const message = confirmError.message || 'Payment failed'
+        const fullMessage = detail ? `${message} [${detail}]` : message
+
+        console.error('Stripe confirmPayment error:', {
+          message: confirmError.message,
+          type: confirmError.type,
+          code: (confirmError as any).code,
+          decline_code: (confirmError as any).decline_code,
+          payment_intent: (confirmError as any).payment_intent,
+        })
+
+        setError(fullMessage)
+        onError?.(fullMessage)
       } else if (paymentIntent?.status === 'succeeded') {
         onSuccess?.(paymentIntent.id)
       } else {
