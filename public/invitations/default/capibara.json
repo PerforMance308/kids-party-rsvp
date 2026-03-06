@@ -1,0 +1,83 @@
+{
+  "template": "capibara.png",
+  "canvas_size": [
+    382,
+    628
+  ],
+  "pricing": {
+    "price": 1.39,
+    "currency": "USD",
+    "isFree": true
+  },
+  "elements": [
+    {
+      "name": "child_name",
+      "content": "",
+      "position": {
+        "x": 191,
+        "y": 31
+      },
+      "font": "Pacifico",
+      "font_size": 48,
+      "color": "#FFFFFF",
+      "align": "center"
+    },
+    {
+      "name": "child_age",
+      "content": "",
+      "position": {
+        "x": 191,
+        "y": 133
+      },
+      "font": "Pacifico",
+      "font_size": 59,
+      "color": "#ffffff",
+      "align": "center",
+      "font_weight": 400
+    },
+    {
+      "name": "date",
+      "content": "",
+      "position": {
+        "x": 115,
+        "y": 259
+      },
+      "font": "ComicSansMS",
+      "font_size": 20,
+      "color": "#ffffff",
+      "align": "left"
+    },
+    {
+      "name": "time",
+      "content": "",
+      "position": {
+        "x": 115,
+        "y": 303
+      },
+      "font": "ComicSansMS",
+      "font_size": 20,
+      "color": "#fcfcfc",
+      "align": "left"
+    },
+    {
+      "name": "location",
+      "content": "",
+      "position": {
+        "x": 151,
+        "y": 344
+      },
+      "font": "ComicSansMS",
+      "font_size": 19,
+      "color": "#f7f7f7",
+      "align": "left"
+    }
+  ],
+  "qr_code": {
+    "position": {
+      "x": 158,
+      "y": 403
+    },
+    "size": 70,
+    "darkColor": "#db8080"
+  }
+}
