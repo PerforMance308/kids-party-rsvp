@@ -43,6 +43,7 @@ export default function ChangeTemplatePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
   const [qrCode, setQrCode] = useState<string>('')
+  const [isFooterVisible, setIsFooterVisible] = useState(false)
 
   // For payment modal: we need theme info to show template preview
   const [themes, setThemes] = useState<Theme[]>([])
@@ -125,6 +126,24 @@ export default function ChangeTemplatePage() {
     }
   }, [showPayment])
 
+  useEffect(() => {
+    const footer = document.querySelector('footer')
+    if (!footer) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setIsFooterVisible(entries[0]?.isIntersecting ?? false)
+      },
+      {
+        threshold: 0.15,
+        rootMargin: '0px 0px -48px 0px',
+      }
+    )
+
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [])
+
   const handleTemplateSelect = useCallback((templateId: string, meta: { name: string; price: number; currency: string; isFree: boolean }) => {
     setSelectedTemplateId(templateId)
     setSelectedTemplateMeta(meta)
@@ -172,6 +191,26 @@ export default function ChangeTemplatePage() {
 
   const handlePayRequest = () => {
     setShowPayment(true)
+  }
+
+  const handleCtaClick = () => {
+    if (!selectedTemplateId || !party) return
+
+    if (selectedTemplateId === party.template) {
+      router.push(`/${locale}/party/${id}/dashboard`)
+      return
+    }
+
+    if (
+      selectedTemplateMeta &&
+      !selectedTemplateMeta.isFree &&
+      !(party.paidTemplates || []).includes(selectedTemplateId)
+    ) {
+      handlePayRequest()
+      return
+    }
+
+    handleSubmit()
   }
 
   const handlePaymentSuccess = async (paymentId: string) => {
@@ -268,13 +307,43 @@ export default function ChangeTemplatePage() {
           qrCodeUrl={qrCode}
           rsvpUrl={party.rsvpUrl}
           onTemplateSelect={handleTemplateSelect}
-          onBack={() => router.push(`/${locale}/party/${id}/dashboard`)}
-          onSubmit={handleSubmit}
-          onPayRequest={handlePayRequest}
-          isSubmitting={isSubmitting}
           currentTemplate={party.template}
           paidTemplates={party.paidTemplates}
         />
+      </div>
+
+      <div className="pointer-events-none sticky bottom-6 z-[80] mt-4 hidden justify-end sm:flex">
+        <button
+          type="button"
+          onClick={handleCtaClick}
+          disabled={isSubmitting}
+          className="pointer-events-auto inline-flex h-11 items-center justify-center rounded-full bg-primary-600 px-5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(168,85,247,0.24)] transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <span className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+            </span>
+          ) : (
+            'Change'
+          )}
+        </button>
+      </div>
+
+      <div className={`${isFooterVisible ? 'hidden' : 'fixed'} bottom-[calc(0.4rem+env(safe-area-inset-bottom))] right-4 z-[80] sm:hidden`}>
+        <button
+          type="button"
+          onClick={handleCtaClick}
+          disabled={isSubmitting}
+          className="inline-flex h-11 items-center justify-center rounded-full bg-primary-600 px-5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(168,85,247,0.32)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isSubmitting ? (
+            <span className="flex items-center gap-2">
+              <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+            </span>
+          ) : (
+            'Change'
+          )}
+        </button>
       </div>
 
       {/* Payment modal */}

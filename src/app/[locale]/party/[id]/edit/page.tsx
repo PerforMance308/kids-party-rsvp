@@ -13,6 +13,7 @@ interface Party {
   childAge: number
   eventDatetime: string
   eventEndDatetime?: string
+  rsvpClosesAt?: string | null
   location: string
   locationFull?: string
   theme?: string
@@ -41,6 +42,8 @@ export default function EditPartyPage() {
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [eventEndTime, setEventEndTime] = useState('')
+  const [rsvpCloseDate, setRsvpCloseDate] = useState('')
+  const [rsvpCloseTime, setRsvpCloseTime] = useState('23:59')
   const [location, setLocation] = useState('')
   const [locationFull, setLocationFull] = useState('')
   const [theme, setTheme] = useState('')
@@ -95,6 +98,17 @@ export default function EditPartyPage() {
             setEventEndTime(`${endHours.toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`)
           }
 
+          if (partyData.rsvpClosesAt) {
+            const closeDateTime = new Date(partyData.rsvpClosesAt)
+            setRsvpCloseDate(toLocalDateInputValue(closeDateTime))
+            setRsvpCloseTime(`${closeDateTime.getHours().toString().padStart(2, '0')}:${closeDateTime.getMinutes().toString().padStart(2, '0')}`)
+          } else {
+            const defaultCloseDate = new Date(startDateTime)
+            defaultCloseDate.setDate(defaultCloseDate.getDate() - 2)
+            setRsvpCloseDate(toLocalDateInputValue(defaultCloseDate))
+            setRsvpCloseTime(`${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`)
+          }
+
           setLocation(partyData.location)
           setLocationFull(partyData.locationFull || partyData.location)
           setTheme(partyData.theme || '')
@@ -132,6 +146,9 @@ export default function EditPartyPage() {
           eventEndDatetime.setDate(eventEndDatetime.getDate() + 1)
         }
       }
+      const rsvpClosesAt = rsvpCloseDate
+        ? new Date(`${rsvpCloseDate}T${rsvpCloseTime || '23:59'}`)
+        : new Date(eventDatetime.getTime() - 2 * 24 * 60 * 60 * 1000)
 
       const response = await fetch(`/api/parties/${id}`, {
         method: 'PUT',
@@ -142,6 +159,7 @@ export default function EditPartyPage() {
         body: JSON.stringify({
           eventDatetime: eventDatetime.toISOString(),
           eventEndDatetime: eventEndDatetime?.toISOString(),
+          rsvpClosesAt: rsvpClosesAt.toISOString(),
           location,
           locationFull: locationFull || location,
           theme: theme || undefined,
@@ -265,6 +283,37 @@ export default function EditPartyPage() {
               />
               <p className="mt-1 text-xs text-neutral-500">
                 Default is 2 hours after start time
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="rsvpCloseDate" className="block text-sm font-medium text-neutral-700 mb-1">
+                RSVP Close Date
+              </label>
+              <input
+                type="date"
+                id="rsvpCloseDate"
+                value={rsvpCloseDate}
+                onChange={(e) => setRsvpCloseDate(e.target.value)}
+                className="input"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="rsvpCloseTime" className="block text-sm font-medium text-neutral-700 mb-1">
+                RSVP Close Time
+              </label>
+              <input
+                type="time"
+                id="rsvpCloseTime"
+                value={rsvpCloseTime}
+                onChange={(e) => setRsvpCloseTime(e.target.value)}
+                className="input"
+              />
+              <p className="mt-1 text-xs text-neutral-500">
+                Default is 2 days before the party starts.
               </p>
             </div>
           </div>

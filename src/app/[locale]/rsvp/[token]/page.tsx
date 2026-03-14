@@ -25,6 +25,8 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  rsvpClosesAt?: string | null
+  isRsvpClosed?: boolean
   location: string
   locationFull?: string
   theme?: string
@@ -81,6 +83,7 @@ export default function RSVPPage() {
   const [allergies, setAllergies] = useState('')
   const [message, setMessage] = useState('')
   const [shouldAutoScrollIntent, setShouldAutoScrollIntent] = useState(false)
+  const isRsvpClosed = Boolean(party?.isRsvpClosed)
 
   // Refs for auto-scrolling
   const authSectionRef = useRef<HTMLDivElement>(null)
@@ -395,7 +398,12 @@ export default function RSVPPage() {
         setSubmitted(true)
       } else {
         const data = await response.json()
-        setError(data.error || 'Failed to submit RSVP')
+        if (response.status === 410) {
+          setParty((current) => current ? { ...current, isRsvpClosed: true, rsvpClosesAt: data.rsvpClosesAt || current.rsvpClosesAt } : current)
+          setError(locale === 'zh' ? '报名截止了，无法继续提交回复。' : 'RSVP is now closed for this party.')
+        } else {
+          setError(data.error || 'Failed to submit RSVP')
+        }
       }
     } catch (error) {
       setError('An error occurred. Please try again.')
@@ -531,6 +539,68 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
           <p className="text-neutral-500">
             {tr('invitationNotFoundDesc')}
           </p>
+        </motion.div>
+      </div>
+    )
+  }
+
+  if (isRsvpClosed) {
+    const closeTimeText = party.rsvpClosesAt
+      ? formatDate(new Date(party.rsvpClosesAt), t('locale') || 'zh')
+      : null
+
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-xl"
+        >
+          <div className="bg-white rounded-3xl border border-neutral-100 shadow-sm p-6 md:p-8 text-center">
+            <div className="text-5xl mb-4">⏳</div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-neutral-900 mb-3">
+              {locale === 'zh' ? '回复通道已截止' : 'RSVP has closed'}
+            </h1>
+            <p className="text-neutral-600 mb-4">
+              {locale === 'zh'
+                ? `这场派对的扫码回复已经截止了。${party.owner?.name ? `如需确认，请联系 ${party.owner.name}。` : '如需确认，请联系主办方。'}`
+                : `The RSVP window for this party has ended. ${party.owner?.name ? `Please contact ${party.owner.name} if you need anything.` : 'Please contact the host if you need anything.'}`}
+            </p>
+
+            {closeTimeText && (
+              <div className="mb-5 rounded-2xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+                {locale === 'zh' ? `截止时间：${closeTimeText}` : `RSVP closed on ${closeTimeText}`}
+              </div>
+            )}
+
+            {(party.owner?.email || party.owner?.phone) && (
+              <div className="mb-5 rounded-2xl bg-primary-50 border border-primary-100 p-4 text-left">
+                <p className="text-sm font-semibold text-neutral-900 mb-2">
+                  {locale === 'zh' ? '联系主办方' : 'Contact the host'}
+                </p>
+                {party.owner?.name && (
+                  <p className="text-sm text-neutral-700 mb-1">{party.owner.name}</p>
+                )}
+                {party.owner?.email && (
+                  <a className="text-sm text-primary-700 hover:underline block" href={`mailto:${party.owner.email}`}>
+                    {party.owner.email}
+                  </a>
+                )}
+                {party.owner?.phone && (
+                  <a className="text-sm text-primary-700 hover:underline block" href={`tel:${party.owner.phone}`}>
+                    {party.owner.phone}
+                  </a>
+                )}
+              </div>
+            )}
+
+            <Link
+              href={`/${locale}`}
+              className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+            >
+              {locale === 'zh' ? '返回首页' : 'Back to home'}
+            </Link>
+          </div>
         </motion.div>
       </div>
     )

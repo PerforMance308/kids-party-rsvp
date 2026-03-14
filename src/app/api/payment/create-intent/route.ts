@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     if (isTemplatePayment) {
       // Server-side price computation for template payments (prevents price tampering)
-      const templateConfig = getTemplateConfig(metadata.templateId)
+      const templateConfig = await getTemplateConfig(metadata.templateId)
       if (!templateConfig) {
         return NextResponse.json({ error: 'Template not found' }, { status: 404 })
       }

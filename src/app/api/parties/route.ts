@@ -4,8 +4,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { createReminderSchedule } from '@/lib/scheduler'
-import { calculateAge } from '@/lib/utils'
+import { calculateAge, getBaseUrl } from '@/lib/utils'
 import { getTemplateConfig, getEffectivePrice } from '@/lib/template-utils'
+import { sendEmail, generatePartyCreatedConfirmationEmail } from '@/lib/email'
 import Stripe from 'stripe'
 
 interface SelectedGuestInput {
@@ -38,6 +39,10 @@ function normalizeSelectedGuests(input: unknown): Array<{ childName: string; ema
   return guests
 }
 
+function getDefaultRsvpCloseDate(eventDatetime: Date): Date {
+  return new Date(eventDatetime.getTime() - 2 * 24 * 60 * 60 * 1000)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -53,7 +58,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Template selection is required' }, { status: 400 })
     }
 
-    const templateConfig = getTemplateConfig(templateId)
+    const templateConfig = await getTemplateConfig(templateId)
     if (!templateConfig) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
@@ -129,7 +134,8 @@ export async function POST(request: NextRequest) {
     if (body.childId) {
       const validatedData = partySchema.parse({
         ...body,
-        eventDatetime: new Date(body.eventDatetime)
+        eventDatetime: new Date(body.eventDatetime),
+        rsvpClosesAt: body.rsvpClosesAt ? new Date(body.rsvpClosesAt) : undefined,
       })
 
       // Verify the child belongs to the current user
@@ -148,6 +154,10 @@ export async function POST(request: NextRequest) {
       const eventEndDatetime = body.eventEndDatetime
         ? new Date(body.eventEndDatetime)
         : new Date(validatedData.eventDatetime.getTime() + 2 * 60 * 60 * 1000)
+      const rsvpClosesAt = validatedData.rsvpClosesAt || getDefaultRsvpCloseDate(validatedData.eventDatetime)
+      if (rsvpClosesAt >= validatedData.eventDatetime) {
+        return NextResponse.json({ error: 'RSVP close time must be before the party starts' }, { status: 400 })
+      }
 
       party = await prisma.party.create({
         data: {
@@ -155,6 +165,7 @@ export async function POST(request: NextRequest) {
           childId: validatedData.childId,
           eventDatetime: validatedData.eventDatetime,
           eventEndDatetime,
+          rsvpClosesAt,
           location: validatedData.location,
           locationFull: validatedData.locationFull || validatedData.location,
           theme: validatedData.theme || null,
@@ -172,7 +183,8 @@ export async function POST(request: NextRequest) {
       // Fallback to legacy schema (for backward compatibility)
       const validatedData = legacyPartySchema.parse({
         ...body,
-        eventDatetime: new Date(body.eventDatetime)
+        eventDatetime: new Date(body.eventDatetime),
+        rsvpClosesAt: body.rsvpClosesAt ? new Date(body.rsvpClosesAt) : undefined,
       })
 
       // First, create a child entry for this party
@@ -189,6 +201,10 @@ export async function POST(request: NextRequest) {
       const legacyEventEndDatetime = body.eventEndDatetime
         ? new Date(body.eventEndDatetime)
         : new Date(validatedData.eventDatetime.getTime() + 2 * 60 * 60 * 1000)
+      const legacyRsvpClosesAt = validatedData.rsvpClosesAt || getDefaultRsvpCloseDate(validatedData.eventDatetime)
+      if (legacyRsvpClosesAt >= validatedData.eventDatetime) {
+        return NextResponse.json({ error: 'RSVP close time must be before the party starts' }, { status: 400 })
+      }
 
       party = await prisma.party.create({
         data: {
@@ -196,6 +212,7 @@ export async function POST(request: NextRequest) {
           childId: child.id,
           eventDatetime: validatedData.eventDatetime,
           eventEndDatetime: legacyEventEndDatetime,
+          rsvpClosesAt: legacyRsvpClosesAt,
           location: validatedData.location,
           locationFull: validatedData.locationFull || validatedData.location,
           theme: validatedData.theme || null,
@@ -260,6 +277,26 @@ export async function POST(request: NextRequest) {
           })
         }
         await createReminderSchedule(party.id)
+        const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
+        if (session.user.email) {
+          const confirmationEmail = generatePartyCreatedConfirmationEmail({
+            childName: party.child.name,
+            childAge,
+            eventDatetime: party.eventDatetime,
+            location: party.location,
+            theme: party.theme || undefined,
+            notes: party.notes || undefined,
+            rsvpClosesAt: party.rsvpClosesAt || null,
+            dashboardUrl: `${getBaseUrl()}/en/party/${party.id}/dashboard`,
+          })
+
+          await sendEmail({
+            to: session.user.email,
+            subject: confirmationEmail.subject,
+            text: confirmationEmail.text,
+            html: confirmationEmail.html,
+          })
+        }
       } catch (error) {
         console.error('Failed to create reminder schedule in background:', error)
       }
@@ -347,6 +384,7 @@ export async function GET(request: NextRequest) {
         childGender: party.childGender,
         eventDatetime: party.eventDatetime,
         eventEndDatetime: party.eventEndDatetime,
+        rsvpClosesAt: party.rsvpClosesAt ?? null,
         location: party.location,
         locationFull: party.locationFull,
         theme: party.theme,

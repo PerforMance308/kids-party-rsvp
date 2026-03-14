@@ -555,6 +555,166 @@ Kid Party RSVP Team`
   }
 }
 
+function formatEmailDateTime(date: Date) {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+}
+
+export function generatePartyCreatedConfirmationEmail(partyData: {
+  childName: string
+  childAge: number
+  eventDatetime: Date
+  location: string
+  theme?: string
+  notes?: string
+  rsvpClosesAt?: Date | null
+  dashboardUrl: string
+}) {
+  const safeChildName = esc(partyData.childName)
+  const safeTheme = esc(partyData.theme)
+  const safeNotes = esc(partyData.notes)
+  const safeLocation = esc(partyData.location)
+  const closeLine = partyData.rsvpClosesAt
+    ? `RSVP closes: ${formatEmailDateTime(partyData.rsvpClosesAt)}`
+    : null
+
+  const subject = `Party created: ${partyData.childName}'s birthday is ready`
+  const text = `Your party is ready.
+
+Party details:
+${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme})` : ''}
+When: ${formatEmailDateTime(partyData.eventDatetime)}
+Where: ${partyData.location}
+${closeLine ? `${closeLine}\n` : ''}${partyData.notes ? `Notes: ${partyData.notes}\n` : ''}
+You can manage guests, invitations, and reminders here:
+${partyData.dashboardUrl}`
+
+  const html = `
+    <p class="greeting">Your party is ready.</p>
+    <p>We created <strong>${safeChildName}'s ${partyData.childAge}th birthday party</strong> and saved your invitation settings.</p>
+
+    <div class="details-card">
+      <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party Details</h3>
+      <div class="details-item"><span class="emoji">🎂</span> ${safeChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme}</em>)` : ''}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formatEmailDateTime(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
+      ${closeLine ? `<div class="details-item"><span class="emoji">⏳</span> ${esc(closeLine)}</div>` : ''}
+    </div>
+
+    ${safeNotes ? `<p><strong>Notes:</strong> ${safeNotes}</p>` : ''}
+    <p>You can review the QR code, invite guests, and track RSVPs from your dashboard.</p>
+  `
+
+  return {
+    subject,
+    text,
+    html: wrapHtmlEmail(subject, html, partyData.dashboardUrl, 'Open Dashboard')
+  }
+}
+
+export function generateHostPartyReminder24hEmail(partyData: {
+  childName: string
+  childAge: number
+  eventDatetime: Date
+  location: string
+  guestCount: number
+  attendingCount: number
+  maybeCount: number
+  notAttendingCount: number
+  dashboardUrl: string
+}) {
+  const subject = `Tomorrow: ${partyData.childName}'s party`
+  const text = `Quick reminder: ${partyData.childName}'s ${partyData.childAge}th birthday party is tomorrow.
+
+When: ${formatEmailDateTime(partyData.eventDatetime)}
+Where: ${partyData.location}
+
+RSVP summary:
+- Invited: ${partyData.guestCount}
+- Attending: ${partyData.attendingCount}
+- Maybe: ${partyData.maybeCount}
+- Not attending: ${partyData.notAttendingCount}
+
+Review the latest guest list:
+${partyData.dashboardUrl}`
+
+  const html = `
+    <p class="greeting">Your party is tomorrow.</p>
+    <p>Here is a quick planning snapshot for <strong>${esc(partyData.childName)}'s ${partyData.childAge}th birthday party</strong>.</p>
+
+    <div class="details-card">
+      <div class="details-item"><span class="emoji">📅</span> ${formatEmailDateTime(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📍</span> ${esc(partyData.location)}</div>
+    </div>
+
+    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; margin: 20px 0;">
+      <p style="margin: 0 0 8px; font-weight: 600; color: #111827;">RSVP summary</p>
+      <p style="margin: 4px 0;">Invited: <strong>${partyData.guestCount}</strong></p>
+      <p style="margin: 4px 0;">Attending: <strong>${partyData.attendingCount}</strong></p>
+      <p style="margin: 4px 0;">Maybe: <strong>${partyData.maybeCount}</strong></p>
+      <p style="margin: 4px 0;">Not attending: <strong>${partyData.notAttendingCount}</strong></p>
+    </div>
+  `
+
+  return {
+    subject,
+    text,
+    html: wrapHtmlEmail(subject, html, partyData.dashboardUrl, 'Review Guest List')
+  }
+}
+
+export function generateGuestPartyReminder24hEmail(partyData: {
+  childName: string
+  childAge: number
+  eventDatetime: Date
+  location: string
+  theme?: string
+  notes?: string
+  guestPageUrl: string
+}, guestData: {
+  childName: string
+}) {
+  const safeChildName = esc(partyData.childName)
+  const safeGuestChildName = esc(guestData.childName)
+  const safeTheme = esc(partyData.theme)
+  const safeNotes = esc(partyData.notes)
+
+  const subject = `Tomorrow: ${partyData.childName}'s birthday party`
+  const text = `${guestData.childName} is on the list for ${partyData.childName}'s ${partyData.childAge}th birthday party tomorrow.
+
+When: ${formatEmailDateTime(partyData.eventDatetime)}
+Where: ${partyData.location}
+${partyData.theme ? `Theme: ${partyData.theme}\n` : ''}${partyData.notes ? `Notes: ${partyData.notes}\n` : ''}
+View party details:
+${partyData.guestPageUrl}`
+
+  const html = `
+    <p class="greeting">Friendly reminder for tomorrow.</p>
+    <p>We&apos;re looking forward to celebrating with <strong>${safeGuestChildName}</strong> at <strong>${safeChildName}'s ${partyData.childAge}th birthday party</strong>.</p>
+
+    <div class="details-card">
+      <div class="details-item"><span class="emoji">🎂</span> ${safeChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme}</em>)` : ''}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formatEmailDateTime(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📍</span> ${esc(partyData.location)}</div>
+    </div>
+
+    ${safeNotes ? `<p><strong>Notes:</strong> ${safeNotes}</p>` : ''}
+    <p>You can reopen the party page anytime for directions and the latest details.</p>
+  `
+
+  return {
+    subject,
+    text,
+    html: wrapHtmlEmail(subject, html, partyData.guestPageUrl, 'Open Party Details')
+  }
+}
+
 export function generatePartyUpdateEmail(
   partyData: {
     id: string

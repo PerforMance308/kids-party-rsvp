@@ -41,6 +41,13 @@ interface TemplateMeta {
   isFree: boolean
 }
 
+function toLocalDateInputValue(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export default function NewPartyPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -59,6 +66,8 @@ export default function NewPartyPage() {
   const [eventDate, setEventDate] = useState('')
   const [eventTime, setEventTime] = useState('')
   const [eventEndTime, setEventEndTime] = useState('')
+  const [rsvpCloseDate, setRsvpCloseDate] = useState('')
+  const [rsvpCloseTime, setRsvpCloseTime] = useState('23:59')
   const [location, setLocation] = useState('')
   const [locationFull, setLocationFull] = useState('')
   const [theme, setTheme] = useState('')
@@ -83,6 +92,8 @@ export default function NewPartyPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingChildren, setIsLoadingChildren] = useState(true)
+  const [isRsvpCloseCustomized, setIsRsvpCloseCustomized] = useState(false)
+  const [isFooterVisible, setIsFooterVisible] = useState(false)
 
   const handleEventTimeChange = (time: string) => {
     setEventTime(time)
@@ -102,6 +113,15 @@ export default function NewPartyPage() {
       setChildGender('')
     }
   }
+
+  useEffect(() => {
+    if (!eventDate || isRsvpCloseCustomized) return
+
+    const closeDate = new Date(`${eventDate}T${eventTime || '23:59'}`)
+    closeDate.setDate(closeDate.getDate() - 2)
+    setRsvpCloseDate(toLocalDateInputValue(closeDate))
+    setRsvpCloseTime(eventTime || '23:59')
+  }, [eventDate, eventTime, isRsvpCloseCustomized])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -181,6 +201,9 @@ export default function NewPartyPage() {
         eventEndDatetime.setDate(eventEndDatetime.getDate() + 1)
       }
     }
+    const rsvpClosesAt = rsvpCloseDate
+      ? new Date(`${rsvpCloseDate}T${rsvpCloseTime || '23:59'}`)
+      : new Date(eventDatetime.getTime() - 2 * 24 * 60 * 60 * 1000)
 
     if (showLegacyForm) {
       return {
@@ -188,6 +211,7 @@ export default function NewPartyPage() {
         childAge: parseInt(childAge),
         eventDatetime: eventDatetime.toISOString(),
         eventEndDatetime: eventEndDatetime?.toISOString(),
+        rsvpClosesAt: rsvpClosesAt.toISOString(),
         location,
         locationFull: locationFull || location,
         theme: theme || undefined,
@@ -204,6 +228,7 @@ export default function NewPartyPage() {
       childId: selectedChildId,
       eventDatetime: eventDatetime.toISOString(),
       eventEndDatetime: eventEndDatetime?.toISOString(),
+      rsvpClosesAt: rsvpClosesAt.toISOString(),
       location,
       locationFull: locationFull || location,
       theme: theme || undefined,
@@ -314,6 +339,20 @@ export default function NewPartyPage() {
     }
   }
 
+  const handleCreateClick = () => {
+    if (!selectedTemplateId) {
+      setError(t('newParty.selectTemplateRequired'))
+      return
+    }
+
+    if (selectedTemplateMeta && !selectedTemplateMeta.isFree) {
+      handlePayRequest()
+      return
+    }
+
+    handleFreeSubmit()
+  }
+
   // Reset viewport position when entering Step 2 so template area starts at top.
   useEffect(() => {
     if (currentStep === 2) {
@@ -332,6 +371,24 @@ export default function NewPartyPage() {
       document.body.style.overflow = ''
     }
   }, [showPaymentModal])
+
+  useEffect(() => {
+    const footer = document.querySelector('footer')
+    if (!footer) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setIsFooterVisible(entries[0]?.isIntersecting ?? false)
+      },
+      {
+        threshold: 0.15,
+        rootMargin: '0px 0px -48px 0px',
+      }
+    )
+
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [])
 
   if (status === 'loading' || isLoadingChildren) {
     return (
@@ -383,10 +440,6 @@ export default function NewPartyPage() {
               notes: notes || undefined,
             }}
             onTemplateSelect={handleTemplateSelect}
-            onBack={() => { setCurrentStep(1); setError('') }}
-            onSubmit={handleFreeSubmit}
-            onPayRequest={handlePayRequest}
-            isSubmitting={isLoading}
           />
 
           {error && (
@@ -394,6 +447,41 @@ export default function NewPartyPage() {
               {error}
             </div>
           )}
+
+        </div>
+
+        <div className="pointer-events-none sticky bottom-6 z-[80] mt-4 hidden justify-end sm:flex">
+          <button
+            type="button"
+            onClick={handleCreateClick}
+            disabled={isLoading}
+            className="pointer-events-auto inline-flex h-11 items-center justify-center rounded-full bg-primary-600 px-5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(168,85,247,0.24)] transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+              </span>
+            ) : (
+              'Create'
+            )}
+          </button>
+        </div>
+
+        <div className={`${isFooterVisible ? 'hidden' : 'fixed'} bottom-[calc(0.4rem+env(safe-area-inset-bottom))] right-4 z-[80] sm:hidden`}>
+          <button
+            type="button"
+            onClick={handleCreateClick}
+            disabled={isLoading}
+            className="inline-flex h-11 items-center justify-center rounded-full bg-primary-600 px-5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(168,85,247,0.32)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+              </span>
+            ) : (
+              'Create'
+            )}
+          </button>
         </div>
 
         {showPaymentModal && selectedTemplateMeta && selectedTemplateId && (
@@ -643,6 +731,43 @@ export default function NewPartyPage() {
                     />
                     <p className="mt-1 text-xs text-neutral-500">
                       {t('newParty.endTimeHelp')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="rsvpCloseDate" className="block text-sm font-medium text-neutral-700 mb-1">
+                      {locale === 'zh' ? '扫码回复截止日期' : 'RSVP close date'}
+                    </label>
+                    <input
+                      type="date"
+                      id="rsvpCloseDate"
+                      value={rsvpCloseDate}
+                      onChange={(e) => {
+                        setRsvpCloseDate(e.target.value)
+                        setIsRsvpCloseCustomized(true)
+                      }}
+                      className="input"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="rsvpCloseTime" className="block text-sm font-medium text-neutral-700 mb-1">
+                      {locale === 'zh' ? '扫码回复截止时间' : 'RSVP close time'}
+                    </label>
+                    <input
+                      type="time"
+                      id="rsvpCloseTime"
+                      value={rsvpCloseTime}
+                      onChange={(e) => {
+                        setRsvpCloseTime(e.target.value)
+                        setIsRsvpCloseCustomized(true)
+                      }}
+                      className="input"
+                    />
+                    <p className="mt-1 text-xs text-neutral-500">
+                      {locale === 'zh' ? '默认是派对开始前 2 天，可按需调整。' : 'Defaults to 2 days before the party starts, and you can adjust it.'}
                     </p>
                   </div>
                 </div>

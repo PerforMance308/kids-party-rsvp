@@ -4,36 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { generateQRCode } from '@/lib/qr'
 import { getBaseUrl } from '@/lib/utils'
-import { getTemplateConfig } from '@/lib/template-utils'
-import fs from 'fs'
-import path from 'path'
-
-function findFirstFreeTemplateId(): string | null {
-  const invitationsDir = path.join(process.cwd(), 'public', 'invitations')
-  if (!fs.existsSync(invitationsDir)) return null
-
-  const themeFolders = fs.readdirSync(invitationsDir, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory())
-    .map((dirent) => dirent.name)
-
-  for (const themeFolder of themeFolders) {
-    const themePath = path.join(invitationsDir, themeFolder)
-    const jsonFiles = fs.readdirSync(themePath).filter((f) => f.endsWith('.json') && f !== 'theme.json')
-
-    for (const jsonFile of jsonFiles) {
-      try {
-        const config = JSON.parse(fs.readFileSync(path.join(themePath, jsonFile), 'utf-8'))
-        if (config.pricing?.isFree) {
-          return jsonFile.replace('.json', '')
-        }
-      } catch {
-        // Skip broken files.
-      }
-    }
-  }
-
-  return null
-}
+import { findFirstFreeTemplateId, getTemplateConfig } from '@/lib/template-utils'
 
 export async function GET(
   request: NextRequest,
@@ -66,10 +37,10 @@ export async function GET(
       let templateId = party.template
 
       if (!templateId || templateId === 'free') {
-        templateId = findFirstFreeTemplateId() || 'dinosaur_1'
+        templateId = (await findFirstFreeTemplateId()) || 'dinosaur_1'
       }
 
-      const config = getTemplateConfig(templateId)
+      const config = await getTemplateConfig(templateId)
       if (config?.qr_code) {
         darkColor = darkColor || config.qr_code.darkColor
         lightColor = lightColor || config.qr_code.lightColor
@@ -88,4 +59,3 @@ export async function GET(
     )
   }
 }
-

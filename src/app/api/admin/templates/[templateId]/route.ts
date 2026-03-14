@@ -1,48 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin'
 import fs from 'fs/promises'
 import path from 'path'
+import { requireAdmin } from '@/lib/admin'
+import { prisma } from '@/lib/prisma'
+import { ensureThemeExists, getTemplate, toPrismaJsonValue } from '@/lib/template-store'
 import type { TemplateConfig } from '@/types/invitation-template'
 import { getEffectivePrice } from '@/types/invitation-template'
 
-const TEMPLATES_DIR = path.join(process.cwd(), 'public', 'invitations')
+async function resolveTemplate(templateId: string) {
+  const dbTemplate = await prisma.template.findUnique({
+    where: { id: templateId },
+  })
 
-// Resolve template ID to theme + baseName.
-// Supports both "dinosaur_1" (theme embedded) and "1" (search all theme dirs).
-async function resolveTemplateId(templateId: string): Promise<{ theme: string; baseName: string } | null> {
-  // Try theme_number format first (e.g. "dinosaur_1" → theme "dinosaur")
-  const parts = templateId.split('_')
-  if (parts.length >= 2) {
-    const theme = parts.slice(0, -1).join('_')
-    const configPath = path.join(TEMPLATES_DIR, theme, `${templateId}.json`)
-    try {
-      await fs.access(configPath)
-      return { theme, baseName: templateId }
-    } catch {
-      // File not found at expected path, fall through to search
+  if (dbTemplate) {
+    return {
+      id: dbTemplate.id,
+      theme: dbTemplate.themeId,
+      name: dbTemplate.name,
+      imageUrl: dbTemplate.imageUrl,
+      config: dbTemplate.config as unknown as TemplateConfig,
+      effectivePrice: getEffectivePrice((dbTemplate.config as unknown as TemplateConfig).pricing),
     }
   }
 
-  // Fallback: search all theme directories for this filename
-  try {
-    const folders = await fs.readdir(TEMPLATES_DIR, { withFileTypes: true })
-    for (const folder of folders.filter(d => d.isDirectory())) {
-      const configPath = path.join(TEMPLATES_DIR, folder.name, `${templateId}.json`)
-      try {
-        await fs.access(configPath)
-        return { theme: folder.name, baseName: templateId }
-      } catch {
-        // Not in this folder, continue
-      }
-    }
-  } catch {
-    // TEMPLATES_DIR doesn't exist
-  }
-
-  return null
+  return getTemplate(templateId)
 }
 
-// GET: 获取单个模板详情
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ templateId: string }> }
@@ -51,32 +34,20 @@ export async function GET(
   if (!auth.authorized) return auth.response!
 
   const { templateId } = await params
-  const resolved = await resolveTemplateId(templateId)
-
-  if (!resolved) {
-    return NextResponse.json({ error: 'Template not found' }, { status: 404 })
-  }
 
   try {
-    const configPath = path.join(TEMPLATES_DIR, resolved.theme, `${resolved.baseName}.json`)
-    const configContent = await fs.readFile(configPath, 'utf-8')
-    const config: TemplateConfig = JSON.parse(configContent)
+    const template = await resolveTemplate(templateId)
+    if (!template) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    }
 
-    return NextResponse.json({
-      id: templateId,
-      theme: resolved.theme,
-      name: resolved.baseName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-      imageUrl: `/invitations/${resolved.theme}/${config.template}`,
-      config,
-      effectivePrice: getEffectivePrice(config.pricing),
-    })
+    return NextResponse.json(template)
   } catch (error) {
     console.error('Error loading template:', error)
     return NextResponse.json({ error: 'Template not found' }, { status: 404 })
   }
 }
 
-// PUT: 更新模板JSON配置
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ templateId: string }> }
@@ -85,11 +56,6 @@ export async function PUT(
   if (!auth.authorized) return auth.response!
 
   const { templateId } = await params
-  const resolved = await resolveTemplateId(templateId)
-
-  if (!resolved) {
-    return NextResponse.json({ error: 'Template not found' }, { status: 404 })
-  }
 
   try {
     const body = await request.json()
@@ -99,13 +65,31 @@ export async function PUT(
       return NextResponse.json({ error: 'Config is required' }, { status: 400 })
     }
 
-    const configPath = path.join(TEMPLATES_DIR, resolved.theme, `${resolved.baseName}.json`)
+    const existing = await prisma.template.findUnique({ where: { id: templateId } })
+    const fallbackTemplate = !existing ? await getTemplate(templateId) : null
 
-    // 验证文件存在
-    await fs.access(configPath)
+    if (!existing && !fallbackTemplate) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    }
 
-    // 保存更新后的配置
-    await fs.writeFile(configPath, JSON.stringify(config, null, 2))
+    const themeId = existing?.themeId || fallbackTemplate!.theme
+    const name = existing?.name || fallbackTemplate!.name
+    const imageUrl = existing?.imageUrl || fallbackTemplate!.imageUrl
+
+    await ensureThemeExists(themeId)
+    await prisma.template.upsert({
+      where: { id: templateId },
+      update: {
+        config: toPrismaJsonValue(config),
+      },
+      create: {
+        id: templateId,
+        themeId,
+        name,
+        imageUrl,
+        config: toPrismaJsonValue(config),
+      },
+    })
 
     return NextResponse.json({
       success: true,
@@ -115,9 +99,6 @@ export async function PUT(
     })
   } catch (error) {
     console.error('Error updating template:', error)
-    if ((error as any).code === 'ENOENT') {
-      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
-    }
     if (error instanceof SyntaxError) {
       return NextResponse.json({ error: 'Invalid JSON format' }, { status: 400 })
     }
@@ -125,7 +106,6 @@ export async function PUT(
   }
 }
 
-// DELETE: 删除模板
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ templateId: string }> }
@@ -134,35 +114,34 @@ export async function DELETE(
   if (!auth.authorized) return auth.response!
 
   const { templateId } = await params
-  const resolved = await resolveTemplateId(templateId)
-
-  if (!resolved) {
-    return NextResponse.json({ error: 'Template not found' }, { status: 404 })
-  }
 
   try {
-    const themePath = path.join(TEMPLATES_DIR, resolved.theme)
-    const configPath = path.join(themePath, `${resolved.baseName}.json`)
-
-    // 读取配置获取图片文件名
-    let config: TemplateConfig
-    try {
-      const configContent = await fs.readFile(configPath, 'utf-8')
-      config = JSON.parse(configContent)
-    } catch {
+    const template = await resolveTemplate(templateId)
+    if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    const imagePath = path.join(themePath, config.template)
+    await prisma.template.deleteMany({
+      where: { id: templateId },
+    })
 
-    // 删除JSON文件
-    await fs.unlink(configPath)
+    const imagePath = template.imageUrl
+      ? path.join(process.cwd(), 'public', template.imageUrl.replace(/^\//, '').replace(/\//g, path.sep))
+      : null
+    const legacyConfigPath = path.join(process.cwd(), 'public', 'invitations', template.theme, `${templateId}.json`)
 
-    // 尝试删除图片文件
+    if (imagePath) {
+      try {
+        await fs.unlink(imagePath)
+      } catch {
+        // Ignore missing image.
+      }
+    }
+
     try {
-      await fs.unlink(imagePath)
+      await fs.unlink(legacyConfigPath)
     } catch {
-      // 图片可能不存在，忽略
+      // Ignore missing legacy JSON.
     }
 
     return NextResponse.json({ success: true, deleted: templateId })

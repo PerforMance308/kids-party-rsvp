@@ -5,6 +5,10 @@ import { authOptions } from '@/lib/auth-config'
 import { sendPartyUpdateEmail } from '@/lib/email'
 import { getBaseUrl, calculateAge } from '@/lib/utils'
 
+function getDefaultRsvpCloseDate(eventDatetime: Date): Date {
+  return new Date(eventDatetime.getTime() - 2 * 24 * 60 * 60 * 1000)
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -70,6 +74,7 @@ export async function GET(
       childName: party.child.name,
       childAge,
       eventEndDatetime: party.eventEndDatetime,
+      rsvpClosesAt: party.rsvpClosesAt,
       stats,
       rsvpUrl: `${getBaseUrl()}/rsvp/${party.publicRsvpToken}`
     }
@@ -125,16 +130,23 @@ export async function PUT(
     const eventEndDatetime = body.eventEndDatetime
       ? new Date(body.eventEndDatetime)
       : new Date(eventDatetime.getTime() + 2 * 60 * 60 * 1000)
+    const rsvpClosesAt = body.rsvpClosesAt
+      ? new Date(body.rsvpClosesAt)
+      : existingParty.rsvpClosesAt || getDefaultRsvpCloseDate(eventDatetime)
 
     const validatedData = {
       eventDatetime,
       eventEndDatetime,
+      rsvpClosesAt,
       location: body.location,
       locationFull: body.locationFull || body.location,
       theme: body.theme || null,
       notes: body.notes || null,
       template: body.template !== undefined ? body.template : existingParty.template,
       targetAge: body.targetAge != null ? parseInt(body.targetAge) : null,
+    }
+    if (validatedData.rsvpClosesAt >= validatedData.eventDatetime) {
+      return NextResponse.json({ error: 'RSVP close time must be before the party starts' }, { status: 400 })
     }
     const existingLocationFull =
       ('locationFull' in existingParty ? (existingParty as { locationFull?: string | null }).locationFull : null)
@@ -143,6 +155,7 @@ export async function PUT(
     const changes = {
       eventDatetime: existingParty.eventDatetime.getTime() !== validatedData.eventDatetime.getTime(),
       eventEndDatetime: (existingParty.eventEndDatetime?.getTime() ?? null) !== (validatedData.eventEndDatetime?.getTime() ?? null),
+      rsvpClosesAt: (existingParty.rsvpClosesAt?.getTime() ?? null) !== (validatedData.rsvpClosesAt?.getTime() ?? null),
       location: existingParty.location !== validatedData.location,
       locationFull: existingLocationFull !== validatedData.locationFull,
       theme: existingParty.theme !== validatedData.theme,
@@ -169,6 +182,7 @@ export async function PUT(
         childName: existingParty.child.name,
         childAge,
         eventEndDatetime: existingParty.eventEndDatetime,
+        rsvpClosesAt: existingParty.rsvpClosesAt,
         stats,
         rsvpUrl: `${getBaseUrl()}/rsvp/${existingParty.publicRsvpToken}`
       })
@@ -188,6 +202,7 @@ export async function PUT(
       data: {
         eventDatetime: validatedData.eventDatetime,
         eventEndDatetime: validatedData.eventEndDatetime,
+        rsvpClosesAt: validatedData.rsvpClosesAt,
         location: validatedData.location,
         locationFull: validatedData.locationFull,
         theme: validatedData.theme,
@@ -252,6 +267,7 @@ export async function PUT(
       childName: updatedParty.child.name,
       childAge,
       eventEndDatetime: updatedParty.eventEndDatetime,
+      rsvpClosesAt: updatedParty.rsvpClosesAt,
       stats,
       rsvpUrl: `${getBaseUrl()}/rsvp/${updatedParty.publicRsvpToken}`
     }

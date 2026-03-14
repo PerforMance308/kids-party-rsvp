@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   scheduleBirthdayReminders,
   processPendingEmails,
+  processPartyReminders24h,
 } from '@/lib/notification-scheduler'
 
 export async function GET(request: NextRequest) {
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
     console.log('🕐 Daily cron job started')
 
     await scheduleBirthdayReminders()
+    await processPartyReminders24h()
     const emailsProcessed = await processPendingEmails()
 
     console.log(`✅ Daily cron job completed. Emails processed: ${emailsProcessed}`)

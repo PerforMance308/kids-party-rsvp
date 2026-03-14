@@ -2,8 +2,11 @@ import { prisma } from '@/lib/prisma'
 import {
   sendEmail,
   generatePhotoSharingAvailableEmail,
-  generateBirthdayPartyReminderEmail
+  generateBirthdayPartyReminderEmail,
+  generateGuestPartyReminder24hEmail,
+  generateHostPartyReminder24hEmail
 } from '@/lib/email'
+import { calculateAge, getBaseUrl } from '@/lib/utils'
 
 export async function schedulePhotoSharingNotifications(partyId: string) {
   try {
@@ -180,6 +183,147 @@ export async function scheduleBirthdayReminders() {
     }
   } catch (error) {
     console.error('Error scheduling birthday reminders:', error)
+  }
+}
+
+export async function processPartyReminders24h() {
+  try {
+    const now = new Date()
+    const nextWindow = new Date(now.getTime() + 36 * 60 * 60 * 1000)
+
+    const parties = await prisma.party.findMany({
+      where: {
+        eventDatetime: {
+          gt: now,
+          lte: nextWindow,
+        },
+      },
+      include: {
+        child: true,
+        user: true,
+        guests: {
+          include: {
+            rsvp: true,
+          },
+        },
+        reminders: true,
+      },
+    })
+
+    for (const party of parties) {
+      const alreadySent = party.reminders.some(
+        (reminder) => reminder.type === 'ONE_DAY' && reminder.sentAt
+      )
+
+      if (alreadySent) continue
+
+      const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
+      const attendingCount = party.guests.filter((guest) => guest.rsvp?.status === 'YES').length
+      const maybeCount = party.guests.filter((guest) => guest.rsvp?.status === 'MAYBE').length
+      const notAttendingCount = party.guests.filter((guest) => guest.rsvp?.status === 'NO').length
+
+      if (party.user.email) {
+        const existingHostNotification = await prisma.emailNotification.findFirst({
+          where: {
+            userId: party.userId,
+            type: 'HOST_PARTY_REMINDER_24H',
+            relatedId: party.id,
+          }
+        })
+
+        const hostEmail = generateHostPartyReminder24hEmail({
+          childName: party.child.name,
+          childAge,
+          eventDatetime: party.eventDatetime,
+          location: party.location,
+          guestCount: party.guests.length,
+          attendingCount,
+          maybeCount,
+          notAttendingCount,
+          dashboardUrl: `${getBaseUrl()}/en/party/${party.id}/dashboard`,
+        })
+
+        if (!existingHostNotification) {
+          await prisma.emailNotification.create({
+            data: {
+              userId: party.userId,
+              email: party.user.email,
+              type: 'HOST_PARTY_REMINDER_24H',
+              subject: hostEmail.subject,
+              content: hostEmail.text,
+              htmlContent: hostEmail.html,
+              relatedId: party.id,
+              scheduledAt: new Date(),
+            } as any,
+          })
+        }
+      }
+
+      for (const guest of party.guests) {
+        if (!guest.email || !guest.userId || !guest.rsvp || !['YES', 'MAYBE'].includes(guest.rsvp.status)) {
+          continue
+        }
+
+        const existingGuestNotification = await prisma.emailNotification.findFirst({
+          where: {
+            userId: guest.userId,
+            type: 'PARTY_REMINDER_24H',
+            relatedId: party.id,
+          }
+        })
+
+        if (existingGuestNotification) {
+          continue
+        }
+
+        const guestEmail = generateGuestPartyReminder24hEmail(
+          {
+            childName: party.child.name,
+            childAge,
+            eventDatetime: party.eventDatetime,
+            location: party.location,
+            theme: party.theme || undefined,
+            notes: party.notes || undefined,
+            guestPageUrl: `${getBaseUrl()}/en/party/guest/${party.publicRsvpToken}`,
+          },
+          {
+            childName: guest.childName,
+          }
+        )
+
+        await prisma.emailNotification.create({
+          data: {
+            userId: guest.userId,
+            email: guest.email,
+            type: 'PARTY_REMINDER_24H',
+            subject: guestEmail.subject,
+            content: guestEmail.text,
+            htmlContent: guestEmail.html,
+            relatedId: party.id,
+            scheduledAt: new Date(),
+          } as any,
+        })
+      }
+
+      const existingReminder = party.reminders.find((reminder) => reminder.type === 'ONE_DAY')
+      if (existingReminder) {
+        await prisma.reminder.update({
+          where: { id: existingReminder.id },
+          data: { sentAt: new Date() },
+        })
+      } else {
+        await prisma.reminder.create({
+          data: {
+            partyId: party.id,
+            type: 'ONE_DAY',
+            sentAt: new Date(),
+          },
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error processing 24-hour party reminders:', error)
+    throw error
   }
 }
 

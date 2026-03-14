@@ -36,6 +36,8 @@ export async function GET(
       return NextResponse.json({ error: 'Party not found' }, { status: 404 })
     }
 
+    const isRsvpClosed = party.rsvpClosesAt ? party.rsvpClosesAt.getTime() <= Date.now() : false
+
     // Calculate child age
     const today = new Date()
     const birthDate = new Date(party.child.birthDate)
@@ -79,6 +81,8 @@ export async function GET(
       locationFull: (party as any).locationFull || party.location,
       theme: party.theme,
       notes: party.notes,
+      rsvpClosesAt: party.rsvpClosesAt,
+      isRsvpClosed,
       owner: {
         name: party.user.name,
         email: party.user.email,
@@ -142,6 +146,17 @@ export async function POST(
 
     if (!party) {
       return NextResponse.json({ error: 'Party not found' }, { status: 404 })
+    }
+
+    if (party.rsvpClosesAt && party.rsvpClosesAt.getTime() <= Date.now()) {
+      return NextResponse.json(
+        {
+          error: 'RSVP is closed for this party',
+          code: 'RSVP_CLOSED',
+          rsvpClosesAt: party.rsvpClosesAt,
+        },
+        { status: 410 }
+      )
     }
 
     // Check if user is the host (only if authenticated)

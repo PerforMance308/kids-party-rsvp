@@ -73,7 +73,7 @@ export async function POST(
     }
 
     // 获取模板配置
-    const templateConfig = getTemplateConfig(template)
+    const templateConfig = await getTemplateConfig(template)
     if (!templateConfig) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }

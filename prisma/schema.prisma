@@ -101,6 +101,7 @@ model Party {
   childId               String     @map("child_id")
   eventDatetime         DateTime   @map("event_datetime")
   eventEndDatetime      DateTime?  @map("event_end_datetime")
+  rsvpClosesAt          DateTime?  @map("rsvp_closes_at")
   location              String
   locationFull          String?    @map("location_full")
   theme                 String?
@@ -226,6 +227,37 @@ model Payment {
   @@index([status])
   @@index([createdAt])
   @@map("payments")
+}
+
+model TemplateTheme {
+  id          String     @id
+  name        Json
+  description Json?
+  icon        String?
+  sortOrder   Int        @default(0) @map("sort_order")
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  templates   Template[]
+
+  @@index([isActive, sortOrder])
+  @@map("template_themes")
+}
+
+model Template {
+  id        String        @id
+  themeId   String        @map("theme_id")
+  name      String
+  imageUrl  String        @map("image_url")
+  config    Json
+  sortOrder Int           @default(0) @map("sort_order")
+  isActive  Boolean       @default(true) @map("is_active")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  theme     TemplateTheme @relation(fields: [themeId], references: [id], onDelete: Restrict)
+
+  @@index([themeId, isActive, sortOrder])
+  @@map("templates")
 }
 
 model EmailNotification {

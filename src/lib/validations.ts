@@ -16,6 +16,7 @@ export const partySchema = z.object({
     date => date > new Date(),
     'Event must be in the future'
   ),
+  rsvpClosesAt: z.date().optional(),
   location: z.string().min(1, 'Location is required'),
   locationFull: z.string().optional(),
   theme: z.string().optional(),
@@ -33,6 +34,7 @@ export const legacyPartySchema = z.object({
     date => date > new Date(),
     'Event must be in the future'
   ),
+  rsvpClosesAt: z.date().optional(),
   location: z.string().min(1, 'Location is required'),
   locationFull: z.string().optional(),
   theme: z.string().optional(),

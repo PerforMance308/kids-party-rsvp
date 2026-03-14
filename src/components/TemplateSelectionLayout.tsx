@@ -28,10 +28,10 @@ interface TemplateSelectionLayoutProps {
   qrCodeUrl?: string
   rsvpUrl?: string
   onTemplateSelect: (templateId: string, templateMeta: TemplateMeta) => void
-  onBack: () => void
-  onSubmit: () => void
-  onPayRequest: () => void
-  isSubmitting: boolean
+  onBack?: () => void
+  onSubmit?: () => void
+  onPayRequest?: () => void
+  isSubmitting?: boolean
   currentTemplate?: string
   paidTemplates?: string[]
   mobileSpacerSelectedClass?: string
@@ -129,10 +129,6 @@ export default function TemplateSelectionLayout({
           <PartyTemplateStep
             onTemplateSelect={onTemplateSelect}
             selectedTemplateId={selectedTemplateId}
-            onBack={onBack}
-            onSubmit={onSubmit}
-            onPayRequest={onPayRequest}
-            isSubmitting={isSubmitting}
             currentTemplate={currentTemplate}
             paidTemplates={paidTemplates}
           />

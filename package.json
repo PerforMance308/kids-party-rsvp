@@ -10,6 +10,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:import-templates": "tsx prisma/import-templates.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

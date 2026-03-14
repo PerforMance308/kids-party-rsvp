@@ -1,71 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin'
 import fs from 'fs/promises'
 import path from 'path'
 import sharp from 'sharp'
+import { requireAdmin } from '@/lib/admin'
+import { prisma } from '@/lib/prisma'
+import { ensureThemeExists, listTemplates, toPrismaJsonValue } from '@/lib/template-store'
 import type { TemplateConfig } from '@/types/invitation-template'
 import { getEffectivePrice } from '@/types/invitation-template'
 
 const TEMPLATES_DIR = path.join(process.cwd(), 'public', 'invitations')
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
-// GET: 获取所有模板
 export async function GET() {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response!
 
   try {
-    // 确保目录存在
-    try {
-      await fs.access(TEMPLATES_DIR)
-    } catch {
-      return NextResponse.json({ templates: [], themes: [] })
-    }
-
-    const themeFolders = await fs.readdir(TEMPLATES_DIR, { withFileTypes: true })
-    const themes: string[] = []
-    const templates: any[] = []
-
-    for (const folder of themeFolders.filter(d => d.isDirectory())) {
-      themes.push(folder.name)
-      const themePath = path.join(TEMPLATES_DIR, folder.name)
-      const files = await fs.readdir(themePath)
-
-      for (const file of files.filter(f => f.endsWith('.json') && f !== 'theme.json')) {
-        const baseName = file.replace('.json', '')
-        const configPath = path.join(themePath, file)
-
-        try {
-          const configContent = await fs.readFile(configPath, 'utf-8')
-          const config: TemplateConfig = JSON.parse(configContent)
-
-          // 检查图片是否存在
-          const hasImage = files.includes(config.template)
-
-          templates.push({
-            id: baseName,
-            theme: folder.name,
-            name: baseName.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-            imageUrl: `/invitations/${folder.name}/${config.template}`,
-            config,
-            effectivePrice: getEffectivePrice(config.pricing),
-            hasImage,
-          })
-        } catch (e) {
-          console.warn(`Failed to parse ${file}:`, e)
-        }
-      }
-    }
-
-    return NextResponse.json({ templates, themes })
+    const catalog = await listTemplates()
+    return NextResponse.json({
+      templates: catalog.themes.flatMap((theme) =>
+        theme.templates.map((template) => ({
+          ...template,
+          hasImage: Boolean(template.imageUrl),
+        }))
+      ),
+      themes: catalog.themes.map((theme) => theme.id),
+    })
   } catch (error) {
     console.error('Error loading templates:', error)
     return NextResponse.json({ error: 'Failed to load templates' }, { status: 500 })
   }
 }
 
-// POST: 创建新模板（上传图片+JSON）
-// Template ID is derived from the image filename (e.g. unicorn_1.png → unicorn_1)
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin()
   if (!auth.authorized) return auth.response!
@@ -89,9 +55,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Image file too large (max 10MB)' }, { status: 400 })
     }
 
-    // Derive template ID from image filename (strip extension, sanitize)
     const originalName = imageFile.name
-    const ext = path.extname(originalName) // e.g. ".png"
+    const ext = path.extname(originalName)
     const baseName = path.basename(originalName, ext)
       .toLowerCase()
       .replace(/\s+/g, '_')
@@ -104,13 +69,9 @@ export async function POST(request: NextRequest) {
     const themePath = path.join(TEMPLATES_DIR, theme)
     await fs.mkdir(themePath, { recursive: true })
 
-    // Image keeps its sanitized name as PNG
     const imageFileName = `${baseName}.png`
-    const jsonFileName = `${baseName}.json`
     const imagePath = path.join(themePath, imageFileName)
-    const jsonPath = path.join(themePath, jsonFileName)
 
-    // Process image with sharp (convert to PNG, read dimensions)
     const buffer = Buffer.from(await imageFile.arrayBuffer())
     const metadata = await sharp(buffer).metadata()
     const imgWidth = metadata.width || 1000
@@ -122,16 +83,13 @@ export async function POST(request: NextRequest) {
 
     await fs.writeFile(imagePath, processedBuffer)
 
-    // Handle JSON config
     let config: TemplateConfig
 
     if (jsonFile) {
-      const jsonString = await jsonFile.text()
-      config = JSON.parse(jsonString)
+      config = JSON.parse(await jsonFile.text())
     } else if (jsonContent) {
       config = JSON.parse(jsonContent)
     } else {
-      // Default config using actual image dimensions
       config = {
         template: imageFileName,
         canvas_size: [imgWidth, imgHeight],
@@ -194,10 +152,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Ensure template field points to actual image file
     config.template = imageFileName
 
-    await fs.writeFile(jsonPath, JSON.stringify(config, null, 2))
+    await ensureThemeExists(theme)
+    await prisma.template.upsert({
+      where: { id: baseName },
+      update: {
+        themeId: theme,
+        name: baseName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        imageUrl: `/invitations/${theme}/${imageFileName}`,
+        config: toPrismaJsonValue(config),
+      },
+      create: {
+        id: baseName,
+        themeId: theme,
+        name: baseName.split('_').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        imageUrl: `/invitations/${theme}/${imageFileName}`,
+        config: toPrismaJsonValue(config),
+      },
+    })
 
     return NextResponse.json({
       success: true,
