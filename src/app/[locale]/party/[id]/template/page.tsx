@@ -319,7 +319,7 @@ export default function ChangeTemplatePage() {
         />
       </div>
 
-      <div className="pointer-events-none sticky bottom-6 z-[80] mt-4 hidden justify-end sm:flex">
+      <div className="pointer-events-none sticky bottom-6 z-30 mt-4 hidden justify-end sm:flex">
         <button
           type="button"
           onClick={handleCtaClick}
@@ -336,7 +336,7 @@ export default function ChangeTemplatePage() {
         </button>
       </div>
 
-      <div className={`${isFooterVisible ? 'hidden' : 'fixed'} bottom-[calc(0.4rem+env(safe-area-inset-bottom))] right-4 z-[80] sm:hidden`}>
+      <div className={`${isFooterVisible ? 'hidden' : 'fixed'} bottom-[calc(0.4rem+env(safe-area-inset-bottom))] right-4 z-30 sm:hidden`}>
         <button
           type="button"
           onClick={handleCtaClick}
@@ -355,7 +355,7 @@ export default function ChangeTemplatePage() {
 
       {/* Payment modal */}
       {showPayment && selectedFullTemplate && selectedTemplateMeta && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowPayment(false)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[120]" onClick={() => setShowPayment(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">

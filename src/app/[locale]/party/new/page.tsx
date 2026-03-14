@@ -460,7 +460,7 @@ export default function NewPartyPage() {
 
         </div>
 
-        <div className="pointer-events-none sticky bottom-6 z-[80] mt-4 hidden justify-end sm:flex">
+        <div className="pointer-events-none sticky bottom-6 z-30 mt-4 hidden justify-end sm:flex">
           <button
             type="button"
             onClick={handleCreateClick}
@@ -477,7 +477,7 @@ export default function NewPartyPage() {
           </button>
         </div>
 
-        <div className={`${isFooterVisible ? 'hidden' : 'fixed'} bottom-[calc(0.4rem+env(safe-area-inset-bottom))] right-4 z-[80] sm:hidden`}>
+        <div className={`${isFooterVisible ? 'hidden' : 'fixed'} bottom-[calc(0.4rem+env(safe-area-inset-bottom))] right-4 z-30 sm:hidden`}>
           <button
             type="button"
             onClick={handleCreateClick}
@@ -495,7 +495,7 @@ export default function NewPartyPage() {
         </div>
 
         {showPaymentModal && selectedTemplateMeta && selectedTemplateId && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[120]">
             <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="mb-4">
