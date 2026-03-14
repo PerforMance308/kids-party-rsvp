@@ -63,7 +63,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    const effectivePrice = getEffectivePrice(templateConfig.pricing)
+    const requestedPaymentCurrency =
+      typeof body.paymentCurrency === 'string' ? body.paymentCurrency : undefined
+    const effectivePrice = getEffectivePrice(templateConfig.pricing, requestedPaymentCurrency)
 
     // For paid templates, verify payment
     let verifiedAmount = 0
@@ -100,10 +102,18 @@ export async function POST(request: NextRequest) {
           )
         }
 
+        if (paymentIntent.amount !== Math.round(effectivePrice.price * 100)) {
+          return NextResponse.json(
+            { error: 'Payment amount does not match template price' },
+            { status: 400 }
+          )
+        }
+
         if (
           paymentIntent.metadata?.feature !== 'template' ||
           paymentIntent.metadata?.templateId !== templateId ||
-          paymentIntent.metadata?.userId !== session.user.id
+          paymentIntent.metadata?.userId !== session.user.id ||
+          paymentIntent.currency.toUpperCase() !== effectivePrice.currency
         ) {
           return NextResponse.json(
             { error: 'Payment metadata verification failed' },

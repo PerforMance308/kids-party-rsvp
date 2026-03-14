@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { detectPreferredCurrency } from '@/lib/currency'
 import type {
   Theme,
   InvitationTemplate,
   TemplatesApiResponse,
+  SupportedCurrency,
 } from '@/types/invitation-template'
-import { formatPrice } from '@/types/invitation-template'
+import { formatPrice, getEffectivePrice } from '@/types/invitation-template'
 
 interface TemplateMeta {
   name: string
@@ -34,6 +36,7 @@ export default function PartyTemplateStep({
   const [themes, setThemes] = useState<Theme[]>([])
   const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [preferredCurrency, setPreferredCurrency] = useState<SupportedCurrency>('USD')
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -52,6 +55,10 @@ export default function PartyTemplateStep({
 
     fetchTemplates()
   }, [])
+
+  useEffect(() => {
+    setPreferredCurrency(detectPreferredCurrency(locale))
+  }, [locale])
 
   const allTemplates = themes.flatMap((theme) => theme.templates)
 
@@ -82,11 +89,12 @@ export default function PartyTemplateStep({
   })
 
   const handleTemplateClick = (template: InvitationTemplate) => {
+    const effectivePrice = getEffectivePrice(template.config.pricing, preferredCurrency)
     onTemplateSelect(template.id, {
       name: template.name,
-      price: template.effectivePrice.price,
-      currency: template.config.pricing.currency,
-      isFree: template.effectivePrice.isFree,
+      price: effectivePrice.price,
+      currency: effectivePrice.currency,
+      isFree: effectivePrice.isFree,
     })
   }
 
@@ -158,10 +166,11 @@ export default function PartyTemplateStep({
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {sortedTemplates.map((template) => {
+            const effectivePrice = getEffectivePrice(template.config.pricing, preferredCurrency)
             const themeInfo = getThemeInfo(template.theme)
-            const isFree = template.effectivePrice.isFree
+            const isFree = effectivePrice.isFree
             const isSelected = selectedTemplateId === template.id
-            const hasDiscount = template.effectivePrice.hasDiscount
+            const hasDiscount = effectivePrice.hasDiscount
             const isCurrent = currentTemplate === template.id
             const isPurchased = isTemplatePurchased(template.id)
 
@@ -209,7 +218,7 @@ export default function PartyTemplateStep({
                       </span>
                     ) : hasDiscount ? (
                       <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
-                        {template.effectivePrice.discountPercent}% OFF
+                        {effectivePrice.discountPercent}% OFF
                       </span>
                     ) : null}
                   </div>
@@ -233,7 +242,7 @@ export default function PartyTemplateStep({
                   <div className="mt-1.5 flex items-center justify-between gap-2">
                     <span className={`text-sm font-bold ${isFree ? 'text-green-600' : 'text-orange-600'}`}>
                       {!isPurchased || isFree
-                        ? formatPrice(template.effectivePrice.price, template.config.pricing.currency, locale)
+                        ? formatPrice(effectivePrice.price, effectivePrice.currency, locale)
                         : ''}
                     </span>
                     <div className="flex items-center gap-1">

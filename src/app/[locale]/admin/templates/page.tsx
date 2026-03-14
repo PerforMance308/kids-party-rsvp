@@ -14,6 +14,7 @@ interface Template {
   config: any
   effectivePrice: {
     price: number
+    currency: string
     isFree: boolean
   }
 }
@@ -275,7 +276,7 @@ export default function AdminTemplatesPage() {
                   ? 'bg-green-500 text-white'
                   : 'bg-orange-500 text-white'
                   }`}>
-                  {template.effectivePrice.isFree ? 'FREE' : `$${template.effectivePrice.price}`}
+                  {template.effectivePrice.isFree ? 'FREE' : `${template.effectivePrice.currency} ${template.effectivePrice.price.toFixed(2)}`}
                 </span>
               </div>
             </div>

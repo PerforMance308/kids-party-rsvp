@@ -96,6 +96,8 @@ export async function POST(request: NextRequest) {
         pricing: {
           price: 1.39,
           currency: 'USD',
+          defaultCurrency: 'USD',
+          prices: { USD: 1.39 },
           isFree: false,
         },
         elements: [

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter, Nunito } from 'next/font/google'
 import { headers } from 'next/headers'
 import './globals.css'
+import { invitationFontVariables } from '@/lib/invitation-fonts'
 import { SITE_URL, SITE_NAME, SEO_KEYWORDS, generateOrganizationSchema, generateWebsiteSchema, generateSoftwareApplicationSchema } from '@/lib/seo'
 
 const inter = Inter({
@@ -107,7 +108,7 @@ export default async function RootLayout({
   const locale = headersList.get('x-locale') || 'en'
 
   return (
-    <html lang={locale} className={`${inter.variable} ${nunito.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${nunito.variable} ${invitationFontVariables}`}>
       <head>
         {/* Structured Data - Organization */}
         <script
@@ -135,9 +136,6 @@ export default async function RootLayout({
         {/* Favicon and Icons */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/logo.png" />
-        {/* Preconnect to important origins */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* DNS Prefetch for external resources */}
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>

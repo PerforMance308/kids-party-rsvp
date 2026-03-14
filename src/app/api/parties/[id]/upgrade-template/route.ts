@@ -79,7 +79,9 @@ export async function POST(
     }
 
     // 计算有效价格
-    const effectivePrice = getEffectivePrice(templateConfig.pricing)
+    const requestedPaymentCurrency =
+      typeof body.paymentCurrency === 'string' ? body.paymentCurrency : undefined
+    const effectivePrice = getEffectivePrice(templateConfig.pricing, requestedPaymentCurrency)
 
     // 免费模板直接使用
     if (effectivePrice.isFree) {
@@ -171,10 +173,18 @@ export async function POST(
         )
       }
 
+      if (paymentIntent.amount !== Math.round(effectivePrice.price * 100)) {
+        return NextResponse.json(
+          { error: 'Payment amount does not match template price' },
+          { status: 400 }
+        )
+      }
+
       // 验证元数据
       if (
         paymentIntent.metadata?.feature !== 'template' ||
-        paymentIntent.metadata?.templateId !== template
+        paymentIntent.metadata?.templateId !== template ||
+        paymentIntent.currency.toUpperCase() !== effectivePrice.currency
       ) {
         console.error('Payment metadata mismatch:', paymentIntent.metadata)
         return NextResponse.json(

@@ -6,6 +6,7 @@ import type {
   PartyData,
   TemplateElement,
 } from '@/types/invitation-template';
+import { getCanvasFontFamily } from '@/lib/invitation-fonts';
 import { useLocale, useTranslations } from '@/contexts/LanguageContext';
 
 // 简洁的日期时间格式：1月15日 14:30 或 Jan 15, 2:30pm
@@ -71,41 +72,43 @@ interface CanvasInvitationProps {
 }
 
 // 字体映射 - 将配置中的字体名映射到实际可用的字体
-const FONT_MAP: Record<string, string> = {
-  // System fonts
-  'Arial-Bold': 'Arial, Helvetica, sans-serif',
-  'Arial-Black': '"Arial Black", Arial, sans-serif',
-  'ComicSansMS': '"Comic Sans MS", cursive, sans-serif',
-  // Google Fonts - cute & playful
-  'LuckiestGuy-Regular': '"Luckiest Guy", cursive',
-  'Fredoka': 'Fredoka, sans-serif',
-  'BubblegumSans': '"Bubblegum Sans", cursive',
-  'Chewy': 'Chewy, cursive',
-  'Baloo2': '"Baloo 2", cursive',
-  'LilitaOne': '"Lilita One", cursive',
-  'Bangers': 'Bangers, cursive',
-  'PatrickHand': '"Patrick Hand", cursive',
-  'Caveat': 'Caveat, cursive',
-  'Pacifico': 'Pacifico, cursive',
-  'DancingScript': '"Dancing Script", cursive',
-  'IndieFlower': '"Indie Flower", cursive',
-};
+async function ensureCanvasFontsLoaded(template: InvitationTemplate) {
+  const fontRequests = new Set<string>()
+  for (const element of template.config.elements) {
+    const fontFamily = getCanvasFontFamily(element.font)
+    const fontWeight = element.font_weight
+      || (element.font.includes('Bold') || element.font.includes('Black') ? 700 : 400)
+    fontRequests.add(`${fontWeight} ${element.font_size}px ${fontFamily}`)
+  }
 
-// Lazy-load decorative fonts only when the canvas invitation component is mounted
-const CANVAS_FONTS_URL =
-  'https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@400;600;700&family=Bubblegum+Sans&family=Chewy&family=Baloo+2:wght@400;600;700;800&family=Lilita+One&family=Bangers&family=Patrick+Hand&family=Caveat:wght@400;600;700&family=Pacifico&family=Dancing+Script:wght@400;600;700&family=Indie+Flower&display=swap'
+  await Promise.all(
+    Array.from(fontRequests).map((font) => document.fonts.load(font))
+  )
+  await document.fonts.ready
+}
 
-function useCanvasFonts() {
+function useCanvasFonts(template: InvitationTemplate) {
+  const [fontsReady, setFontsReady] = useState(false)
+
   useEffect(() => {
-    const linkId = 'canvas-invitation-fonts'
-    if (!document.getElementById(linkId)) {
-      const link = document.createElement('link')
-      link.id = linkId
-      link.rel = 'stylesheet'
-      link.href = CANVAS_FONTS_URL
-      document.head.appendChild(link)
+    let cancelled = false
+
+    setFontsReady(false)
+    ensureCanvasFontsLoaded(template)
+      .then(() => {
+        if (!cancelled) setFontsReady(true)
+      })
+      .catch((error) => {
+        console.error('Failed to load invitation fonts:', error)
+        if (!cancelled) setFontsReady(true)
+      })
+
+    return () => {
+      cancelled = true
     }
-  }, [])
+  }, [template])
+
+  return fontsReady
 }
 
 export default function CanvasInvitation({
@@ -120,7 +123,7 @@ export default function CanvasInvitation({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const locale = useLocale();
-  useCanvasFonts();
+  const fontsReady = useCanvasFonts(template);
   const t = useTranslations('templates');
 
   const { config } = template;
@@ -177,8 +180,9 @@ export default function CanvasInvitation({
     setError(null);
 
     try {
-      // Wait for all fonts to be loaded before drawing text
-      await document.fonts.ready;
+      if (!fontsReady) {
+        return;
+      }
       // Set canvas pixel size from template config
       canvas.width = canvasWidth * scale;
       canvas.height = canvasHeight * scale;
@@ -229,7 +233,7 @@ export default function CanvasInvitation({
         const content = getElementContent(element);
         if (!content) continue;
 
-        const fontFamily = FONT_MAP[element.font] || element.font;
+        const fontFamily = getCanvasFontFamily(element.font);
         const fontWeight = element.font_weight
           || (element.font.includes('Bold') || element.font.includes('Black') ? 700 : 400);
         ctx.font = `${fontWeight} ${element.font_size}px ${fontFamily}`;
@@ -336,6 +340,7 @@ export default function CanvasInvitation({
     scale,
     getElementContent,
     onRenderComplete,
+    fontsReady,
   ]);
 
   useEffect(() => {

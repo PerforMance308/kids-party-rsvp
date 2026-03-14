@@ -4,13 +4,15 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { useTranslations, useLocale } from '@/contexts/LanguageContext'
 import PaymentForm from './PaymentForm'
+import { detectPreferredCurrency } from '@/lib/currency'
 import { toast } from '@/lib/toast'
 import type {
   Theme,
   InvitationTemplate,
   TemplatesApiResponse,
+  SupportedCurrency,
 } from '@/types/invitation-template'
-import { formatPrice } from '@/types/invitation-template'
+import { formatPrice, getEffectivePrice } from '@/types/invitation-template'
 import { SwatchIcon } from '@heroicons/react/24/outline'
 
 interface Party {
@@ -53,6 +55,7 @@ export default function TemplateSelector({
   const [showPayment, setShowPayment] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<InvitationTemplate | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [preferredCurrency, setPreferredCurrency] = useState<SupportedCurrency>('USD')
 
   const hideScrollbarStyle = `
     .template-scroll-container::-webkit-scrollbar {
@@ -77,6 +80,10 @@ export default function TemplateSelector({
     fetchTemplates()
   }, [])
 
+  useEffect(() => {
+    setPreferredCurrency(detectPreferredCurrency(locale))
+  }, [locale])
+
   // Lock background scroll when payment modal is open
   useEffect(() => {
     if (showPayment) {
@@ -100,8 +107,8 @@ export default function TemplateSelector({
     : allTemplates
 
   const sortedTemplates = [...filteredTemplates].sort((a, b) => {
-    const aFree = a.effectivePrice.isFree
-    const bFree = b.effectivePrice.isFree
+    const aFree = getEffectivePrice(a.config.pricing, preferredCurrency).isFree
+    const bFree = getEffectivePrice(b.config.pricing, preferredCurrency).isFree
     const aPurchased = isTemplatePurchased(a.id)
     const bPurchased = isTemplatePurchased(b.id)
 
@@ -113,7 +120,7 @@ export default function TemplateSelector({
   })
 
   const handleTemplateClick = (template: InvitationTemplate) => {
-    if (template.effectivePrice.isFree || isTemplatePurchased(template.id)) {
+    if (getEffectivePrice(template.config.pricing, preferredCurrency).isFree || isTemplatePurchased(template.id)) {
       onTemplateSelect(template.id)
       return
     }
@@ -139,6 +146,7 @@ export default function TemplateSelector({
         body: JSON.stringify({
           template: selectedTemplate.id,
           paymentId,
+          paymentCurrency: getEffectivePrice(selectedTemplate.config.pricing, preferredCurrency).currency,
         }),
       })
 
@@ -283,11 +291,12 @@ export default function TemplateSelector({
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {sortedTemplates.map((template) => {
+                const effectivePrice = getEffectivePrice(template.config.pricing, preferredCurrency)
                 const themeInfo = getThemeInfo(template.theme)
-                const isFree = template.effectivePrice.isFree
+                const isFree = effectivePrice.isFree
                 const isPurchased = isTemplatePurchased(template.id)
                 const isCurrent = currentTemplate === template.id
-                const hasDiscount = template.effectivePrice.hasDiscount
+                const hasDiscount = effectivePrice.hasDiscount
 
                 return (
                   <div
@@ -333,7 +342,7 @@ export default function TemplateSelector({
                             </span>
                           ) : hasDiscount ? (
                             <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                              {template.effectivePrice.discountPercent}% OFF
+                              {effectivePrice.discountPercent}% OFF
                             </span>
                           ) : null}
                         </div>
@@ -350,13 +359,13 @@ export default function TemplateSelector({
                         <div className="flex justify-center items-center gap-1 sm:gap-2 mb-2 flex-wrap">
                           {!isPurchased && (
                             <>
-                              {hasDiscount && template.effectivePrice.originalPrice && (
+                              {hasDiscount && effectivePrice.originalPrice && (
                                 <span className="text-xs text-neutral-400 line-through hidden sm:inline">
-                                  {formatPrice(template.effectivePrice.originalPrice, template.config.pricing.currency, locale)}
+                                  {formatPrice(effectivePrice.originalPrice, effectivePrice.currency, locale)}
                                 </span>
                               )}
                               <span className={`text-sm sm:text-base md:text-lg font-bold ${isFree ? 'text-green-600' : 'text-orange-600'}`}>
-                                {formatPrice(template.effectivePrice.price, template.config.pricing.currency, locale)}
+                                {formatPrice(effectivePrice.price, effectivePrice.currency, locale)}
                               </span>
                             </>
                           )}
@@ -443,21 +452,22 @@ export default function TemplateSelector({
                         {getThemeInfo(selectedTemplate.theme)?.name[locale as 'zh' | 'en']}
                       </p>
                       <p className="text-lg font-bold text-orange-600 mt-1">
-                        {formatPrice(selectedTemplate.effectivePrice.price, selectedTemplate.config.pricing.currency, locale)}
+                        {formatPrice(getEffectivePrice(selectedTemplate.config.pricing, preferredCurrency).price, getEffectivePrice(selectedTemplate.config.pricing, preferredCurrency).currency, locale)}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <PaymentForm
-                  amount={selectedTemplate.effectivePrice.price}
-                  currency={selectedTemplate.config.pricing.currency}
+                  amount={getEffectivePrice(selectedTemplate.config.pricing, preferredCurrency).price}
+                  currency={getEffectivePrice(selectedTemplate.config.pricing, preferredCurrency).currency}
                   description={`Premium template: ${selectedTemplate.name}`}
                   metadata={{
                     partyId,
                     feature: 'template',
                     templateId: selectedTemplate.id,
                     templateName: selectedTemplate.name,
+                    currency: getEffectivePrice(selectedTemplate.config.pricing, preferredCurrency).currency,
                   }}
                   onSuccess={handlePaymentSuccess}
                   onError={handlePaymentError}

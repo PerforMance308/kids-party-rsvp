@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { useLocale } from '@/contexts/LanguageContext'
 import { toast } from '@/lib/toast'
 import CanvasInvitation from '@/components/CanvasInvitation'
-import type { InvitationTemplate, TemplateConfig, TemplateElement, QRCodeConfig } from '@/types/invitation-template'
+import type { InvitationTemplate, SupportedCurrency, TemplateConfig, TemplateElement, QRCodeConfig } from '@/types/invitation-template'
+import { SUPPORTED_CURRENCIES, normalizePricing } from '@/types/invitation-template'
 import QRCode from 'qrcode'
 import { TrashIcon, PlusIcon, ArrowPathIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, CodeBracketSquareIcon } from '@heroicons/react/24/outline'
 
@@ -336,11 +337,12 @@ export default function EditTemplatePage() {
 
   const updatePricing = (updates: any) => {
     if (!template) return
+    const currentPricing = normalizePricing(template.config.pricing)
     setTemplate({
       ...template,
       config: {
         ...template.config,
-        pricing: { ...template.config.pricing, ...updates }
+        pricing: normalizePricing({ ...currentPricing, ...updates })
       }
     })
   }
@@ -355,13 +357,15 @@ export default function EditTemplatePage() {
 
   if (!template) return null
 
+  const pricing = normalizePricing(template.config.pricing)
+
   const previewTemplate: InvitationTemplate = {
     id: template.id,
     theme: template.theme,
     name: template.name,
     imageUrl: template.imageUrl,
     config: template.config,
-    effectivePrice: { price: 0, isFree: true, hasDiscount: false },
+    effectivePrice: { price: 0, currency: pricing.defaultCurrency, isFree: true, hasDiscount: false },
   }
 
   return (
@@ -742,35 +746,48 @@ export default function EditTemplatePage() {
                     <input
                       type="checkbox"
                       id="isFree"
-                      checked={template.config.pricing?.isFree ?? true}
+                      checked={pricing.isFree}
                       onChange={(e) => updatePricing({ isFree: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-600"
                     />
                     <label htmlFor="isFree" className="text-sm font-medium text-gray-900">Always Free</label>
                   </div>
 
-                  {!(template.config.pricing?.isFree) && (
+                  {!pricing.isFree && (
                     <>
                       <div>
-                        <label className="text-xs text-gray-500">Price</label>
-                        <input
-                          type="number"
-                          placeholder="0.00"
-                          value={template.config.pricing?.price ?? 0}
-                          onChange={(e) => updatePricing({ price: parseFloat(e.target.value) || 0 })}
-                          className="w-full text-sm border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Currency</label>
+                        <label className="text-xs text-gray-500">Default Currency</label>
                         <select
-                          value={template.config.pricing?.currency ?? 'USD'}
-                          onChange={(e) => updatePricing({ currency: e.target.value })}
+                          value={pricing.defaultCurrency}
+                          onChange={(e) => updatePricing({ defaultCurrency: e.target.value as SupportedCurrency })}
                           className="w-full text-sm border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
                         >
-                          <option value="USD">USD ($)</option>
-                          <option value="CNY">CNY (¥)</option>
+                          {SUPPORTED_CURRENCIES.map((currency) => (
+                            <option key={currency} value={currency}>{currency}</option>
+                          ))}
                         </select>
+                      </div>
+                      <div className="space-y-3">
+                        <label className="text-xs text-gray-500 block">Prices</label>
+                        {SUPPORTED_CURRENCIES.map((currency) => (
+                          <div key={currency}>
+                            <label className="text-xs text-gray-500">{currency}</label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              value={pricing.prices[currency] ?? ''}
+                              onChange={(e) => updatePricing({
+                                prices: {
+                                  ...pricing.prices,
+                                  [currency]: e.target.value === '' ? undefined : (parseFloat(e.target.value) || 0),
+                                },
+                              })}
+                              className="w-full text-sm border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
+                            />
+                          </div>
+                        ))}
                       </div>
                     </>
                   )}
@@ -779,7 +796,7 @@ export default function EditTemplatePage() {
                     <label className="text-xs text-gray-500 block mb-1">Free Until (Optional)</label>
                     <input
                       type="datetime-local"
-                      value={template.config.pricing?.freeUntil ? new Date(template.config.pricing.freeUntil).toISOString().slice(0, 16) : ''}
+                      value={pricing.freeUntil ? new Date(pricing.freeUntil).toISOString().slice(0, 16) : ''}
                       onChange={(e) => updatePricing({ freeUntil: e.target.value ? new Date(e.target.value).toISOString() : null })}
                       className="w-full text-sm border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
                     />

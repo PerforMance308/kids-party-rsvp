@@ -4,12 +4,13 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import type {
   InvitationTemplate,
+  Pricing,
   TemplateConfig,
   TemplatesApiResponse,
   Theme,
   ThemeMetadata,
 } from '@/types/invitation-template'
-import { getEffectivePrice } from '@/types/invitation-template'
+import { getEffectivePrice, normalizePricing } from '@/types/invitation-template'
 
 const INVITATIONS_DIR = path.join(process.cwd(), 'public', 'invitations')
 
@@ -50,15 +51,19 @@ function getDefaultThemeMetadata(themeId: string): ThemeMetadata {
 }
 
 function normalizeTemplateConfig(config: TemplateConfig): TemplateConfig {
-  if (config.pricing) return config
+  const pricing: Pricing = config.pricing
+    ? normalizePricing(config.pricing)
+    : normalizePricing({
+        price: 1.39,
+        currency: 'USD',
+        defaultCurrency: 'USD',
+        prices: { USD: 1.39 },
+        isFree: false,
+      })
 
   return {
     ...config,
-    pricing: {
-      price: 1.39,
-      currency: 'USD',
-      isFree: false,
-    },
+    pricing,
   }
 }
 

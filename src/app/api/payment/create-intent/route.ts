@@ -15,7 +15,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const { amount, currency, description, metadata } = await request.json()
+    const body = await request.json()
+    const { amount, description, metadata } = body
+    let requestedCurrency = body.currency
 
     // Determine the actual charge amount
     let chargeAmount: number
@@ -29,7 +31,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Template not found' }, { status: 404 })
       }
 
-      const effectivePrice = getEffectivePrice(templateConfig.pricing)
+      const selectedCurrency = metadata?.currency || requestedCurrency
+      const effectivePrice = getEffectivePrice(templateConfig.pricing, selectedCurrency)
       if (effectivePrice.isFree) {
         return NextResponse.json(
           { error: 'This template is free, no payment needed' },
@@ -38,10 +41,11 @@ export async function POST(request: NextRequest) {
       }
 
       chargeAmount = effectivePrice.price
+      requestedCurrency = effectivePrice.currency
       chargeDescription = description || `Template: ${metadata.templateId}`
     } else {
       // Non-template payments (e.g., photo-sharing) use front-end amount
-      if (!amount || !currency) {
+      if (!amount || !requestedCurrency) {
         return NextResponse.json({
           error: 'Amount and currency are required'
         }, { status: 400 })
@@ -50,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate and normalize currency code
-    const rawCurrency = currency || 'USD'
+    const rawCurrency = requestedCurrency || 'USD'
     if (typeof rawCurrency !== 'string') {
       return NextResponse.json({
         error: 'Currency must be a string'
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
     // Validate currency code format (should be 3 uppercase letters)
     if (!/^[A-Z]{3}$/.test(normalizedCurrency)) {
       return NextResponse.json({
-        error: `Invalid currency code format: ${rawCurrency}. Must be 3 uppercase letters (e.g., USD, EUR, CNY)`
+        error: `Invalid currency code format: ${rawCurrency}. Must be 3 uppercase letters (e.g., USD, CAD, EUR)`
       }, { status: 400 })
     }
 
@@ -82,6 +86,7 @@ export async function POST(request: NextRequest) {
     }
     if (metadata?.feature) intentMetadata.feature = metadata.feature
     if (metadata?.templateId) intentMetadata.templateId = metadata.templateId
+    if (metadata?.currency || requestedCurrency) intentMetadata.currency = String(metadata?.currency || requestedCurrency).toUpperCase()
     if (metadata?.flow) intentMetadata.flow = metadata.flow
     if (metadata?.partyId) intentMetadata.partyId = metadata.partyId
 

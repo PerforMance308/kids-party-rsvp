@@ -6,9 +6,10 @@ import Link from 'next/link'
 import PaymentForm from '@/components/PaymentForm'
 import TemplateSelectionLayout from '@/components/TemplateSelectionLayout'
 import { useLanguage, useLocale } from '@/contexts/LanguageContext'
+import { detectPreferredCurrency } from '@/lib/currency'
 import { toast } from '@/lib/toast'
-import type { TemplatesApiResponse, Theme } from '@/types/invitation-template'
-import { formatPrice } from '@/types/invitation-template'
+import type { SupportedCurrency, TemplatesApiResponse, Theme } from '@/types/invitation-template'
+import { formatPrice, getEffectivePrice } from '@/types/invitation-template'
 
 interface PartyData {
   id: string
@@ -44,9 +45,14 @@ export default function ChangeTemplatePage() {
   const [showPayment, setShowPayment] = useState(false)
   const [qrCode, setQrCode] = useState<string>('')
   const [isFooterVisible, setIsFooterVisible] = useState(false)
+  const [preferredCurrency, setPreferredCurrency] = useState<SupportedCurrency>('USD')
 
   // For payment modal: we need theme info to show template preview
   const [themes, setThemes] = useState<Theme[]>([])
+
+  useEffect(() => {
+    setPreferredCurrency(detectPreferredCurrency(locale))
+  }, [locale])
 
   useEffect(() => {
     const fetchParty = async () => {
@@ -223,6 +229,7 @@ export default function ChangeTemplatePage() {
         body: JSON.stringify({
           template: selectedTemplateId,
           paymentId,
+          paymentCurrency: selectedTemplateMeta?.currency,
         }),
       })
 
@@ -395,6 +402,7 @@ export default function ChangeTemplatePage() {
                   feature: 'template',
                   templateId: selectedTemplateId!,
                   templateName: selectedFullTemplate.name,
+                  currency: selectedTemplateMeta.currency,
                 }}
                 onSuccess={handlePaymentSuccess}
                 onError={(msg) => console.error('Payment error:', msg)}

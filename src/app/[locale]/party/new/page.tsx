@@ -8,8 +8,10 @@ import TemplateSelectionLayout from '@/components/TemplateSelectionLayout'
 import PaymentForm from '@/components/PaymentForm'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import { useLocale, useLanguage } from '@/contexts/LanguageContext'
+import { detectPreferredCurrency } from '@/lib/currency'
 import { formatPhoneInput } from '@/lib/utils'
-import type { TemplatesApiResponse, InvitationTemplate as InvitationTemplateType } from '@/types/invitation-template'
+import type { SupportedCurrency, TemplatesApiResponse, InvitationTemplate as InvitationTemplateType } from '@/types/invitation-template'
+import { getEffectivePrice } from '@/types/invitation-template'
 
 interface Contact {
   id: string
@@ -84,6 +86,7 @@ export default function NewPartyPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [selectedTemplateMeta, setSelectedTemplateMeta] = useState<TemplateMeta | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [preferredCurrency, setPreferredCurrency] = useState<SupportedCurrency>('USD')
 
   // Host phone (synced to user profile)
   const [hostPhone, setHostPhone] = useState('')
@@ -122,6 +125,10 @@ export default function NewPartyPage() {
     setRsvpCloseDate(toLocalDateInputValue(closeDate))
     setRsvpCloseTime(eventTime || '23:59')
   }, [eventDate, eventTime, isRsvpCloseCustomized])
+
+  useEffect(() => {
+    setPreferredCurrency(detectPreferredCurrency(locale))
+  }, [locale])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -219,6 +226,7 @@ export default function NewPartyPage() {
         childGender: childGender || undefined,
         templateId,
         paymentId,
+        paymentCurrency: selectedTemplateMeta?.currency,
         selectedGuests,
         hostPhone: hostPhone || undefined,
       }
@@ -237,6 +245,7 @@ export default function NewPartyPage() {
       childGender: childGender || undefined,
       templateId,
       paymentId,
+      paymentCurrency: selectedTemplateMeta?.currency,
       selectedGuests,
       hostPhone: hostPhone || undefined,
     }
@@ -297,13 +306,14 @@ export default function NewPartyPage() {
 
         const fallbackFree = freeTemplates[0]
         const selected = (genderMatched || fallbackFree) as InvitationTemplateType
+        const effectivePrice = getEffectivePrice(selected.config.pricing, preferredCurrency)
 
         setSelectedTemplateId(selected.id)
         setSelectedTemplateMeta({
           name: selected.name,
-          price: selected.effectivePrice.price,
-          currency: selected.config.pricing.currency,
-          isFree: selected.effectivePrice.isFree,
+          price: effectivePrice.price,
+          currency: effectivePrice.currency,
+          isFree: effectivePrice.isFree,
         })
       } catch {
         // Keep selection empty if default-pick fails.
@@ -311,7 +321,7 @@ export default function NewPartyPage() {
     }
 
     pickDefaultTemplate()
-  }, [currentStep, selectedTemplateId, childGender])
+  }, [currentStep, selectedTemplateId, childGender, preferredCurrency])
 
   // Step 2: free template -> create directly
   const handleFreeSubmit = () => {
@@ -510,6 +520,7 @@ export default function NewPartyPage() {
                   metadata={{
                     feature: 'template',
                     templateId: selectedTemplateId,
+                    currency: selectedTemplateMeta.currency,
                     flow: 'party_create',
                   }}
                   onSuccess={handlePaymentSuccess}
