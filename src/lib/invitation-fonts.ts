@@ -4,6 +4,7 @@ import {
   Bubblegum_Sans,
   Caveat,
   Chewy,
+  Comic_Neue,
   Dancing_Script,
   Fredoka,
   Indie_Flower,
@@ -38,6 +39,13 @@ const chewy = Chewy({
   subsets: ['latin'],
   weight: '400',
   variable: '--font-chewy',
+  display: 'swap',
+})
+
+const comicNeue = Comic_Neue({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-comic-neue',
   display: 'swap',
 })
 
@@ -102,6 +110,7 @@ export const invitationFontVariables = [
   fredoka.variable,
   bubblegumSans.variable,
   chewy.variable,
+  comicNeue.variable,
   baloo2.variable,
   lilitaOne.variable,
   bangers.variable,
@@ -117,6 +126,7 @@ const INVITATION_FONT_VARIABLES: Record<string, string> = {
   'Fredoka': '--font-fredoka',
   'BubblegumSans': '--font-bubblegum-sans',
   'Chewy': '--font-chewy',
+  'ComicSansMS': '--font-comic-neue',
   'Baloo2': '--font-baloo-2',
   'LilitaOne': '--font-lilita-one',
   'Bangers': '--font-bangers',
@@ -130,7 +140,6 @@ const INVITATION_FONT_VARIABLES: Record<string, string> = {
 const SYSTEM_FONT_FAMILIES: Record<string, string> = {
   'Arial-Bold': 'Arial, Helvetica, sans-serif',
   'Arial-Black': '"Arial Black", Arial, sans-serif',
-  'ComicSansMS': '"Comic Sans MS", cursive, sans-serif',
 }
 
 export function getCanvasFontFamily(fontKey: string): string {
