@@ -64,6 +64,14 @@ export function formatDateForInput(date: Date): string {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
+export function isUndeliverableGuestEmail(email?: string | null): boolean {
+  return !email || email?.endsWith('@no-email.com') === true
+}
+
+export function getGuestEmailDisplay(email?: string | null): string {
+  return isUndeliverableGuestEmail(email) ? '' : (email ?? '')
+}
+
 /**
  * Calculate age from birth date
  * Uses precise calculation accounting for leap years
@@ -111,10 +119,10 @@ export function getRsvpStatusText(status?: string, locale: string = 'en'): strin
       default: 'Pending'
     },
     zh: {
-      YES: '参加',
-      NO: '不参加',
-      MAYBE: '可能参加',
-      default: '待定'
+      YES: '\u53c2\u52a0',
+      NO: '\u4e0d\u53c2\u52a0',
+      MAYBE: '\u53ef\u80fd\u53c2\u52a0',
+      default: '\u5f85\u5b9a'
     }
   }
 

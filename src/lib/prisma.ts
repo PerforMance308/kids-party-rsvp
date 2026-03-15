@@ -4,15 +4,31 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Enhanced Prisma client with connection resilience for production
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
+function createPrismaClient() {
+  return new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
     },
-  },
-  log: process.env.NODE_ENV === 'production' ? ['error'] : ['query', 'error', 'warn'],
-})
+    log: process.env.NODE_ENV === 'production' ? ['error'] : ['query', 'error', 'warn'],
+  })
+}
+
+// Enhanced Prisma client with connection resilience for production
+export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+
+export async function withBackgroundPrisma<T>(work: (client: PrismaClient) => Promise<T>): Promise<T> {
+  const backgroundPrisma = createPrismaClient()
+  try {
+    await backgroundPrisma.$connect()
+    return await work(backgroundPrisma)
+  } finally {
+    await backgroundPrisma.$disconnect().catch((error) => {
+      console.error('Failed to disconnect background Prisma client:', error)
+    })
+  }
+}
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 

@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { formatDate, formatPhoneDisplay } from '@/lib/utils'
+import { formatDate, formatPhoneDisplay, getGuestEmailDisplay } from '@/lib/utils'
 import { useLanguage, useTranslations, useLocale } from '@/contexts/LanguageContext'
 import InvitationCard from '@/components/InvitationCard'
 import InvitationTemplate from '@/components/InvitationTemplates'
 import InviteGuests from '@/components/InviteGuests'
 import PaymentForm from '@/components/PaymentForm'
+import { detectPreferredCurrency } from '@/lib/currency'
+import { getBroadcastExtraPrice } from '@/lib/broadcast-pricing'
+import { formatPrice, type SupportedCurrency } from '@/types/invitation-template'
 // Photo sharing disabled
 // import PhotoSharingSection from '@/components/PhotoSharingSection'
 // import HostPhotoManager from '@/components/HostPhotoManager'
@@ -67,7 +70,7 @@ export default function PartyDashboard() {
   const loadQRCode = async () => {
     if (!id) return
     try {
-      // 添加时间戳防止缓存
+      // Add timestamp to avoid stale QR cache
       const response = await fetch(`/api/parties/${id}/qr?t=${Date.now()}`)
       if (response.ok) {
         const data = await response.json()
@@ -78,7 +81,7 @@ export default function PartyDashboard() {
     }
   }
 
-  // 获取派对数据的函数，可以被子组件调用来刷新数据
+  // Fetch party data and allow child components to refresh it
   const fetchParty = async () => {
     if (!id) return
 
@@ -99,7 +102,7 @@ export default function PartyDashboard() {
     }
   }
 
-  // 刷新派对数据（不显示 loading 状态）
+  // Refresh party data without showing a full loading state
   const refreshParty = async () => {
     if (!id) return
     try {
@@ -130,6 +133,7 @@ export default function PartyDashboard() {
   const [showBroadcastPaymentModal, setShowBroadcastPaymentModal] = useState(false)
   const [broadcastSentToday, setBroadcastSentToday] = useState(0)
   const [broadcastPaymentId, setBroadcastPaymentId] = useState<string | null>(null)
+  const [broadcastCurrency, setBroadcastCurrency] = useState<SupportedCurrency>('USD')
 
   // Fetch contacts count to decide whether to show Add Guests section
   useEffect(() => {
@@ -172,15 +176,21 @@ export default function PartyDashboard() {
     }
   }, [showBroadcastPaymentModal])
 
+  useEffect(() => {
+    setBroadcastCurrency(detectPreferredCurrency(locale))
+  }, [locale])
+
+  const broadcastPricing = getBroadcastExtraPrice(broadcastCurrency)
   const copyRsvpLink = () => {
     if (party) {
       navigator.clipboard.writeText(party.rsvpUrl)
       toast.success(
-        locale === 'zh' ? '已复制！' : 'Copied!',
-        locale === 'zh' ? 'RSVP链接已复制到剪贴板' : 'RSVP link copied to clipboard'
+        locale === 'zh' ? '\u5df2\u590d\u5236\uff01' : 'Copied!',
+        locale === 'zh' ? 'RSVP \u94fe\u63a5\u5df2\u590d\u5236\u5230\u526a\u8d34\u677f' : 'RSVP link copied to clipboard'
       )
     }
   }
+
 
   const exportToCSV = () => {
     if (!party) return
@@ -188,7 +198,7 @@ export default function PartyDashboard() {
     const headers = ['Child Name', 'Email', 'Phone', 'Status', 'Children', 'Parent Staying', 'Allergies', 'Message']
     const rows = party.guests.map(guest => [
       guest.childName,
-      guest.email,
+      getGuestEmailDisplay(guest.email),
       guest.phone ? formatPhoneDisplay(guest.phone) : '',
       guest.rsvp?.status || 'No response',
       guest.rsvp?.numChildren || '',
@@ -228,7 +238,8 @@ export default function PartyDashboard() {
         body: JSON.stringify({
           subject: broadcastSubject,
           message: broadcastMessage,
-          paymentId: broadcastPaymentId || undefined
+          paymentId: broadcastPaymentId || undefined,
+          currency: broadcastPricing.currency
         })
       })
 
@@ -340,7 +351,7 @@ export default function PartyDashboard() {
             </div>
             <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-3 text-center border border-red-100">
               <div className="text-xl font-bold text-red-500">{party.stats.notAttending}</div>
-              <div className="text-[10px] text-red-500 font-medium">{locale === 'zh' ? '不参加' : 'Declined'}</div>
+              <div className="text-[10px] text-red-500 font-medium">{locale === 'zh' ? '\u4e0d\u53c2\u52a0' : 'Declined'}</div>
             </div>
             <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-3 text-center border border-amber-100">
               <div className="text-xl font-bold text-amber-600">
@@ -459,7 +470,7 @@ export default function PartyDashboard() {
               </div>
               <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-2xl p-5 text-center border border-red-100">
                 <div className="font-display text-3xl font-bold text-red-500">{party.stats.notAttending}</div>
-                <h3 className="text-sm text-red-500 mt-1">{locale === 'zh' ? '不参加' : 'Declined'}</h3>
+                <h3 className="text-sm text-red-500 mt-1">{locale === 'zh' ? '\u4e0d\u53c2\u52a0' : 'Declined'}</h3>
               </div>
               <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-5 text-center border border-amber-100">
                 <div className="font-display text-3xl font-bold text-amber-600">
@@ -469,7 +480,7 @@ export default function PartyDashboard() {
               </div>
             </div>
 
-            {/* Add Guest Section - Only show when contacts exist */}
+
             {hasContacts && (
               party.guests.length === 0 ? (
                 <div className="card">
@@ -505,12 +516,12 @@ export default function PartyDashboard() {
 
             <div className="card">
               <h2 className="text-lg lg:text-xl font-semibold text-neutral-900 mb-4">
-                {locale === 'zh' ? '群发通知' : 'Broadcast Notification'}
+                {locale === 'zh' ? '\u7fa4\u53d1\u901a\u77e5' : 'Broadcast Notification'}
               </h2>
               <p className="text-sm text-neutral-600 mb-3">
                 {locale === 'zh'
-                  ? '每天免费 1 条群发，额外每条 $0.99。'
-                  : '1 free broadcast per day; each additional one is $0.99.'}
+                  ? `\u6bcf\u5929\u514d\u8d39 1 \u6761\u7fa4\u53d1\uff0c\u989d\u5916\u6bcf\u6761 ${formatPrice(broadcastPricing.price, broadcastPricing.currency, locale)}\u3002`
+                  : `1 free broadcast per day; each additional one is ${formatPrice(broadcastPricing.price, broadcastPricing.currency, locale)}.`}
               </p>
               <div className="space-y-3">
                 <input
@@ -519,7 +530,7 @@ export default function PartyDashboard() {
                   onChange={(e) => setBroadcastSubject(e.target.value)}
                   className="input"
                   maxLength={120}
-                  placeholder={locale === 'zh' ? '邮件标题（3-120字）' : 'Email subject (3-120 chars)'}
+                  placeholder={locale === 'zh' ? '\u90ae\u4ef6\u6807\u9898\uff083-120\u5b57\uff09' : 'Email subject (3-120 chars)'}
                 />
                 <textarea
                   value={broadcastMessage}
@@ -527,7 +538,7 @@ export default function PartyDashboard() {
                   className="input"
                   rows={4}
                   maxLength={1000}
-                  placeholder={locale === 'zh' ? '通知内容（3-1000字）' : 'Message content (3-1000 chars)'}
+                  placeholder={locale === 'zh' ? '\u901a\u77e5\u5185\u5bb9\uff083-1000\u5b57\uff09' : 'Message content (3-1000 chars)'}
                 />
                 {broadcastResult && (
                   <div className={`p-2 rounded text-sm ${broadcastResult.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
@@ -544,10 +555,10 @@ export default function PartyDashboard() {
                       : 'btn-primary'}`}
                   >
                     {isSendingBroadcast
-                      ? (locale === 'zh' ? '发送中...' : 'Sending...')
+                      ? (locale === 'zh' ? '\u53d1\u9001\u4e2d...' : 'Sending...')
                       : needsBroadcastPayment
-                        ? (locale === 'zh' ? '发送通知 ($0.99)' : 'Send Broadcast ($0.99)')
-                        : (locale === 'zh' ? '发送通知' : 'Send Broadcast')}
+                        ? (locale === 'zh' ? `\u53d1\u9001\u901a\u77e5 (${formatPrice(broadcastPricing.price, broadcastPricing.currency, locale)})` : `Send Broadcast (${formatPrice(broadcastPricing.price, broadcastPricing.currency, locale)})`)
+                        : (locale === 'zh' ? '\u53d1\u9001\u901a\u77e5' : 'Send Broadcast')}
                   </button>
                 </div>
               </div>
@@ -580,20 +591,20 @@ export default function PartyDashboard() {
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-neutral-100 text-neutral-600'
                             }`}>
-                            {guest.rsvp?.status === 'YES' ? '✓ ' : guest.rsvp?.status === 'NO' ? '✗ ' : ''}{guest.rsvp?.status || 'Pending'}
+                            {guest.rsvp?.status === 'YES' ? 'Yes ' : guest.rsvp?.status === 'NO' ? 'No ' : ''}{guest.rsvp?.status || 'Pending'}
                           </span>
                         </div>
                         <div className="text-xs text-neutral-500 space-y-0.5">
-                          <div>{guest.email}</div>
+                          <div>{getGuestEmailDisplay(guest.email)}</div>
                           {guest.phone && <div>{formatPhoneDisplay(guest.phone)}</div>}
                           {guest.rsvp && (
                             <div className="flex flex-wrap gap-2 mt-1">
-                              <span className="bg-neutral-100 px-1.5 py-0.5 rounded">{guest.rsvp.numChildren} {locale === 'zh' ? '个孩子' : 'child'}</span>
-                              <span className="bg-neutral-100 px-1.5 py-0.5 rounded">{guest.rsvp.parentStaying ? (locale === 'zh' ? '家长陪同' : 'Parent stays') : (locale === 'zh' ? '不陪同' : 'Drop-off')}</span>
+                              <span className="bg-neutral-100 px-1.5 py-0.5 rounded">{guest.rsvp.numChildren} {locale === 'zh' ? '\u4e2a\u5b69\u5b50' : 'child'}</span>
+                              <span className="bg-neutral-100 px-1.5 py-0.5 rounded">{guest.rsvp.parentStaying ? (locale === 'zh' ? '\u5bb6\u957f\u966a\u540c' : 'Parent stays') : (locale === 'zh' ? '\u4e0d\u966a\u540c' : 'Drop-off')}</span>
                             </div>
                           )}
                           {guest.rsvp?.allergies && (
-                            <div className="text-red-600 mt-1">⚠️ {guest.rsvp.allergies}</div>
+                            <div className="text-red-600 mt-1">Warning: {guest.rsvp.allergies}</div>
                           )}
                         </div>
                       </div>
@@ -621,7 +632,7 @@ export default function PartyDashboard() {
                             </td>
                             <td className="px-4 py-3">
                               <div>
-                                <div className="text-sm text-neutral-900">{guest.email}</div>
+                                <div className="text-sm text-neutral-900">{getGuestEmailDisplay(guest.email)}</div>
                                 {guest.phone && <div className="text-sm text-neutral-600">{formatPhoneDisplay(guest.phone)}</div>}
                               </div>
                             </td>
@@ -643,7 +654,7 @@ export default function PartyDashboard() {
                                   <div>{tr('child').replace('{count}', guest.rsvp.numChildren.toString())}</div>
                                   <div>{guest.rsvp.parentStaying ? tr('staying') : tr('dropOff')}</div>
                                   {guest.rsvp.allergies && (
-                                    <div className="text-red-600">⚠️ {guest.rsvp.allergies}</div>
+                                    <div className="text-red-600">Warning: {guest.rsvp.allergies}</div>
                                   )}
                                   {guest.rsvp.message && (
                                     <div className="text-neutral-600 italic">"{guest.rsvp.message}"</div>
@@ -671,7 +682,7 @@ export default function PartyDashboard() {
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto my-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg font-bold text-neutral-900">
-                {locale === 'zh' ? '购买额外发送次数' : 'Buy Extra Broadcast'}
+                {locale === 'zh' ? '\u8d2d\u4e70\u989d\u5916\u53d1\u9001\u6b21\u6570' : 'Buy Extra Broadcast'}
               </h3>
               <button onClick={() => setShowBroadcastPaymentModal(false)} className="text-neutral-400 hover:text-neutral-600">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -682,27 +693,28 @@ export default function PartyDashboard() {
 
             <p className="text-sm text-neutral-600 mb-4">
               {locale === 'zh'
-                ? '今日免费次数已用完，购买后可额外发送 1 次群发通知。'
+                ? '\u4eca\u65e5\u514d\u8d39\u6b21\u6570\u5df2\u7528\u5b8c\uff0c\u8d2d\u4e70\u540e\u53ef\u989d\u5916\u53d1\u9001 1 \u6b21\u7fa4\u53d1\u901a\u77e5\u3002'
                 : 'Free daily broadcast used. Purchase 1 additional broadcast send.'}
             </p>
 
             <div className="text-center mb-4">
-              <span className="text-2xl font-bold text-neutral-900">$0.99</span>
-              <span className="text-sm text-neutral-500 ml-1">USD</span>
+              <span className="text-2xl font-bold text-neutral-900">{formatPrice(broadcastPricing.price, broadcastPricing.currency, locale)}</span>
+              <span className="text-sm text-neutral-500 ml-1">{broadcastPricing.currency}</span>
             </div>
 
             <PaymentForm
-              amount={0.99}
-              currency="USD"
-              description={locale === 'zh' ? '额外群发通知' : 'Additional broadcast notification'}
+              amount={broadcastPricing.price}
+              currency={broadcastPricing.currency}
+              description={locale === 'zh' ? '\u989d\u5916\u7fa4\u53d1\u901a\u77e5' : 'Additional broadcast notification'}
               metadata={{
                 partyId: party.id,
                 feature: 'broadcast_extra',
+                currency: broadcastPricing.currency,
               }}
               onSuccess={(paymentId) => {
                 setBroadcastPaymentId(paymentId)
                 setShowBroadcastPaymentModal(false)
-                setBroadcastResult({ type: 'success', text: locale === 'zh' ? '付款成功，请点击发送' : 'Payment successful, click Send to broadcast' })
+                setBroadcastResult({ type: 'success', text: locale === 'zh' ? '\u4ed8\u6b3e\u6210\u529f\uff0c\u8bf7\u70b9\u51fb\u53d1\u9001' : 'Payment successful, click Send to broadcast' })
               }}
               onError={(msg) => setBroadcastResult({ type: 'error', text: msg })}
               onCancel={() => setShowBroadcastPaymentModal(false)}
@@ -721,7 +733,7 @@ export default function PartyDashboard() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
-            {locale === 'zh' ? '分享链接' : 'Share'}
+            {locale === 'zh' ? '\u5206\u4eab\u94fe\u63a5' : 'Share'}
           </button>
           <Link
             href={`/${locale}/party/${party.id}/edit`}
@@ -730,12 +742,12 @@ export default function PartyDashboard() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
-            {locale === 'zh' ? '编辑' : 'Edit'}
+            {locale === 'zh' ? '\u7f16\u8f91' : 'Edit'}
           </Link>
           <button
             onClick={exportToCSV}
             className="inline-flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm text-neutral-800 shadow-sm hover:bg-neutral-50 transition-colors"
-            title={locale === 'zh' ? '导出名单' : 'Export'}
+            title={locale === 'zh' ? '\u5bfc\u51fa\u540d\u5355' : 'Export'}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

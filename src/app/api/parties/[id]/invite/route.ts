@@ -58,25 +58,37 @@ export async function POST(
             party.user.name || 'Your friend'
         )
 
-        // Send emails in parallel
-        const sendPromises = emails.map(email =>
-            sendEmail({
-                to: email,
-                subject: emailContent.subject,
-                text: emailContent.text,
-                html: emailContent.html
-            }).catch(err => {
-                console.error(`Failed to send invite to ${email}:`, err)
-                return null
+        // Send emails in parallel and report partial failures honestly
+        const results = await Promise.all(
+            emails.map(async (email) => {
+                try {
+                    await sendEmail({
+                        to: email,
+                        subject: emailContent.subject,
+                        text: emailContent.text,
+                        html: emailContent.html
+                    })
+                    return { email, success: true as const }
+                } catch (err) {
+                    console.error(`Failed to send invite to ${email}:`, err)
+                    return { email, success: false as const }
+                }
             })
         )
 
-        await Promise.all(sendPromises)
+        const successCount = results.filter(result => result.success).length
+        const failedEmails = results
+            .filter(result => !result.success)
+            .map(result => result.email)
 
         return NextResponse.json({
-            message: `Invitations sent to ${emails.length} recipients`,
-            count: emails.length
-        })
+            message: failedEmails.length === 0
+                ? `Invitations sent to ${successCount} recipients`
+                : `Invitations sent to ${successCount} recipients, ${failedEmails.length} failed`,
+            count: successCount,
+            failedCount: failedEmails.length,
+            failedEmails
+        }, { status: failedEmails.length === 0 ? 200 : 207 })
 
     } catch (error) {
         console.error('Send invites error:', error)

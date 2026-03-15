@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin'
 import { prisma } from '@/lib/prisma'
+import { isUndeliverableGuestEmail } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,12 +10,19 @@ export async function GET(request: NextRequest) {
       return adminCheck.response!
     }
 
-    // Get all notifications, ordered by creation date
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
+    const type = searchParams.get('type')
+
     const notifications = await prisma.emailNotification.findMany({
+      where: {
+        ...(status && status !== 'all' ? { status } : {}),
+        ...(type && type !== 'all' ? { type } : {}),
+      },
       orderBy: {
         createdAt: 'desc'
       },
-      take: 100, // Limit to last 100 notifications
+      take: 200,
       select: {
         id: true,
         email: true,
@@ -25,11 +33,54 @@ export async function GET(request: NextRequest) {
         scheduledAt: true,
         attempts: true,
         error: true,
-        createdAt: true
+        createdAt: true,
+        relatedId: true,
+        user: {
+          select: {
+            email: true,
+            name: true,
+          }
+        }
       }
     })
 
-    // Get statistics
+    const partyIds = Array.from(new Set(
+      notifications
+        .filter((notification) =>
+          ['HOST_BROADCAST', 'PARTY_REMINDER_24H', 'HOST_PARTY_REMINDER_24H', 'PHOTO_SHARING_AVAILABLE'].includes(notification.type)
+        )
+        .map((notification) => notification.relatedId)
+        .filter((id): id is string => Boolean(id))
+    ))
+
+    const parties = partyIds.length > 0
+      ? await prisma.party.findMany({
+          where: {
+            id: { in: partyIds }
+          },
+          select: {
+            id: true,
+            eventDatetime: true,
+            child: {
+              select: {
+                name: true
+              }
+            }
+          }
+        })
+      : []
+
+    const partyMap = new Map(
+      parties.map((party) => [
+        party.id,
+        {
+          id: party.id,
+          childName: party.child.name,
+          eventDatetime: party.eventDatetime,
+        }
+      ])
+    )
+
     const stats = {
       total: notifications.length,
       pending: notifications.filter(n => n.status === 'pending').length,
@@ -38,7 +89,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      notifications,
+      notifications: notifications.map((notification) => ({
+        ...notification,
+        email: isUndeliverableGuestEmail(notification.email) ? '' : notification.email,
+        party: notification.relatedId ? partyMap.get(notification.relatedId) ?? null : null,
+      })),
       stats
     })
   } catch (error) {

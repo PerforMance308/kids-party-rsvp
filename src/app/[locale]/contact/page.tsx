@@ -10,15 +10,35 @@ export default function ContactPage() {
     message: ''
   })
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus('sending')
-    
-    // Simulate form submission - in production, connect to an API
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setStatus('success')
-    setFormData({ name: '', email: '', subject: '', message: '' })
+    setError('')
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        setStatus('error')
+        setError(data.error || 'Failed to send your message.')
+        return
+      }
+
+      setStatus('success')
+      setFormData({ name: '', email: '', subject: '', message: '' })
+    } catch {
+      setStatus('error')
+      setError('Failed to send your message.')
+    }
   }
 
   return (
@@ -43,7 +63,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-medium text-neutral-800">Email</h3>
-                  <p className="text-neutral-600">support@kidpartyrsvp.com</p>
+                  <p className="text-neutral-600">support@kidspartyrsvp.com</p>
                 </div>
               </div>
 
@@ -87,6 +107,11 @@ export default function ContactPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                {status === 'error' && error && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-neutral-700 mb-1">
                     Name

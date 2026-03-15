@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
-import { prisma } from '@/lib/prisma'
+import { prisma, withBackgroundPrisma } from '@/lib/prisma'
 import { sanitizeInput, isValidEmail, isValidUUID } from '@/lib/security'
 import { rsvpSchema } from '@/lib/validations'
 import { sendEmail, generateHostRSVPNotificationEmail, generateGuestRSVPConfirmationEmail } from '@/lib/email'
@@ -359,26 +359,28 @@ export async function POST(
     if (user?.email) {
       const saveContact = async () => {
         try {
-          const existingContact = await prisma.contact.findFirst({
-            where: {
-              userId: party.userId,
-              email: user.email
-            }
-          })
-
-          if (!existingContact) {
-            await prisma.contact.create({
-              data: {
+          await withBackgroundPrisma(async (backgroundPrisma) => {
+            const existingContact = await backgroundPrisma.contact.findFirst({
+              where: {
                 userId: party.userId,
-                name: childName,
-                childName: childName,
-                email: user.email,
-                phone: phone || null,
-                source: 'RSVP'
+                email: user.email
               }
             })
-            console.log(`✅ Auto-saved contact for host: ${user.email}`)
-          }
+
+            if (!existingContact) {
+              await backgroundPrisma.contact.create({
+                data: {
+                  userId: party.userId,
+                  name: childName,
+                  childName: childName,
+                  email: user.email,
+                  phone: phone || null,
+                  source: 'RSVP'
+                }
+              })
+              console.log(`✅ Auto-saved contact for host: ${user.email}`)
+            }
+          })
         } catch (contactError) {
           console.error('Failed to auto-save contact:', contactError)
         }

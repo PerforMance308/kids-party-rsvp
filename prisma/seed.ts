@@ -1,0 +1,5 @@
+console.error('')
+console.error('db:seed is intentionally disabled for production safety.')
+console.error('Use `npm run db:seed:smoke` only in development/test environments.')
+console.error('')
+process.exit(1)

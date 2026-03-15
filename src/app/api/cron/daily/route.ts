@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log('🕐 Daily cron job started')
+    console.log('[cron] Daily cron job started')
 
     await scheduleBirthdayReminders()
     await processPartyReminders24h()
     const emailsProcessed = await processPendingEmails()
 
-    console.log(`✅ Daily cron job completed. Emails processed: ${emailsProcessed}`)
+    console.log(`[cron] Daily cron job completed. Emails processed: ${emailsProcessed}`)
 
     return NextResponse.json({
       success: true,
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('❌ Daily cron job error:', error)
+    console.error('[cron] Daily cron job error:', error)
     return NextResponse.json(
       { error: 'Cron job failed' },
       { status: 500 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse, after } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, withBackgroundPrisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { partySchema, legacyPartySchema } from '@/lib/validations'
@@ -275,18 +275,22 @@ export async function POST(request: NextRequest) {
     // Create reminder schedule in the background (Non-blocking)
     after(async () => {
       try {
-        if (selectedGuests.length > 0) {
-          await prisma.guest.createMany({
-            data: selectedGuests.map((guest) => ({
-              partyId: party.id,
-              childName: guest.childName,
-              email: guest.email,
-              phone: guest.phone,
-            })),
-            skipDuplicates: true,
-          })
-        }
-        await createReminderSchedule(party.id)
+        await withBackgroundPrisma(async (backgroundPrisma) => {
+          if (selectedGuests.length > 0) {
+            await backgroundPrisma.guest.createMany({
+              data: selectedGuests.map((guest) => ({
+                partyId: party.id,
+                childName: guest.childName,
+                email: guest.email,
+                phone: guest.phone,
+              })),
+              skipDuplicates: true,
+            })
+          }
+
+          await createReminderSchedule(party.id, backgroundPrisma)
+        })
+
         const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
         if (session.user.email) {
           const confirmationEmail = generatePartyCreatedConfirmationEmail({

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import Stripe from 'stripe'
 import { getTemplateConfig, getEffectivePrice } from '@/lib/template-utils'
+import { getBroadcastExtraPrice } from '@/lib/broadcast-pricing'
 
 
 export async function POST(request: NextRequest) {
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
     let chargeAmount: number
     let chargeDescription = description || 'Kid Party RSVP Payment'
     const isTemplatePayment = metadata?.feature === 'template' && metadata?.templateId
+    const isBroadcastExtraPayment = metadata?.feature === 'broadcast_extra'
 
     if (isTemplatePayment) {
       // Server-side price computation for template payments (prevents price tampering)
@@ -43,6 +45,11 @@ export async function POST(request: NextRequest) {
       chargeAmount = effectivePrice.price
       requestedCurrency = effectivePrice.currency
       chargeDescription = description || `Template: ${metadata.templateId}`
+    } else if (isBroadcastExtraPayment) {
+      const broadcastPricing = getBroadcastExtraPrice(metadata?.currency || requestedCurrency)
+      chargeAmount = broadcastPricing.price
+      requestedCurrency = broadcastPricing.currency
+      chargeDescription = description || 'Additional broadcast notification'
     } else {
       // Non-template payments (e.g., photo-sharing) use front-end amount
       if (!amount || !requestedCurrency) {

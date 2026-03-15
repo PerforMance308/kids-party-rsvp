@@ -229,11 +229,15 @@ export const createTransporter = () => {
 }
 
 export async function sendEmail(emailData: EmailData) {
+  if (process.env.EMAIL_TEST_MODE === 'record') {
+    console.log(`[email:test] ${emailData.to} :: ${emailData.subject}`)
+    return
+  }
+
   try {
     const provider = await getEmailProvider()
     await provider.send(emailData.to, emailData.subject, emailData.text, emailData.html, emailData.attachments)
     console.log(`✅ Email sent via ${provider.name} to ${emailData.to}`)
-    return Promise.resolve()
   } catch (error) {
     console.error('❌ Failed to send email:', error)
 
@@ -248,8 +252,7 @@ export async function sendEmail(emailData: EmailData) {
     }
     console.log('=====================================\n')
 
-    // Don't throw error - just log and continue
-    return Promise.resolve()
+    throw error
   }
 }
 

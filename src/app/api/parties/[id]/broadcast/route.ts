@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
-import { prisma } from '@/lib/prisma'
+import { prisma, withBackgroundPrisma } from '@/lib/prisma'
 import { sanitizeInput } from '@/lib/security'
 import { sendEmail, generateBroadcastEmail } from '@/lib/email'
-import { calculateAge, getBaseUrl } from '@/lib/utils'
+import { calculateAge, getBaseUrl, isUndeliverableGuestEmail } from '@/lib/utils'
+import { getBroadcastExtraPrice, normalizeSupportedCurrency } from '@/lib/broadcast-pricing'
 import Stripe from 'stripe'
 
 const BROADCAST_FREE_DAILY_LIMIT = 1
@@ -12,6 +13,10 @@ const BROADCAST_MAX_RECIPIENTS = 200
 
 function uniqueEmails(emails: string[]) {
   return Array.from(new Set(emails.map(e => e.trim().toLowerCase()).filter(Boolean)))
+}
+
+function isDeliverableEmail(email: string) {
+  return !isUndeliverableGuestEmail(email)
 }
 
 export async function POST(
@@ -45,6 +50,7 @@ export async function POST(
     const subject = sanitizeInput(body?.subject || '')
     const message = sanitizeInput(body?.message || '')
     const paymentId = sanitizeInput(body?.paymentId || '')
+    const requestedCurrency = normalizeSupportedCurrency(body?.currency)
 
     if (subject.length < 3 || subject.length > 120) {
       return NextResponse.json({ error: 'Subject must be 3-120 characters' }, { status: 400 })
@@ -70,12 +76,13 @@ export async function POST(
     const extraBroadcastNeeded = sentToday >= BROADCAST_FREE_DAILY_LIMIT
     if (extraBroadcastNeeded) {
       if (!paymentId) {
+        const pricing = getBroadcastExtraPrice(requestedCurrency)
         return NextResponse.json(
           {
             error: 'Payment required for additional broadcasts today',
             code: 'PAYMENT_REQUIRED',
-            price: 0.99,
-            currency: 'USD',
+            price: pricing.price,
+            currency: pricing.currency,
             sentToday,
             freeLimit: BROADCAST_FREE_DAILY_LIMIT
           },
@@ -140,11 +147,25 @@ export async function POST(
           { status: 400 }
         )
       }
+
+      const expectedPricing = getBroadcastExtraPrice(paymentIntent.metadata?.currency || paymentIntent.currency)
+      if (paymentIntent.amount !== Math.round(expectedPricing.price * 100)) {
+        return NextResponse.json(
+          { error: 'Payment amount verification failed' },
+          { status: 400 }
+        )
+      }
+      if (paymentIntent.currency.toUpperCase() !== expectedPricing.currency) {
+        return NextResponse.json(
+          { error: 'Payment currency verification failed' },
+          { status: 400 }
+        )
+      }
     }
 
-    const recipients = uniqueEmails(party.guests.map(g => g.email))
+    const recipients = uniqueEmails(party.guests.map(g => g.email)).filter(isDeliverableEmail)
     if (recipients.length === 0) {
-      return NextResponse.json({ error: 'No guest emails found for this party' }, { status: 400 })
+      return NextResponse.json({ error: 'No deliverable guest emails found for this party' }, { status: 400 })
     }
     if (recipients.length > BROADCAST_MAX_RECIPIENTS) {
       return NextResponse.json(
@@ -173,51 +194,97 @@ export async function POST(
     const html = emailContent.html
     const text = emailContent.text
 
-    // Record broadcast + payment usage in DB first, then return immediately
-    await prisma.reminder.create({
-      data: {
-        partyId: party.id,
-        type: 'HOST_BROADCAST',
-        sentAt: now
-      }
-    })
-
-    await prisma.emailNotification.createMany({
-      data: recipients.map(email => ({
-        userId: session.user.id!,
-        email,
-        type: 'HOST_BROADCAST',
-        subject,
-        content: text,
-        htmlContent: html,
-        relatedId: party.id,
-        status: 'sent',
-        sentAt: now
-      })) as any[]
-    })
-
-    if (extraBroadcastNeeded && paymentId) {
-      await prisma.emailNotification.create({
+    const notifications = await prisma.$transaction(async (tx) => {
+      await tx.reminder.create({
         data: {
-          userId: session.user.id!,
-          email: session.user.email || '',
-          type: 'HOST_BROADCAST_PAYMENT_USAGE',
-          subject: 'Broadcast extra payment used',
-          content: `Payment ${paymentId} used for party ${party.id}`,
-          relatedId: paymentId,
-          status: 'sent',
+          partyId: party.id,
+          type: 'HOST_BROADCAST',
           sentAt: now
-        } as any
+        }
       })
-    }
 
-    // Fire-and-forget: send emails in background, don't block response
-    Promise.allSettled(
-      recipients.map(email => sendEmail({ to: email, subject, text, html }))
-    ).catch(err => console.error('Background email send error:', err))
+      const createdNotifications = await Promise.all(
+        recipients.map(email =>
+          tx.emailNotification.create({
+            data: {
+              userId: session.user.id!,
+              email,
+              type: 'HOST_BROADCAST',
+              subject,
+              content: text,
+              htmlContent: html,
+              relatedId: party.id,
+              status: 'pending',
+              scheduledAt: now
+            } as any,
+            select: {
+              id: true,
+              email: true
+            }
+          })
+        )
+      )
+
+      if (extraBroadcastNeeded && paymentId) {
+        await tx.emailNotification.create({
+          data: {
+            userId: session.user.id!,
+            email: session.user.email || '',
+            type: 'HOST_BROADCAST_PAYMENT_USAGE',
+            subject: 'Broadcast extra payment used',
+            content: `Payment ${paymentId} used for party ${party.id}`,
+            relatedId: paymentId,
+            status: 'sent',
+            sentAt: now
+          } as any
+        })
+      }
+
+      return createdNotifications
+    })
+
+    after(async () => {
+      await withBackgroundPrisma(async (backgroundPrisma) => {
+        await Promise.allSettled(
+          notifications.map(async (notification) => {
+            try {
+              await sendEmail({
+                to: notification.email,
+                subject,
+                text,
+                html
+              })
+
+              await backgroundPrisma.emailNotification.update({
+                where: { id: notification.id },
+                data: {
+                  status: 'sent',
+                  sentAt: new Date(),
+                  error: null
+                }
+              })
+            } catch (error) {
+              const errorMessage = error instanceof Error ? error.message : String(error)
+              console.error(`Broadcast email failed for ${notification.email}:`, error)
+
+              await backgroundPrisma.emailNotification.update({
+                where: { id: notification.id },
+                data: {
+                  status: 'failed',
+                  error: errorMessage,
+                  attempts: {
+                    increment: 1
+                  }
+                }
+              })
+            }
+          })
+        )
+      })
+    })
 
     return NextResponse.json({
-      message: `Sending broadcast to ${recipients.length} guests`,
+      message: `Broadcast queued for ${recipients.length} guests`,
       totalRecipients: recipients.length,
       sentToday: sentToday + 1,
       freeDailyLimit: BROADCAST_FREE_DAILY_LIMIT

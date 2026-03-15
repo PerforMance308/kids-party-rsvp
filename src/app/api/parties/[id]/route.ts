@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { sendPartyUpdateEmail } from '@/lib/email'
-import { getBaseUrl, calculateAge } from '@/lib/utils'
+import { getBaseUrl, calculateAge, isUndeliverableGuestEmail } from '@/lib/utils'
 
 function getDefaultRsvpCloseDate(eventDatetime: Date): Date {
   return new Date(eventDatetime.getTime() - 2 * 24 * 60 * 60 * 1000)
@@ -240,7 +240,7 @@ export async function PUT(
       after(async () => {
         await Promise.allSettled(
           notifiableGuests
-            .filter((guest) => Boolean(guest.email))
+            .filter((guest) => !isUndeliverableGuestEmail(guest.email))
             .map((guest) =>
               sendPartyUpdateEmail(
                 guest.email!,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma, withBackgroundPrisma } from '@/lib/prisma'
 import { hashPassword, validatePassword, validateEmail } from '@/lib/auth'
 import { sanitizeInput } from '@/lib/security'
 import { v4 as uuidv4 } from 'uuid'
@@ -59,21 +59,23 @@ export async function POST(request: NextRequest) {
     const token = uuidv4()
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-    prisma.verificationToken.create({
-      data: {
-        identifier: email,
-        token,
-        expires
-      }
-    }).then(() => {
+    withBackgroundPrisma(async (backgroundPrisma) => {
+      await backgroundPrisma.verificationToken.create({
+        data: {
+          identifier: email,
+          token,
+          expires
+        }
+      })
+
       const emailContent = generateVerificationEmail(email, token)
-      return sendEmail({
+      await sendEmail({
         to: email,
         subject: emailContent.subject,
         text: emailContent.text,
         html: emailContent.html
       })
-    }).then(() => {
+
       console.log(`✅ Verification email sent to ${email} upon registration`)
     }).catch((emailError) => {
       console.error('[AUTH] Failed to send verification email on registration:', emailError)

@@ -1,9 +1,12 @@
+import { PrismaClient } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { sendEmail, generateReminderEmail } from '@/lib/email'
 import { getBaseUrl } from '@/lib/utils'
 
-export async function createReminderSchedule(partyId: string) {
-  const party = await prisma.party.findUnique({
+type ReminderPrismaClient = Pick<PrismaClient, 'party' | 'reminder'>
+
+export async function createReminderSchedule(partyId: string, prismaClient: ReminderPrismaClient = prisma) {
+  const party = await prismaClient.party.findUnique({
     where: { id: partyId }
   })
 
@@ -29,7 +32,7 @@ export async function createReminderSchedule(partyId: string) {
   // Create reminder records for future dates
   for (const reminder of reminderTypes) {
     if (reminder.date > now) {
-      await prisma.reminder.create({
+      await prismaClient.reminder.create({
         data: {
           partyId,
           type: reminder.type,

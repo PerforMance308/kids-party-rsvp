@@ -54,6 +54,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 Templates
               </Link>
+              <Link
+                href={`/${locale}/admin/notifications` as any}
+                className={`font-medium ${pathname?.includes('/admin/notifications') ? 'text-gray-900 underline underline-offset-4' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                Notifications
+              </Link>
             </nav>
           </div>
           <div className="flex items-center gap-4">
