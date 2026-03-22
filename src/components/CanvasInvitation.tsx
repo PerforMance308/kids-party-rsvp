@@ -7,6 +7,7 @@ import type {
   TemplateElement,
 } from '@/types/invitation-template';
 import { getCanvasFontFamily } from '@/lib/invitation-fonts';
+import { resolvePartyEndDateTime, resolvePartyStartDateTime } from '@/lib/party-datetime';
 import { useLocale, useTranslations } from '@/contexts/LanguageContext';
 
 // 简洁的日期时间格式：1月15日 14:30 或 Jan 15, 2:30pm
@@ -134,8 +135,8 @@ export default function CanvasInvitation({
   // 获取元素的实际内容（只返回动态值，不加前缀，因为图片上已有标签）
   const getElementContent = useCallback(
     (element: TemplateElement): string => {
-      const startDate = new Date(party.eventDatetime);
-      const endDate = party.eventEndDatetime ? new Date(party.eventEndDatetime) : null;
+      const startDate = resolvePartyStartDateTime(party);
+      const endDate = resolvePartyEndDateTime(party);
 
       switch (element.name) {
         case 'child_name':

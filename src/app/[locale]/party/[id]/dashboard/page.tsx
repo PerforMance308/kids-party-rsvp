@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { resolvePartyStartDateTime } from '@/lib/party-datetime'
 import { formatDate, formatPhoneDisplay, getGuestEmailDisplay } from '@/lib/utils'
 import { useLanguage, useTranslations, useLocale } from '@/contexts/LanguageContext'
 import InvitationCard from '@/components/InvitationCard'
@@ -36,7 +37,11 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventLocalDate?: string
+  eventLocalTime?: string
   eventEndDatetime?: string
+  eventEndLocalDate?: string
+  eventEndLocalTime?: string
   location: string
   theme?: string
   notes?: string
@@ -294,6 +299,8 @@ export default function PartyDashboard() {
     )
   }
 
+  const partyStart = resolvePartyStartDateTime(party)
+
 
   return (
     <main className="flex-1 px-4 py-4 lg:py-8 pb-8 lg:pb-8">
@@ -326,7 +333,7 @@ export default function PartyDashboard() {
               <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              {formatDate(new Date(party.eventDatetime), locale)}
+              {formatDate(partyStart, locale)}
             </span>
             <span className="flex items-center gap-1">
               <svg className="w-3.5 h-3.5 lg:w-4 lg:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,7 +417,11 @@ export default function PartyDashboard() {
                       childName: party.childName,
                       childAge: party.childAge,
                       eventDatetime: party.eventDatetime,
+                      eventLocalDate: party.eventLocalDate,
+                      eventLocalTime: party.eventLocalTime,
                       eventEndDatetime: party.eventEndDatetime,
+                      eventEndLocalDate: party.eventEndLocalDate,
+                      eventEndLocalTime: party.eventEndLocalTime,
                       location: party.location,
                       theme: party.theme,
                       notes: party.notes

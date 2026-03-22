@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
+import { resolvePartyEndDateTime, resolvePartyStartDateTime } from '@/lib/party-datetime'
 import { useLocale } from '@/contexts/LanguageContext'
 import PhotoUpload from '@/components/PhotoUpload'
 import PartyMapCard from '@/components/PartyMapCard'
@@ -14,6 +15,11 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventLocalDate?: string
+  eventLocalTime?: string
+  eventEndDatetime?: string
+  eventEndLocalDate?: string
+  eventEndLocalTime?: string
   location: string
   locationFull?: string
   theme?: string
@@ -53,6 +59,27 @@ interface Photo {
   caption?: string
   uploaderName: string
   uploadedAt: string
+}
+
+function formatPartyTimeRange(start: Date, end: Date | null, locale: string): string {
+  if (!end) return formatDate(start, locale)
+
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate()
+
+  if (!sameDay) {
+    return `${formatDate(start, locale)} - ${formatDate(end, locale)}`
+  }
+
+  const normalizedLocale = locale.startsWith('zh') ? 'zh-CN' : 'en-US'
+  const endTime = new Intl.DateTimeFormat(normalizedLocale, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(end)
+
+  return `${formatDate(start, locale)} - ${endTime}`
 }
 
 export default function GuestPartyPage() {
@@ -195,7 +222,10 @@ export default function GuestPartyPage() {
     )
   }
 
-  const isPastEvent = new Date(party.eventDatetime) < new Date()
+  const partyStart = resolvePartyStartDateTime(party)
+  const partyEnd = resolvePartyEndDateTime(party)
+  const isPastEvent = partyStart < new Date()
+  const partyTimeRange = formatPartyTimeRange(partyStart, partyEnd, locale)
 
   return (
     <div className="min-h-screen bg-neutral-50 py-8 px-4">
@@ -211,7 +241,7 @@ export default function GuestPartyPage() {
             )}
             <div className="bg-primary-50 rounded-lg p-4 inline-block">
               <div className="space-y-2 text-sm text-primary-800">
-                <p><strong>When:</strong> {formatDate(new Date(party.eventDatetime))}</p>
+                <p><strong>When:</strong> {partyTimeRange}</p>
                 <p><strong>Where:</strong> {party.location}</p>
                 {isPastEvent && (
                   <p className="text-neutral-600">✅ This event has passed</p>
@@ -223,7 +253,6 @@ export default function GuestPartyPage() {
                 <strong>Special Notes:</strong> {party.notes}
               </div>
             )}
-            <PartyMapCard address={party.locationFull || party.location} title="Party location map" />
             {(party.owner?.email || party.owner?.phone) && (
               <div className="mt-4 p-3 rounded-lg border border-neutral-200 bg-white text-sm text-neutral-700 text-left">
                 <p className="font-semibold mb-1">Host contact</p>
@@ -332,7 +361,7 @@ export default function GuestPartyPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="font-medium text-neutral-700">Date & Time:</span>
-                  <p className="text-neutral-900">{formatDate(new Date(party.eventDatetime))}</p>
+                  <p className="text-neutral-900">{partyTimeRange}</p>
                 </div>
                 <div>
                   <span className="font-medium text-neutral-700">Location:</span>

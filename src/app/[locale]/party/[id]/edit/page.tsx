@@ -12,7 +12,11 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventLocalDate?: string
+  eventLocalTime?: string
   eventEndDatetime?: string
+  eventEndLocalDate?: string
+  eventEndLocalTime?: string
   rsvpClosesAt?: string | null
   location: string
   locationFull?: string
@@ -86,12 +90,12 @@ export default function EditPartyPage() {
 
           // Populate form - 分别设置日期和时间
           const startDateTime = new Date(partyData.eventDatetime)
-          setEventDate(toLocalDateInputValue(startDateTime))
-          setEventTime(`${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`)
+          setEventDate(partyData.eventLocalDate || toLocalDateInputValue(startDateTime))
+          setEventTime(partyData.eventLocalTime || `${startDateTime.getHours().toString().padStart(2, '0')}:${startDateTime.getMinutes().toString().padStart(2, '0')}`)
 
           if (partyData.eventEndDatetime) {
             const endDateTime = new Date(partyData.eventEndDatetime)
-            setEventEndTime(`${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime.getMinutes().toString().padStart(2, '0')}`)
+            setEventEndTime(partyData.eventEndLocalTime || `${endDateTime.getHours().toString().padStart(2, '0')}:${endDateTime.getMinutes().toString().padStart(2, '0')}`)
           } else {
             // 默认设置结束时间为开始时间+2小时
             const endHours = (startDateTime.getHours() + 2) % 24
@@ -158,7 +162,11 @@ export default function EditPartyPage() {
         credentials: 'include',
         body: JSON.stringify({
           eventDatetime: eventDatetime.toISOString(),
+          eventLocalDate: eventDate,
+          eventLocalTime: eventTime,
           eventEndDatetime: eventEndDatetime?.toISOString(),
+          eventEndLocalDate: eventEndDatetime ? toLocalDateInputValue(eventEndDatetime) : undefined,
+          eventEndLocalTime: eventEndTime || undefined,
           rsvpClosesAt: rsvpClosesAt.toISOString(),
           location,
           locationFull: locationFull || location,

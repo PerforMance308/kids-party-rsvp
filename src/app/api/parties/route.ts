@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { partySchema, legacyPartySchema } from '@/lib/validations'
 import { createReminderSchedule } from '@/lib/scheduler'
+import { getPartyLocalFields } from '@/lib/party-datetime'
 import { calculateAge, getBaseUrl } from '@/lib/utils'
 import { getTemplateConfig, getEffectivePrice } from '@/lib/template-utils'
 import { sendEmail, generatePartyCreatedConfirmationEmail } from '@/lib/email'
@@ -139,6 +140,10 @@ export async function POST(request: NextRequest) {
 
     let party
     const selectedGuests = normalizeSelectedGuests(body.selectedGuests)
+    const eventLocalDate = typeof body.eventLocalDate === 'string' ? body.eventLocalDate : undefined
+    const eventLocalTime = typeof body.eventLocalTime === 'string' ? body.eventLocalTime : undefined
+    const eventEndLocalDate = typeof body.eventEndLocalDate === 'string' ? body.eventEndLocalDate : undefined
+    const eventEndLocalTime = typeof body.eventEndLocalTime === 'string' ? body.eventEndLocalTime : undefined
 
     // Try new schema first (with childId)
     if (body.childId) {
@@ -174,7 +179,11 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           childId: validatedData.childId,
           eventDatetime: validatedData.eventDatetime,
+          eventLocalDate: eventLocalDate || null,
+          eventLocalTime: eventLocalTime || null,
           eventEndDatetime,
+          eventEndLocalDate: eventEndLocalDate || null,
+          eventEndLocalTime: eventEndLocalTime || null,
           rsvpClosesAt,
           location: validatedData.location,
           locationFull: validatedData.locationFull || validatedData.location,
@@ -221,7 +230,11 @@ export async function POST(request: NextRequest) {
           userId: session.user.id,
           childId: child.id,
           eventDatetime: validatedData.eventDatetime,
+          eventLocalDate: eventLocalDate || null,
+          eventLocalTime: eventLocalTime || null,
           eventEndDatetime: legacyEventEndDatetime,
+          eventEndLocalDate: eventEndLocalDate || null,
+          eventEndLocalTime: eventEndLocalTime || null,
           rsvpClosesAt: legacyRsvpClosesAt,
           location: validatedData.location,
           locationFull: validatedData.locationFull || validatedData.location,
@@ -293,10 +306,20 @@ export async function POST(request: NextRequest) {
 
         const childAge = party.targetAge ?? calculateAge(party.child.birthDate)
         if (session.user.email) {
+          const localTimes = getPartyLocalFields({
+            eventDatetime: party.eventDatetime,
+            eventEndDatetime: party.eventEndDatetime,
+            eventLocalDate: party.eventLocalDate,
+            eventLocalTime: party.eventLocalTime,
+            eventEndLocalDate: party.eventEndLocalDate,
+            eventEndLocalTime: party.eventEndLocalTime,
+          })
           const confirmationEmail = generatePartyCreatedConfirmationEmail({
             childName: party.child.name,
             childAge,
             eventDatetime: party.eventDatetime,
+            eventLocalDate: localTimes.eventLocalDate,
+            eventLocalTime: localTimes.eventLocalTime,
             location: party.location,
             theme: party.theme || undefined,
             notes: party.notes || undefined,
@@ -397,7 +420,11 @@ export async function GET(request: NextRequest) {
         childAge,
         childGender: party.childGender,
         eventDatetime: party.eventDatetime,
+        eventLocalDate: party.eventLocalDate,
+        eventLocalTime: party.eventLocalTime,
         eventEndDatetime: party.eventEndDatetime,
+        eventEndLocalDate: party.eventEndLocalDate,
+        eventEndLocalTime: party.eventEndLocalTime,
         rsvpClosesAt: party.rsvpClosesAt ?? null,
         location: party.location,
         locationFull: party.locationFull,

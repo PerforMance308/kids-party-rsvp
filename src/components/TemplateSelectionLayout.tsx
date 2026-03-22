@@ -15,7 +15,11 @@ interface PreviewParty {
   childName: string
   childAge: number
   eventDatetime: string
+  eventLocalDate?: string
+  eventLocalTime?: string
   eventEndDatetime?: string
+  eventEndLocalDate?: string
+  eventEndLocalTime?: string
   location: string
   theme?: string
   notes?: string

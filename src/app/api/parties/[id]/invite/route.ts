@@ -50,6 +50,8 @@ export async function POST(
                 childName: party.child.name,
                 childAge,
                 eventDatetime: party.eventDatetime,
+                eventLocalDate: party.eventLocalDate,
+                eventLocalTime: party.eventLocalTime,
                 location: party.location,
                 theme: party.theme || undefined,
                 notes: party.notes || undefined,

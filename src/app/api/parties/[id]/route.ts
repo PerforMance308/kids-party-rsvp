@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-config'
 import { sendPartyUpdateEmail } from '@/lib/email'
+import { getPartyLocalFields } from '@/lib/party-datetime'
 import { getBaseUrl, calculateAge, isUndeliverableGuestEmail } from '@/lib/utils'
 
 function getDefaultRsvpCloseDate(eventDatetime: Date): Date {
@@ -73,7 +74,11 @@ export async function GET(
       ...party,
       childName: party.child.name,
       childAge,
+      eventLocalDate: party.eventLocalDate,
+      eventLocalTime: party.eventLocalTime,
       eventEndDatetime: party.eventEndDatetime,
+      eventEndLocalDate: party.eventEndLocalDate,
+      eventEndLocalTime: party.eventEndLocalTime,
       rsvpClosesAt: party.rsvpClosesAt,
       stats,
       rsvpUrl: `${getBaseUrl()}/rsvp/${party.publicRsvpToken}`
@@ -136,7 +141,11 @@ export async function PUT(
 
     const validatedData = {
       eventDatetime,
+      eventLocalDate: typeof body.eventLocalDate === 'string' ? body.eventLocalDate : existingParty.eventLocalDate,
+      eventLocalTime: typeof body.eventLocalTime === 'string' ? body.eventLocalTime : existingParty.eventLocalTime,
       eventEndDatetime,
+      eventEndLocalDate: typeof body.eventEndLocalDate === 'string' ? body.eventEndLocalDate : existingParty.eventEndLocalDate,
+      eventEndLocalTime: typeof body.eventEndLocalTime === 'string' ? body.eventEndLocalTime : existingParty.eventEndLocalTime,
       rsvpClosesAt,
       location: body.location,
       locationFull: body.locationFull || body.location,
@@ -154,7 +163,11 @@ export async function PUT(
 
     const changes = {
       eventDatetime: existingParty.eventDatetime.getTime() !== validatedData.eventDatetime.getTime(),
+      eventLocalDate: existingParty.eventLocalDate !== validatedData.eventLocalDate,
+      eventLocalTime: existingParty.eventLocalTime !== validatedData.eventLocalTime,
       eventEndDatetime: (existingParty.eventEndDatetime?.getTime() ?? null) !== (validatedData.eventEndDatetime?.getTime() ?? null),
+      eventEndLocalDate: existingParty.eventEndLocalDate !== validatedData.eventEndLocalDate,
+      eventEndLocalTime: existingParty.eventEndLocalTime !== validatedData.eventEndLocalTime,
       rsvpClosesAt: (existingParty.rsvpClosesAt?.getTime() ?? null) !== (validatedData.rsvpClosesAt?.getTime() ?? null),
       location: existingParty.location !== validatedData.location,
       locationFull: existingLocationFull !== validatedData.locationFull,
@@ -181,7 +194,11 @@ export async function PUT(
         ...existingParty,
         childName: existingParty.child.name,
         childAge,
+        eventLocalDate: existingParty.eventLocalDate,
+        eventLocalTime: existingParty.eventLocalTime,
         eventEndDatetime: existingParty.eventEndDatetime,
+        eventEndLocalDate: existingParty.eventEndLocalDate,
+        eventEndLocalTime: existingParty.eventEndLocalTime,
         rsvpClosesAt: existingParty.rsvpClosesAt,
         stats,
         rsvpUrl: `${getBaseUrl()}/rsvp/${existingParty.publicRsvpToken}`
@@ -201,7 +218,11 @@ export async function PUT(
       where: { id: id },
       data: {
         eventDatetime: validatedData.eventDatetime,
+        eventLocalDate: validatedData.eventLocalDate,
+        eventLocalTime: validatedData.eventLocalTime,
         eventEndDatetime: validatedData.eventEndDatetime,
+        eventEndLocalDate: validatedData.eventEndLocalDate,
+        eventEndLocalTime: validatedData.eventEndLocalTime,
         rsvpClosesAt: validatedData.rsvpClosesAt,
         location: validatedData.location,
         locationFull: validatedData.locationFull,
@@ -230,6 +251,8 @@ export async function PUT(
         childName: updatedParty.child.name,
         childAge: updatedParty.targetAge ?? calculateAge(updatedParty.child.birthDate),
         eventDatetime: updatedParty.eventDatetime,
+        eventLocalDate: updatedParty.eventLocalDate,
+        eventLocalTime: updatedParty.eventLocalTime,
         location: updatedParty.location,
         theme: updatedParty.theme || undefined,
         notes: updatedParty.notes || undefined,
@@ -266,7 +289,11 @@ export async function PUT(
       ...updatedParty,
       childName: updatedParty.child.name,
       childAge,
+      eventLocalDate: updatedParty.eventLocalDate,
+      eventLocalTime: updatedParty.eventLocalTime,
       eventEndDatetime: updatedParty.eventEndDatetime,
+      eventEndLocalDate: updatedParty.eventEndLocalDate,
+      eventEndLocalTime: updatedParty.eventEndLocalTime,
       rsvpClosesAt: updatedParty.rsvpClosesAt,
       stats,
       rsvpUrl: `${getBaseUrl()}/rsvp/${updatedParty.publicRsvpToken}`

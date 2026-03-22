@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { formatDate, formatPhoneInput } from '@/lib/utils'
+import { resolvePartyStartDateTime } from '@/lib/party-datetime'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocale, useLanguage, useTranslations } from '@/contexts/LanguageContext'
@@ -25,6 +26,11 @@ interface Party {
   childName: string
   childAge: number
   eventDatetime: string
+  eventLocalDate?: string
+  eventLocalTime?: string
+  eventEndDatetime?: string
+  eventEndLocalDate?: string
+  eventEndLocalTime?: string
   rsvpClosesAt?: string | null
   isRsvpClosed?: boolean
   location: string
@@ -84,6 +90,7 @@ export default function RSVPPage() {
   const [message, setMessage] = useState('')
   const [shouldAutoScrollIntent, setShouldAutoScrollIntent] = useState(false)
   const isRsvpClosed = Boolean(party?.isRsvpClosed)
+  const partyStart = party ? resolvePartyStartDateTime(party) : null
 
   // Refs for auto-scrolling
   const authSectionRef = useRef<HTMLDivElement>(null)
@@ -646,7 +653,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
                 {party.childName}&apos;s {party.childAge}th Birthday Party
               </h3>
               <p className="text-sm text-neutral-600 mb-1">
-                {formatDate(new Date(party.eventDatetime), t('locale') || 'zh')}
+                {partyStart ? formatDate(partyStart, t('locale') || 'zh') : ''}
               </p>
               <p className="text-sm text-neutral-600">
                 {party.location}
@@ -704,7 +711,7 @@ function smoothScrollToElement(el: HTMLDivElement | null, topOffset = 90, durati
               <div className="space-y-2 text-sm text-primary-800 mt-2">
                 <p className="flex items-center justify-center gap-2">
                   <span>📅</span>
-                  <strong>{tr('when')}</strong> {formatDate(new Date(party.eventDatetime), t('locale') || 'zh')}
+                  <strong>{tr('when')}</strong> {partyStart ? formatDate(partyStart, t('locale') || 'zh') : ''}
                 </p>
                 <p className="flex items-center justify-center gap-2">
                   <span>📍</span>

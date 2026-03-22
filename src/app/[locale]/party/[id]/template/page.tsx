@@ -16,7 +16,11 @@ interface PartyData {
   childName: string
   childAge: number
   eventDatetime: string
+  eventLocalDate?: string
+  eventLocalTime?: string
   eventEndDatetime?: string
+  eventEndLocalDate?: string
+  eventEndLocalTime?: string
   location: string
   theme?: string
   notes?: string
@@ -306,7 +310,11 @@ export default function ChangeTemplatePage() {
             childName: party.childName,
             childAge: party.childAge,
             eventDatetime: party.eventDatetime,
+            eventLocalDate: party.eventLocalDate,
+            eventLocalTime: party.eventLocalTime,
             eventEndDatetime: party.eventEndDatetime,
+            eventEndLocalDate: party.eventEndLocalDate,
+            eventEndLocalTime: party.eventEndLocalTime,
             location: party.location,
             theme: party.theme,
             notes: party.notes,

@@ -100,7 +100,11 @@ model Party {
   userId                String     @map("user_id")
   childId               String     @map("child_id")
   eventDatetime         DateTime   @map("event_datetime")
+  eventLocalDate        String?    @map("event_local_date")
+  eventLocalTime        String?    @map("event_local_time")
   eventEndDatetime      DateTime?  @map("event_end_datetime")
+  eventEndLocalDate     String?    @map("event_end_local_date")
+  eventEndLocalTime     String?    @map("event_end_local_time")
   rsvpClosesAt          DateTime?  @map("rsvp_closes_at")
   location              String
   locationFull          String?    @map("location_full")

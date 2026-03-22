@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import { getEmailProvider, EmailAttachment } from './email-providers'
+import { resolvePartyStartDateTime } from './party-datetime'
 import { getBaseUrl } from './utils'
 
 interface EmailData {
@@ -8,6 +9,12 @@ interface EmailData {
   text: string
   html?: string
   attachments?: EmailAttachment[]
+}
+
+interface PartyEmailDateTimeFields {
+  eventDatetime: Date
+  eventLocalDate?: string | null
+  eventLocalTime?: string | null
 }
 
 // ── ICS (iCalendar) generator ─────────────────────────────────────────────────
@@ -261,6 +268,8 @@ export function generateRSVPConfirmationEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
     theme?: string
     notes?: string
@@ -274,16 +283,7 @@ export function generateRSVPConfirmationEmail(
     message?: string
   }
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const statusEmoji = {
     'YES': '🎉',
@@ -324,7 +324,7 @@ ${guestConfirmText.replace(/<[^>]*>/g, '')}
 
 Party Details:
 🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
-📅 ${formatDate(partyData.eventDatetime)}
+📅 ${formattedPartyDateTime}
 📍 ${partyData.location}
 
 ${partyData.notes ? `Special Notes: ${partyData.notes}\n\n` : ''}${guestData.allergies ? `⚠️ Allergies/Dietary Restrictions: ${guestData.allergies}\n\n` : ''}${guestData.message ? `💬 Your Message: "${guestData.message}"\n\n` : ''}Looking forward to celebrating together!
@@ -345,7 +345,7 @@ Kid Party RSVP Team`
     <div class="details-card">
       <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party Details</h3>
       <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
     </div>
 
@@ -368,6 +368,8 @@ export function generateHostRSVPNotificationEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
   },
   guestData: {
@@ -379,16 +381,7 @@ export function generateHostRSVPNotificationEmail(
     message?: string
   }
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const statusEmoji = {
     'YES': '🎉',
@@ -427,7 +420,7 @@ ${guestData.allergies ? `• ⚠️ Allergies/Dietary Restrictions: ${guestData.
 ` : ''}
 🎂 Party Information:
 • Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party
-• When: ${formatDate(partyData.eventDatetime)}
+• When: ${formattedPartyDateTime}
 • Where: ${partyData.location}
 
 KidParty RSVP System`
@@ -461,7 +454,7 @@ KidParty RSVP System`
     <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
       <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 Party Information</h4>
       <div class="details-item">• Event: ${safePartyChildName}'s ${partyData.childAge}th Birthday Party</div>
-      <div class="details-item">• When: ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item">• When: ${formattedPartyDateTime}</div>
       <div class="details-item">• Where: ${safeLocation}</div>
     </div>
   `
@@ -478,6 +471,8 @@ export function generateReminderEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
     theme?: string
     notes?: string
@@ -488,16 +483,7 @@ export function generateReminderEmail(
   },
   reminderType: 'SEVEN_DAYS' | 'TWO_DAYS' | 'SAME_DAY'
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const timeMap = {
     SEVEN_DAYS: '7 days',
@@ -521,7 +507,7 @@ This is a friendly reminder about ${partyData.childName}'s ${partyData.childAge}
 
 Party Details:
 🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
-📅 ${formatDate(partyData.eventDatetime)}
+📅 ${formattedPartyDateTime}
 📍 ${partyData.location}
 
 ${partyData.notes ? `Special Notes: ${partyData.notes}\n\n` : ''}Haven't RSVP'd yet? Please let us know: ${partyData.rsvpUrl}
@@ -538,7 +524,7 @@ Kid Party RSVP Team`
     <div class="details-card">
       <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party reminder</h3>
       <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
     </div>
 
@@ -569,10 +555,22 @@ function formatEmailDateTime(date: Date) {
   }).format(date)
 }
 
+function formatPartyEmailDateTime(partyData: PartyEmailDateTimeFields) {
+  return formatEmailDateTime(
+    resolvePartyStartDateTime({
+      eventDatetime: partyData.eventDatetime,
+      eventLocalDate: partyData.eventLocalDate,
+      eventLocalTime: partyData.eventLocalTime,
+    })
+  )
+}
+
 export function generatePartyCreatedConfirmationEmail(partyData: {
   childName: string
   childAge: number
   eventDatetime: Date
+  eventLocalDate?: string | null
+  eventLocalTime?: string | null
   location: string
   theme?: string
   notes?: string
@@ -586,13 +584,14 @@ export function generatePartyCreatedConfirmationEmail(partyData: {
   const closeLine = partyData.rsvpClosesAt
     ? `RSVP closes: ${formatEmailDateTime(partyData.rsvpClosesAt)}`
     : null
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const subject = `Party created: ${partyData.childName}'s birthday is ready`
   const text = `Your party is ready.
 
 Party details:
 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme})` : ''}
-When: ${formatEmailDateTime(partyData.eventDatetime)}
+When: ${formattedPartyDateTime}
 Where: ${partyData.location}
 ${closeLine ? `${closeLine}\n` : ''}${partyData.notes ? `Notes: ${partyData.notes}\n` : ''}
 You can manage guests, invitations, and reminders here:
@@ -605,7 +604,7 @@ ${partyData.dashboardUrl}`
     <div class="details-card">
       <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party Details</h3>
       <div class="details-item"><span class="emoji">🎂</span> ${safeChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme}</em>)` : ''}</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatEmailDateTime(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
       ${closeLine ? `<div class="details-item"><span class="emoji">⏳</span> ${esc(closeLine)}</div>` : ''}
     </div>
@@ -625,6 +624,8 @@ export function generateHostPartyReminder24hEmail(partyData: {
   childName: string
   childAge: number
   eventDatetime: Date
+  eventLocalDate?: string | null
+  eventLocalTime?: string | null
   location: string
   guestCount: number
   attendingCount: number
@@ -633,9 +634,10 @@ export function generateHostPartyReminder24hEmail(partyData: {
   dashboardUrl: string
 }) {
   const subject = `Tomorrow: ${partyData.childName}'s party`
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
   const text = `Quick reminder: ${partyData.childName}'s ${partyData.childAge}th birthday party is tomorrow.
 
-When: ${formatEmailDateTime(partyData.eventDatetime)}
+When: ${formattedPartyDateTime}
 Where: ${partyData.location}
 
 RSVP summary:
@@ -652,7 +654,7 @@ ${partyData.dashboardUrl}`
     <p>Here is a quick planning snapshot for <strong>${esc(partyData.childName)}'s ${partyData.childAge}th birthday party</strong>.</p>
 
     <div class="details-card">
-      <div class="details-item"><span class="emoji">📅</span> ${formatEmailDateTime(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${esc(partyData.location)}</div>
     </div>
 
@@ -676,6 +678,8 @@ export function generateGuestPartyReminder24hEmail(partyData: {
   childName: string
   childAge: number
   eventDatetime: Date
+  eventLocalDate?: string | null
+  eventLocalTime?: string | null
   location: string
   theme?: string
   notes?: string
@@ -687,11 +691,12 @@ export function generateGuestPartyReminder24hEmail(partyData: {
   const safeGuestChildName = esc(guestData.childName)
   const safeTheme = esc(partyData.theme)
   const safeNotes = esc(partyData.notes)
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const subject = `Tomorrow: ${partyData.childName}'s birthday party`
   const text = `${guestData.childName} is on the list for ${partyData.childName}'s ${partyData.childAge}th birthday party tomorrow.
 
-When: ${formatEmailDateTime(partyData.eventDatetime)}
+When: ${formattedPartyDateTime}
 Where: ${partyData.location}
 ${partyData.theme ? `Theme: ${partyData.theme}\n` : ''}${partyData.notes ? `Notes: ${partyData.notes}\n` : ''}
 View party details:
@@ -703,7 +708,7 @@ ${partyData.guestPageUrl}`
 
     <div class="details-card">
       <div class="details-item"><span class="emoji">🎂</span> ${safeChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme}</em>)` : ''}</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatEmailDateTime(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${esc(partyData.location)}</div>
     </div>
 
@@ -724,6 +729,8 @@ export function generatePartyUpdateEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
     theme?: string
     notes?: string
@@ -739,16 +746,7 @@ export function generatePartyUpdateEmail(
     childAge?: boolean
   }
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const safePartyChildName = esc(partyData.childName)
   const safeGuestChildName = esc(guestData.childName)
@@ -773,7 +771,7 @@ ${changesList.map(change => `• ${change}`).join('\n')}
 
 Updated Party Details:
 🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
-📅 ${formatDate(partyData.eventDatetime)}
+📅 ${formattedPartyDateTime}
 📍 ${partyData.location}
 
 ${partyData.notes ? `Special Notes: ${partyData.notes}\n\n` : ''}Please note these changes and let us know if they affect your ability to attend.
@@ -798,7 +796,7 @@ Kid Party RSVP Team`
     <div class="details-card">
       <h4 style="margin-top: 0; color: ${PRIMARY_COLOR};">Updated Party Details</h4>
       <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
     </div>
 
@@ -830,7 +828,8 @@ export async function sendPartyUpdateEmail(
   await sendEmail({
     to: email,
     subject: emailContent.subject,
-    text: emailContent.text
+    text: emailContent.text,
+    html: emailContent.html,
   })
 }
 
@@ -839,6 +838,8 @@ export function generateInvitationEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
     theme?: string
     notes?: string
@@ -846,16 +847,7 @@ export function generateInvitationEmail(
   },
   hostName: string
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const rsvpUrl = `${getBaseUrl()}/rsvp/${partyData.publicRsvpToken}`
 
@@ -869,7 +861,7 @@ ${hostName} has sent you this invitation.
 
 Party Details:
 🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
-📅 ${formatDate(partyData.eventDatetime)}
+📅 ${formattedPartyDateTime}
 📍 ${partyData.location}
 
 ${partyData.notes ? `Special Notes: ${partyData.notes}\n\n` : ''}Please RSVP by clicking the link below:
@@ -889,7 +881,7 @@ Kid Party RSVP Team`
     <div class="details-card" style="background-color: #fdf2f8; border-left-color: #db2777;">
       <h3 style="margin-top: 0; color: #db2777;">Party Details</h3>
       <div class="details-item"><span class="emoji">🎂</span> ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (<em>${partyData.theme} theme</em>)` : ''}</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${partyData.location}</div>
     </div>
 
@@ -913,6 +905,8 @@ export function generatePhotoSharingAvailableEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
     theme?: string
     publicRsvpToken: string
@@ -921,16 +915,7 @@ export function generatePhotoSharingAvailableEmail(
     childName: string
   }
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const guestPageUrl = `${getBaseUrl()}/party/guest/${partyData.publicRsvpToken}`
 
@@ -951,7 +936,7 @@ You can now:
 
 Party Details:
 🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
-📅 ${formatDate(partyData.eventDatetime)}
+📅 ${formattedPartyDateTime}
 📍 ${partyData.location}
 
 Share your photos here:
@@ -976,7 +961,7 @@ Kid Party RSVP Team`
     <div class="details-card">
       <h4 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party Summary</h4>
       <div class="details-item"><span class="emoji">🎂</span> ${partyData.childName}'s ${partyData.childAge}th Birthday</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
     </div>
 
     <p>Let's create a beautiful photo album together to remember this special day! 📚✨</p>
@@ -1129,6 +1114,8 @@ export function generateGuestMessageEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
     dashboardUrl: string
   },
@@ -1138,16 +1125,7 @@ export function generateGuestMessageEmail(
     message: string
   }
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const subject = `New message from ${guestData.childName}'s parent - ${partyData.childName}'s Party`
 
@@ -1159,7 +1137,7 @@ Message:
 "${guestData.message}"
 
 Party: ${partyData.childName}'s ${partyData.childAge}th Birthday Party
-When: ${formatDate(partyData.eventDatetime)}
+When: ${formattedPartyDateTime}
 Where: ${partyData.location}
 
 KidParty RSVP System`
@@ -1180,7 +1158,7 @@ KidParty RSVP System`
     <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
       <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 Party Information</h4>
       <div class="details-item">• Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party</div>
-      <div class="details-item">• When: ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item">• When: ${formattedPartyDateTime}</div>
       <div class="details-item">• Where: ${partyData.location}</div>
     </div>
   `
@@ -1197,6 +1175,8 @@ export function generateBroadcastEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     location: string
     rsvpUrl: string
   },
@@ -1204,16 +1184,7 @@ export function generateBroadcastEmail(
   broadcastMessage: string,
   hostName: string
 ) {
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
-  }
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const subject = broadcastSubject
 
@@ -1222,7 +1193,7 @@ export function generateBroadcastEmail(
 ${broadcastMessage}
 
 Party Details:
-When: ${formatDate(partyData.eventDatetime)}
+When: ${formattedPartyDateTime}
 Where: ${partyData.location}
 
 KidParty RSVP System`
@@ -1240,7 +1211,7 @@ KidParty RSVP System`
     <div class="details-card" style="border-left-color: ${SECONDARY_COLOR}; background-color: #fff1f2;">
       <h4 style="margin-top: 0; color: ${SECONDARY_COLOR};">🎂 Party Details</h4>
       <div class="details-item">• Event: ${partyData.childName}'s ${partyData.childAge}th Birthday Party</div>
-      <div class="details-item">• When: ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item">• When: ${formattedPartyDateTime}</div>
       <div class="details-item">• Where: ${partyData.location}</div>
     </div>
   `
@@ -1260,7 +1231,11 @@ export function generateGuestRSVPConfirmationEmail(
     childName: string
     childAge: number
     eventDatetime: Date
+    eventLocalDate?: string | null
+    eventLocalTime?: string | null
     eventEndDatetime?: Date | null
+    eventEndLocalDate?: string | null
+    eventEndLocalTime?: string | null
     location: string
     theme?: string | null
     notes?: string | null
@@ -1275,15 +1250,7 @@ export function generateGuestRSVPConfirmationEmail(
     message?: string | null
   }
 ): { subject: string; text: string; html: string; icsAttachment: EmailAttachment } {
-  const formatDate = (date: Date) =>
-    new Intl.DateTimeFormat('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date)
+  const formattedPartyDateTime = formatPartyEmailDateTime(partyData)
 
   const safePartyChildName = esc(partyData.childName)
   const safeGuestName = esc(guestData.guestName)
@@ -1333,7 +1300,7 @@ ${isMaybe ? "You've indicated you might be able to attend" : "Great news! You're
 
 Party Details:
 🎂 ${partyData.childName}'s ${partyData.childAge}th Birthday${partyData.theme ? ` (${partyData.theme} theme)` : ''}
-📅 ${formatDate(partyData.eventDatetime)}
+📅 ${formattedPartyDateTime}
 📍 ${partyData.location}
 ${partyData.notes ? `\nSpecial Notes: ${partyData.notes}` : ''}
 ${guestData.status === 'YES' ? `\nYour details:
@@ -1357,7 +1324,7 @@ Kid Party RSVP Team`
     <div class="details-card">
       <h3 style="margin-top: 0; color: ${PRIMARY_COLOR};">Party Details</h3>
       <div class="details-item"><span class="emoji">🎂</span> ${safePartyChildName}'s ${partyData.childAge}th Birthday${safeTheme ? ` (<em>${safeTheme} theme</em>)` : ''}</div>
-      <div class="details-item"><span class="emoji">📅</span> ${formatDate(partyData.eventDatetime)}</div>
+      <div class="details-item"><span class="emoji">📅</span> ${formattedPartyDateTime}</div>
       <div class="details-item"><span class="emoji">📍</span> ${safeLocation}</div>
     </div>
 
