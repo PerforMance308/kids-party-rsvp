@@ -6,11 +6,6 @@ const globalForPrisma = globalThis as unknown as {
 
 function createPrismaClient() {
   return new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
     log: process.env.NODE_ENV === 'production' ? ['error'] : ['query', 'error', 'warn'],
   })
 }
@@ -31,8 +26,3 @@ export async function withBackgroundPrisma<T>(work: (client: PrismaClient) => Pr
 }
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
-
-// Ensure connection on startup in production
-if (process.env.NODE_ENV === 'production') {
-  prisma.$connect().catch(console.error)
-}

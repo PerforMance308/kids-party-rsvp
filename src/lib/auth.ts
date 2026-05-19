@@ -3,14 +3,21 @@ import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { AuthUser } from '@/types'
 
-// Generate a secure JWT secret if not provided
-const JWT_SECRET = process.env.JWT_SECRET || (() => {
+let developmentJwtSecret: string | undefined
+
+// Generate a secure JWT secret if not provided in development.
+function getJwtSecret() {
+  if (process.env.JWT_SECRET) {
+    return process.env.JWT_SECRET
+  }
+
   if (process.env.NODE_ENV === 'production') {
     throw new Error('JWT_SECRET must be set in production environment')
   }
-  // Generate a random secret for development
-  return crypto.randomBytes(64).toString('hex')
-})()
+
+  developmentJwtSecret ??= crypto.randomBytes(64).toString('hex')
+  return developmentJwtSecret
+}
 
 // Password validation function
 export function validatePassword(password: string): { isValid: boolean; errors: string[] } {
@@ -60,14 +67,14 @@ export function validateEmail(email: string): boolean {
 export function generateToken(user: AuthUser): string {
   return jwt.sign(
     { userId: user.id, email: user.email },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '7d' }
   )
 }
 
 export function verifyToken(token: string): AuthUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any
+    const decoded = jwt.verify(token, getJwtSecret()) as any
     return {
       id: decoded.userId,
       email: decoded.email
